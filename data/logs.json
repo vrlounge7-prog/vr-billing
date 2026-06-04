@@ -1,0 +1,335 @@
+[
+  {
+    "id": "2a0ccde2-53c2-4817-aba9-ad62b204fe68",
+    "user_id": "d3397a18-d347-4df7-b74e-51e44cd23aea",
+    "action": "LOGIN_SUCCESS",
+    "details": "User admin logged in successfully",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-01T11:16:20.849Z"
+  },
+  {
+    "id": "11c3f29f-2e1f-46ce-aa12-bee56bab6c02",
+    "user_id": "650ac406-e411-46ff-84a2-1c1be3537f2c",
+    "action": "PAYMENT_VERIFIED",
+    "details": "Verified payment for 20260501-31059137",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-01T11:18:02.199Z"
+  },
+  {
+    "id": "f189ba14-e809-4995-b49d-81aceaa25692",
+    "user_id": "d3397a18-d347-4df7-b74e-51e44cd23aea",
+    "action": "LOGOUT",
+    "details": "User admin logged out",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-07T14:13:39.493Z"
+  },
+  {
+    "id": "101cea16-caa7-4327-98ca-8b4564f1ce74",
+    "user_id": "650ac406-e411-46ff-84a2-1c1be3537f2c",
+    "action": "LOGIN_SUCCESS",
+    "details": "User cate logged in successfully",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-07T14:13:47.879Z"
+  },
+  {
+    "id": "f5dbca68-04fd-4419-b466-3f0a4ae249c8",
+    "user_id": "d3397a18-d347-4df7-b74e-51e44cd23aea",
+    "action": "LOGIN_SUCCESS",
+    "details": "User admin logged in successfully",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-07T14:47:56.984Z"
+  },
+  {
+    "id": "12fa987f-8b4d-464f-a580-7efc9d00d444",
+    "user_id": "650ac406-e411-46ff-84a2-1c1be3537f2c",
+    "action": "LOGIN_SUCCESS",
+    "details": "User cate logged in successfully",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-07T14:48:12.868Z"
+  },
+  {
+    "id": "125263a5-c4d3-428b-a0b5-4e3b029f95ee",
+    "user_id": "650ac406-e411-46ff-84a2-1c1be3537f2c",
+    "action": "TRANSACTION_CREATED",
+    "details": "Created receipt 20260507-15534248",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-07T14:48:47.997Z"
+  },
+  {
+    "id": "6293c2ee-539e-480d-9e3c-07358a0b9720",
+    "user_id": "650ac406-e411-46ff-84a2-1c1be3537f2c",
+    "action": "TRANSACTION_CREATED",
+    "details": "Created receipt 20260507-89890409",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-07T14:50:16.128Z"
+  },
+  {
+    "id": "a2bc2d2e-335d-49c2-b811-2334d3a1a667",
+    "user_id": "650ac406-e411-46ff-84a2-1c1be3537f2c",
+    "action": "PAYMENT_VERIFIED",
+    "details": "Verified payment for 20260507-89890409",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-07T14:50:36.805Z"
+  },
+  {
+    "id": "338cc503-01cb-414b-bb31-29eeed6cbfb3",
+    "user_id": "650ac406-e411-46ff-84a2-1c1be3537f2c",
+    "action": "LOGIN_SUCCESS",
+    "details": "User cate logged in successfully",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-07T14:57:29.345Z"
+  },
+  {
+    "id": "8bdb0b01-dbc1-4a73-bfdb-e83b0fc3930b",
+    "user_id": "650ac406-e411-46ff-84a2-1c1be3537f2c",
+    "action": "LOGIN_SUCCESS",
+    "details": "User cate logged in successfully",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-09T08:31:27.858Z"
+  },
+  {
+    "id": "d24cef89-4bb5-4ae5-b526-e66bbf333c73",
+    "user_id": "d3397a18-d347-4df7-b74e-51e44cd23aea",
+    "action": "LOGIN_SUCCESS",
+    "details": "User admin logged in successfully",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-09T08:32:37.576Z"
+  },
+  {
+    "id": "8692d9b2-ec20-4aec-bb3c-9f9f10edf638",
+    "user_id": "d3397a18-d347-4df7-b74e-51e44cd23aea",
+    "action": "GAME_CREATED",
+    "details": "Created game: PS5",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-09T08:39:43.527Z"
+  },
+  {
+    "id": "b80cef92-6687-4de8-a7a3-9d7e19484559",
+    "user_id": "650ac406-e411-46ff-84a2-1c1be3537f2c",
+    "action": "LOGOUT",
+    "details": "User cate logged out",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-09T08:39:58.082Z"
+  },
+  {
+    "id": "02e3e3dc-24da-46e7-82bc-e137070d9061",
+    "user_id": "650ac406-e411-46ff-84a2-1c1be3537f2c",
+    "action": "LOGIN_SUCCESS",
+    "details": "User cate logged in successfully",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-09T08:40:09.599Z"
+  },
+  {
+    "id": "8527adf3-c1e0-449c-a282-6284af24a923",
+    "user_id": "d3397a18-d347-4df7-b74e-51e44cd23aea",
+    "action": "GAME_UPDATED",
+    "details": "Updated game: PS5",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-09T08:41:00.994Z"
+  },
+  {
+    "id": "1b04b11d-07b9-498a-a3ff-809b925ca5cb",
+    "user_id": "650ac406-e411-46ff-84a2-1c1be3537f2c",
+    "action": "TRANSACTION_CREATED",
+    "details": "Created receipt 20260509-54605032",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-09T08:41:41.777Z"
+  },
+  {
+    "id": "c4e38ebf-fb43-471a-8f23-c5592ea08f96",
+    "user_id": "650ac406-e411-46ff-84a2-1c1be3537f2c",
+    "action": "PAYMENT_VERIFIED",
+    "details": "Verified payment for 20260509-54605032",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-09T08:41:43.355Z"
+  },
+  {
+    "id": "9a634b71-7bf9-4931-a919-5b4c08d170dc",
+    "user_id": "650ac406-e411-46ff-84a2-1c1be3537f2c",
+    "action": "TRANSACTION_CREATED",
+    "details": "Created receipt 20260509-56497793",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-09T08:46:06.285Z"
+  },
+  {
+    "id": "c78abc0e-cc48-409b-9fbd-0592ef9588bd",
+    "user_id": "650ac406-e411-46ff-84a2-1c1be3537f2c",
+    "action": "PAYMENT_VERIFIED",
+    "details": "Verified payment for 20260509-56497793",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-09T08:46:08.381Z"
+  },
+  {
+    "id": "0f7d6389-0b74-4928-a38a-dc4fbc5478f8",
+    "user_id": "650ac406-e411-46ff-84a2-1c1be3537f2c",
+    "action": "LOGIN_SUCCESS",
+    "details": "User cate logged in successfully",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-09T08:47:28.532Z"
+  },
+  {
+    "id": "f8b6087b-724a-4ab9-a657-0eeb0b7782f0",
+    "user_id": "650ac406-e411-46ff-84a2-1c1be3537f2c",
+    "action": "TRANSACTION_CREATED",
+    "details": "Created receipt 20260509-18276085",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-09T08:47:32.597Z"
+  },
+  {
+    "id": "78041be2-d81f-48bf-9b35-2ab21af7b63a",
+    "user_id": "650ac406-e411-46ff-84a2-1c1be3537f2c",
+    "action": "PAYMENT_VERIFIED",
+    "details": "Verified payment for 20260509-18276085",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-09T08:47:33.798Z"
+  },
+  {
+    "id": "a83faa75-083e-41a2-83de-31c82901c7c7",
+    "user_id": "650ac406-e411-46ff-84a2-1c1be3537f2c",
+    "action": "LOGIN_SUCCESS",
+    "details": "User cate logged in successfully",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-09T11:52:12.847Z"
+  },
+  {
+    "id": "d9bdf2c9-b219-43c9-a987-722bd2353e63",
+    "user_id": "650ac406-e411-46ff-84a2-1c1be3537f2c",
+    "action": "TRANSACTION_CREATED",
+    "details": "Created receipt 20260509-00385114",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-09T11:52:15.172Z"
+  },
+  {
+    "id": "1e773ec5-9798-4615-b2d1-419dc2091588",
+    "user_id": "650ac406-e411-46ff-84a2-1c1be3537f2c",
+    "action": "PAYMENT_VERIFIED",
+    "details": "Verified payment for 20260509-00385114",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-09T11:52:16.167Z"
+  },
+  {
+    "id": "fbe0feb0-9ee6-489f-a54f-ecef4059e536",
+    "user_id": "d3397a18-d347-4df7-b74e-51e44cd23aea",
+    "action": "LOGIN_SUCCESS",
+    "details": "User admin logged in successfully",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-10T10:17:31.438Z"
+  },
+  {
+    "id": "d07021b7-155a-4fa3-952b-99c70cc42e0b",
+    "user_id": "650ac406-e411-46ff-84a2-1c1be3537f2c",
+    "action": "LOGIN_SUCCESS",
+    "details": "User cate logged in successfully",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-10T10:17:34.889Z"
+  },
+  {
+    "id": "168979a0-56b3-408d-b0d2-ede1f62893a4",
+    "user_id": "650ac406-e411-46ff-84a2-1c1be3537f2c",
+    "action": "TRANSACTION_CREATED",
+    "details": "Created receipt 20260510-73535698",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-10T10:17:37.679Z"
+  },
+  {
+    "id": "a0318c2a-14b4-4220-9443-b83aa7caf313",
+    "user_id": "650ac406-e411-46ff-84a2-1c1be3537f2c",
+    "action": "PAYMENT_VERIFIED",
+    "details": "Verified payment for 20260510-73535698",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-10T10:17:38.710Z"
+  },
+  {
+    "id": "48b3f919-adec-4716-8fd5-8d584a7cfd70",
+    "user_id": "650ac406-e411-46ff-84a2-1c1be3537f2c",
+    "action": "LOGOUT",
+    "details": "User cate logged out",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-10T10:19:07.247Z"
+  },
+  {
+    "id": "83c457e0-5b76-4882-9ffc-071f1229e0ea",
+    "user_id": "650ac406-e411-46ff-84a2-1c1be3537f2c",
+    "action": "LOGIN_SUCCESS",
+    "details": "User cate logged in successfully",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-12T08:58:20.546Z"
+  },
+  {
+    "id": "ad4b3458-4a8b-45ea-9fa0-2a8fae5b6558",
+    "user_id": "650ac406-e411-46ff-84a2-1c1be3537f2c",
+    "action": "TRANSACTION_CREATED",
+    "details": "Created receipt 20260512-61915639",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-12T08:58:39.173Z"
+  },
+  {
+    "id": "92f27f35-c1e9-4fb5-ba0b-ee8041ab1fc2",
+    "user_id": "650ac406-e411-46ff-84a2-1c1be3537f2c",
+    "action": "PAYMENT_VERIFIED",
+    "details": "Verified payment for 20260512-61915639",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "created_at": "2026-05-12T08:59:21.632Z"
+  },
+  {
+    "id": "2cb2ab8e-0420-4e5b-bf26-6d85a3327935",
+    "user_id": "650ac406-e411-46ff-84a2-1c1be3537f2c",
+    "action": "LOGIN_SUCCESS",
+    "details": "User cate logged in successfully",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36",
+    "created_at": "2026-05-12T12:09:10.822Z"
+  },
+  {
+    "id": "f77832dc-ebc2-4c8d-9371-88472ed65c66",
+    "user_id": "650ac406-e411-46ff-84a2-1c1be3537f2c",
+    "action": "TRANSACTION_CREATED",
+    "details": "Created receipt 20260512-88935660",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36",
+    "created_at": "2026-05-12T12:35:15.839Z"
+  },
+  {
+    "id": "2b68a39a-1009-4448-bcdc-13218eb7cfb8",
+    "user_id": "650ac406-e411-46ff-84a2-1c1be3537f2c",
+    "action": "PAYMENT_VERIFIED",
+    "details": "Verified payment for 20260512-88935660",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36",
+    "created_at": "2026-05-12T12:35:17.259Z"
+  }
+]

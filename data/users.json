@@ -1,0 +1,35 @@
+[
+  {
+    "id": "d3397a18-d347-4df7-b74e-51e44cd23aea",
+    "full_name": "System Administrator",
+    "username": "admin",
+    "password": "$2a$10$zyhrfDeSHlPvhpxeGY9HcOaE7LZagEe4rikxwbKl8q0c96SHusinS",
+    "role": "admin",
+    "phone_number": "",
+    "gender": "male",
+    "bio": "",
+    "profile_picture": "",
+    "is_active": true,
+    "last_login": "2026-05-10T10:17:31.422Z",
+    "last_ip": "127.0.0.1",
+    "created_at": "2026-04-29T16:48:48.025Z",
+    "updated_at": "2026-05-07T09:54:06.077Z",
+    "can_delete_voided": true
+  },
+  {
+    "id": "650ac406-e411-46ff-84a2-1c1be3537f2c",
+    "full_name": "Cate M",
+    "username": "cate",
+    "password": "$2a$10$L3HxVfLd8IWerrxKTNz5wuXeeqIPyIB7oV5rWFrn0Pf9CXyPNo8T.",
+    "role": "cashier",
+    "phone_number": "0746701416",
+    "gender": "female",
+    "bio": "Being Cate🤪",
+    "profile_picture": "",
+    "is_active": true,
+    "last_login": "2026-05-12T12:09:10.817Z",
+    "last_ip": "127.0.0.1",
+    "created_at": "2026-04-30T11:51:45.353Z",
+    "updated_at": "2026-04-30T11:54:10.637Z"
+  }
+]

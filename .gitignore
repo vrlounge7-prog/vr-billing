@@ -1,0 +1,9 @@
+# Environment variables (contains secrets)
+.env
+
+# Node modules (will be reinstalled with npm install)
+node_modules/
+
+# Database files (contains customer and business data)
+*.sqlite
+*.db

@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>VR BILLING - Cashier POS</title>
+    <link rel="shortcut icon" href="/favicon.ico" type="image/png">
+    <link rel="manifest" href="/manifest.json">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #f5f7fb;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 14px;
+            border-radius: 14px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            flex-shrink: 0;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-left img {
+            width: 38px;
+            height: 38px;
+            object-fit: contain;
+            border-radius: 10px;
+            background: white;
+            padding: 4px;
+        }
+
+        .header-left .logo-fallback {
+            display: none;
+            font-size: 24px;
+        }
+
+        .brand h4 {
+            font-size: 13px;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .brand small {
+            font-size: 9px;
+            opacity: 0.85;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .refresh-btn {
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .refresh-btn:active {
+            transform: scale(0.96);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            position: relative;
+            padding: 5px 10px;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.15);
+            transition: all 0.2s;
+        }
+
+        .user-profile:active {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .profile-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .welcome-text {
+            text-align: right;
+        }
+
+        .welcome-text .name {
+            font-weight: 600;
+            font-size: 11px;
+        }
+
+        .welcome-text .role {
+            font-size: 9px;
+            opacity: 0.8;
+        }
+
+        .profile-dropdown {
+            position: absolute;
+            top: 45px;
+            right: 0;
+            background: white;
+            color: #333;
+            border-radius: 14px;
+            width: 240px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            display: none;
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .profile-dropdown.show {
+            display: block;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .profile-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 14px;
+            text-align: center;
+        }
+
+        .profile-header .large-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            margin: 0 auto 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        .logout-section {
+            padding: 14px;
+        }
+
+        .logout-btn {
+            width: 100%;
+            padding: 10px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex: 1;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .category-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            flex-shrink: 0;
+        }
+
+        .category-buttons {
+            display: flex;
+            gap: 6px;
+            padding-bottom: 2px;
+            min-width: min-content;
+        }
+
+        .cat-btn {
+            padding: 8px 14px;
+            background: white;
+            color: #667eea;
+            border: 1.5px solid #667eea;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 11px;
+            transition: all 0.2s;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .cat-btn:active {
+            transform: scale(0.96);
+        }
+
+        .cat-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .scroll-container {
+            position: relative;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            overflow-y: auto;
+            padding: 2px;
+            height: 100%;
+            align-content: start;
+        }
+
+        .scroll-fade-bottom {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: linear-gradient(to top, rgba(245, 247, 251, 1) 0%, rgba(245, 247, 251, 0.8) 30%, rgba(245, 247, 251, 0) 100%);
+            pointer-events: none;
+            z-index: 10;
+            transition: opacity 0.3s ease;
+            opacity: 0;
+        }
+
+        .scroll-fade-bottom.visible {
+            opacity: 1;
+        }
+
+        .scroll-fade-top {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 30px;
+            background: linear-gradient(to bottom, rgba(245, 247, 251, 1) 0%, rgba(245, 247, 251, 0.8) 30%, rgba(245, 247, 251, 0) 100%);
+            pointer-events: none;
+            z-index: 10;
+            transition: opacity 0.3s ease;
+            opacity: 0;
+        }
+
+        .scroll-fade-top.visible {
+            opacity: 1;
+        }
+
+        .game-card {
+            background: white;
+            padding: 12px 10px;
+            border-radius: 14px;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s;
+            border: 1px solid #f0f0f0;
+        }
+
+        .game-card:active {
+            transform: scale(0.98);
+            background: #f8f9ff;
+        }
+
+        .game-card .game-icon {
+            font-size: 28px;
+            margin-bottom: 4px;
+        }
+
+        .game-card .game-name {
+            font-weight: 600;
+            font-size: 12px;
+            margin-bottom: 2px;
+            color: #333;
+        }
+
+        .game-card .game-detail {
+            font-size: 10px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .game-card .game-price {
+            color: #28a745;
+            font-weight: bold;
+            font-size: 14px;
+            background: #e8f5e9;
+            padding: 3px 10px;
+            border-radius: 15px;
+            display: inline-block;
+        }
+
+        .right-panel {
+            background: white;
+            border-radius: 18px;
+            padding: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            min-height: 0;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        select,
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 13px;
+            background: #fafafa;
+            transition: all 0.2s;
+        }
+
+        select:focus,
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+        }
+
+        .cart-scroll-container {
+            position: relative;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .cart-items {
+            overflow-y: auto;
+            margin: 6px 0;
+            height: 100%;
+            max-height: 150px;
+        }
+
+        .cart-scroll-fade-bottom {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 35px;
+            background: linear-gradient(to top, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.8) 30%, rgba(255, 255, 255, 0) 100%);
+            pointer-events: none;
+            z-index: 10;
+            transition: opacity 0.3s ease;
+            opacity: 0;
+        }
+
+        .cart-scroll-fade-bottom.visible {
+            opacity: 1;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 5px;
+            gap: 6px;
+        }
+
+        .cart-item-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .cart-item-details strong {
+            display: block;
+            color: #333;
+            font-size: 11px;
+        }
+
+        .cart-item-details small {
+            color: #666;
+            font-size: 9px;
+        }
+
+        .cart-item-station-select {
+            padding: 3px 6px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 9px;
+            background: white;
+            max-width: 90px;
+        }
+
+        .remove-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .remove-btn:active {
+            transform: scale(0.95);
+        }
+
+        .cart-total {
+            font-weight: bold;
+            font-size: 18px;
+            margin: 8px 0;
+            padding: 10px;
+            background: linear-gradient(135deg, #f8f9ff 0%, #e8ecff 100%);
+            border-radius: 10px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .payment-methods {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin: 8px 0;
+        }
+
+        .payment-btn {
+            padding: 10px;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+            font-size: 12px;
+            color: #333;
+        }
+
+        .payment-btn.active {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .process-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .process-btn:active {
+            transform: scale(0.98);
+        }
+
+        .timer-section {
+            background: white;
+            border-radius: 14px;
+            padding: 12px;
+            margin-top: 8px;
+            flex-shrink: 0;
+        }
+
+        .timer-scroll-container {
+            position: relative;
+            max-height: 180px;
+            overflow: hidden;
+        }
+
+        #timerStationsList {
+            overflow-y: auto;
+            max-height: 180px;
+        }
+
+        .timer-scroll-fade-bottom {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 30px;
+            background: linear-gradient(to top, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.8) 30%, rgba(255, 255, 255, 0) 100%);
+            pointer-events: none;
+            z-index: 10;
+            transition: opacity 0.3s ease;
+            opacity: 0;
+        }
+
+        .timer-scroll-fade-bottom.visible {
+            opacity: 1;
+        }
+
+        .timer-station-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            margin-bottom: 5px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 3px solid #667eea;
+        }
+
+        .timer-station-card.warning {
+            border-left-color: #ffc107;
+            background: #fffbea;
+        }
+
+        .timer-station-card.danger {
+            border-left-color: #dc3545;
+            background: #fff0f0;
+        }
+
+        .timer-station-card.done {
+            border-left-color: #28a745;
+            background: #f0fff4;
+        }
+
+        .timer-station-info strong {
+            font-size: 12px;
+        }
+
+        .timer-station-info small {
+            font-size: 9px;
+        }
+
+        .timer-station-time {
+            font-size: 16px;
+            font-weight: bold;
+            font-family: monospace;
+            color: #667eea;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 24px;
+            padding: 24px;
+            width: 90%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-content h3 {
+            margin-bottom: 16px;
+            color: #333;
+            font-size: 18px;
+        }
+
+        .duration-selector {
+            margin: 15px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        .duration-selector label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .duration-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .duration-input-group input {
+            flex: 2;
+            margin: 0;
+            padding: 10px;
+        }
+
+        .duration-input-group select {
+            flex: 1;
+            margin: 0;
+            padding: 10px;
+        }
+
+        .price-display {
+            margin-top: 10px;
+            padding: 8px;
+            background: #e8ecff;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-confirm {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-cancel {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-stk {
+            background: #667eea;
+            color: white;
+        }
+
+        .backdate-container {
+            position: fixed;
+            bottom: 15px;
+            left: 12px;
+            z-index: 100;
+        }
+
+        .backdate-btn {
+            background: linear-gradient(135deg, #ffc107, #ff9800);
+            border: none;
+            border-radius: 50px;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s;
+            color: #333;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .backdate-btn:active {
+            transform: scale(0.96);
+        }
+
+        .backdate-btn span:first-child {
+            font-size: 18px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            left: 12px;
+            padding: 12px 18px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 500;
+            z-index: 3000;
+            animation: slideIn 0.3s ease;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .notification.success {
+            background: #28a745;
+        }
+
+        .notification.error {
+            background: #dc3545;
+        }
+
+        .notification.warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (min-width: 768px) {
+            body {
+                padding: 12px;
+            }
+
+            .container {
+                flex-direction: row;
+                gap: 12px;
+            }
+
+            .left-panel {
+                flex: 2;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+                min-height: 0;
+            }
+
+            .right-panel {
+                flex: 1;
+                max-width: 380px;
+                height: 100%;
+            }
+
+            .games-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .backdate-container {
+                bottom: 20px;
+                left: 20px;
+            }
+
+            .notification {
+                left: auto;
+                right: 16px;
+                max-width: 400px;
+            }
+
+            .cart-items {
+                max-height: 200px;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .games-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <div class="header-left">
+            <img src="/logo.png" alt="VR Billing Logo"
+                onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+            <div class="logo-fallback">🎮</div>
+            <div class="brand">
+                <h4>VR BILLING POS</h4>
+                <small>Awaken your inner child Magic</small>
+            </div>
+        </div>
+        <div class="header-right">
+            <button class="refresh-btn" onclick="window.refreshSystem()">⟳</button>
+            <div class="user-profile" id="userProfileBtn">
+                <div class="profile-avatar" id="profileIcon">👤</div>
+                <div class="welcome-text">
+                    <div class="name" id="welcomeName">Cashier</div>
+                    <div class="role" id="welcomeRole">Cashier</div>
+                </div>
+                <div class="profile-dropdown" id="profileDropdown">
+                    <div class="profile-header">
+                        <div class="large-avatar" id="profilePicLarge">👤</div>
+                        <h4 id="profileName">Cashier</h4>
+                        <small id="profileRoleText">Cashier</small>
+                    </div>
+                    <div class="logout-section">
+                        <button class="logout-btn" onclick="handleLogout()">⏻ Logout</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="left-panel">
+            <div class="category-wrapper">
+                <div class="category-buttons" id="categoryButtons"></div>
+            </div>
+            <div class="scroll-container">
+                <div class="scroll-fade-top" id="gamesFadeTop"></div>
+                <div class="games-grid" id="gamesGrid">
+                    <div class="empty-state">
+                        <div class="icon">🎮</div>
+                        <p>Select a category</p>
+                    </div>
+                </div>
+                <div class="scroll-fade-bottom" id="gamesFadeBottom"></div>
+            </div>
+            <div class="timer-section" id="timerSection" style="display:none;">
+                <div class="section-title">⏱️ Active Station Timers</div>
+                <div class="timer-scroll-container">
+                    <div id="timerStationsList">
+                        <p style="color:#999;text-align:center;padding:10px;">No active timers</p>
+                    </div>
+                    <div class="timer-scroll-fade-bottom" id="timerFadeBottom"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="section-title">🛒 Current Sale</div>
+            <select id="stationSelect" onchange="onStationChange()">
+                <option value="">-- Apply station to all --</option>
+            </select>
+            <input type="text" id="customerName" placeholder="Customer Name (Optional)">
+            <input type="text" id="customerPhone" placeholder="Phone Number">
+            <div class="cart-scroll-container">
+                <div class="cart-items" id="cartItems">
+                    <div class="empty-state">
+                        <div class="icon">🛒</div>
+                        <p>Cart is empty</p>
+                    </div>
+                </div>
+                <div class="cart-scroll-fade-bottom" id="cartFadeBottom"></div>
+            </div>
+            <div class="cart-total" id="cartTotal">Total: KES 0</div>
+            <div class="section-title">💳 Payment Method</div>
+            <div class="payment-methods">
+                <button class="payment-btn active" id="btnCash">💵 Cash</button>
+                <button class="payment-btn" id="btnMpesa">📱 M-Pesa</button>
+                <button class="payment-btn" id="btnCredit">📝 Credit</button>
+            </div>
+            <button class="process-btn" id="processPaymentBtn">💳 PROCESS & PRINT</button>
+        </div>
+    </div>
+
+    <div class="backdate-container">
+        <button class="backdate-btn" onclick="openBackdateModal()"><span>📅</span><span>Backdate
+                Transaction</span></button>
+    </div>
+
+    <div class="modal-overlay" id="paymentModal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Complete Payment</h3>
+            <div id="modalBody"></div>
+            <div class="modal-buttons" id="modalButtons"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="creditModal">
+        <div class="modal-content">
+            <h3>📝 Credit Details</h3>
+            <p style="font-size:12px;color:#666;">All fields marked * are required</p>
+            <input type="text" id="creditFullName" placeholder="* Full Name">
+            <input type="text" id="creditPhone" placeholder="* Phone Number">
+            <input type="text" id="creditGuarantor" placeholder="* Guarantor Name">
+            <input type="text" id="creditGuarantorPhone" placeholder="Guarantor Phone">
+            <input type="date" id="creditDueDate">
+            <div class="modal-buttons">
+                <button class="btn-confirm" id="confirmCreditBtn">Confirm</button>
+                <button class="btn-cancel" id="cancelCreditBtn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="durationModal">
+        <div class="modal-content">
+            <h3 id="durationModalTitle">Select Duration</h3>
+            <div id="durationModalBody">
+                <div class="duration-selector">
+                    <label id="durationModalLabel">⏱️ Select Time Duration</label>
+                    <div class="duration-input-group">
+                        <input type="number" id="durationValue" value="30" min="1" step="5">
+                        <select id="durationUnit">
+                            <option value="minutes">Minutes</option>
+                            <option value="hours">Hours</option>
+                            <option value="games">Games</option>
+                        </select>
+                    </div>
+                    <div class="price-display" id="durationPriceDisplay">Price: KES 0</div>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeDurationModal()">Cancel</button>
+                <button class="btn-confirm" id="confirmDurationBtn">Add to Cart</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="backdateModal">
+        <div class="modal-content">
+            <h3>📅 Record Past Transaction</h3>
+            <p style="font-size:12px;color:#666;margin-bottom:12px;">Add transactions that were not captured by the
+                system</p>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <input type="date" id="backdateDate" placeholder="Date">
+                <input type="time" id="backdateTime" placeholder="Time">
+            </div>
+            <input type="text" id="backdateCustomer" placeholder="Customer Name">
+            <input type="text" id="backdatePhone" placeholder="Phone Number">
+            <input type="text" id="backdateGame" placeholder="* Game/Service (e.g., PS5, VR, Paintball)">
+            <input type="text" id="backdateStation" placeholder="* Station Used (e.g., VR Station 1)">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <input type="number" id="backdateDuration" placeholder="Duration">
+                <select id="backdateDurationUnit">
+                    <option value="minutes">Minutes</option>
+                    <option value="hours">Hours</option>
+                </select>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <input type="number" id="backdateAmount" placeholder="* Amount (KES)">
+                <select id="backdateMethod">
+                    <option value="Cash">Cash</option>
+                    <option value="Mpesa">M-Pesa</option>
+                    <option value="Credit">Credit</option>
+                </select>
+            </div>
+            <input type="text" id="backdateCashier" placeholder="Cashier Name (who served)">
+            <input type="text" id="backdateMpesa" placeholder="M-Pesa Code (if applicable)">
+            <textarea id="backdateNotes" rows="2" placeholder="Notes (optional)"
+                style="width:100%; padding:10px; border:1.5px solid #e0e0e0; border-radius:12px; font-family:inherit;"></textarea>
+            <div class="modal-buttons" style="margin-top:16px;">
+                <button class="btn-cancel" onclick="closeBackdateModal()">Cancel</button>
+                <button class="btn-confirm" onclick="submitBackdateTransaction()">💾 Save Past Transaction</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            var API_URL = '/api';
+            var token = sessionStorage.getItem('token');
+            var user = JSON.parse(sessionStorage.getItem('user') || '{}');
+            var games = [], stations = [], cart = [], selectedPayment = 'Cash', currentTx = null;
+            var stationTimers = {}, timerIntervals = {};
+            var sessionCheckInterval;
+            var pendingGame = null;
+            var stkPollInterval = null;
+
+            if (!token) { window.location.href = '/'; return; }
+
+            sessionCheckInterval = setInterval(function () {
+                fetch(API_URL + '/verify-token', { headers: { 'Authorization': 'Bearer ' + token } })
+                    .then(function (res) { return res.json(); })
+                    .then(function (data) {
+                        if (!data.valid) {
+                            clearInterval(sessionCheckInterval);
+                            notify('Session expired. Please login again.', 'session-expired');
+                            setTimeout(function () { sessionStorage.clear(); window.location.href = '/'; }, 2000);
+                        }
+                    }).catch(function () { });
+            }, 30000);
+
+            window.addEventListener('beforeunload', function () {
+                if (stkPollInterval) clearInterval(stkPollInterval);
+                if (token) { navigator.sendBeacon(API_URL + '/logout', JSON.stringify({})); }
+            });
+
+            document.getElementById('welcomeName').textContent = user.full_name || 'Cashier';
+            document.getElementById('welcomeRole').textContent = user.role || 'Cashier';
+            document.getElementById('profileName').textContent = user.full_name || 'Cashier';
+            document.getElementById('profileRoleText').textContent = user.role || 'Cashier';
+
+            function notify(msg, type) {
+                type = type || 'success';
+                var el = document.createElement('div');
+                el.className = 'notification ' + type;
+                el.textContent = msg;
+                document.body.appendChild(el);
+                setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 3000);
+            }
+
+            window.refreshSystem = function () { loadGames(); loadStations(); notify('Refreshed!', 'success'); };
+
+            document.getElementById('userProfileBtn').addEventListener('click', function (e) {
+                e.stopPropagation();
+                document.getElementById('profileDropdown').classList.toggle('show');
+            });
+            document.addEventListener('click', function (e) {
+                if (!document.getElementById('userProfileBtn').contains(e.target))
+                    document.getElementById('profileDropdown').classList.remove('show');
+            });
+
+            window.handleLogout = async function () {
+                if (!confirm('Logout?')) return;
+                try { await fetch(API_URL + '/logout', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } }); } catch (e) { }
+                Object.keys(timerIntervals).forEach(function (k) { clearInterval(timerIntervals[k]); });
+                if (sessionCheckInterval) clearInterval(sessionCheckInterval);
+                if (stkPollInterval) clearInterval(stkPollInterval);
+                sessionStorage.clear();
+                window.location.href = '/';
+            };
+
+            async function loadGames() {
+                try {
+                    var res = await fetch(API_URL + '/games', { headers: { 'Authorization': 'Bearer ' + token } });
+                    var data = await res.json();
+                    games = Array.isArray(data) ? data : [];
+                    games = games.filter(function (g) { return g.is_active; });
+                    loadCategories();
+                } catch (e) { console.error('Load games error:', e); }
+            }
+
+            async function loadStations() {
+                try {
+                    var res = await fetch(API_URL + '/stations', { headers: { 'Authorization': 'Bearer ' + token } });
+                    var data = await res.json();
+                    stations = Array.isArray(data) ? data : [];
+                    stations = stations.filter(function (s) { return s.is_active; });
+                    updateStationDropdown();
+                } catch (e) { console.error('Load stations error:', e); }
+            }
+
+            function updateStationDropdown() {
+                var s = document.getElementById('stationSelect');
+                s.innerHTML = '<option value="">-- Apply to compatible items --</option>';
+                stations.forEach(function (st) {
+                    var tag = st.in_use ? ' 🔴 IN USE' : ' 🟢 OPEN';
+                    s.innerHTML += '<option value="' + st.id + '" data-type="' + st.station_type + '" data-name="' + st.station_name + '"' + (st.in_use ? ' disabled' : '') + '>' + st.station_name + ' (' + st.station_type + ')' + tag + '</option>';
+                });
+            }
+
+            var categories = ['VR Experience', 'PS Games', 'Game Lounge', 'Paintball', 'Race Simulator'];
+            var icons = { 'VR Experience': '🥽', 'PS Games': '🎮', 'Game Lounge': '🎯', 'Paintball': '🔫', 'Race Simulator': '🏎️' };
+
+            function loadCategories() {
+                var c = document.getElementById('categoryButtons');
+                c.innerHTML = '';
+                categories.forEach(function (cat) {
+                    var btn = document.createElement('button');
+                    btn.className = 'cat-btn';
+                    btn.textContent = (icons[cat] || '🎯') + ' ' + cat;
+                    btn.addEventListener('click', function () {
+                        document.querySelectorAll('.cat-btn').forEach(function (b) { b.classList.remove('active'); });
+                        btn.classList.add('active');
+                        showGames(cat);
+                    });
+                    c.appendChild(btn);
+                });
+                if (categories.length > 0) { c.querySelector('.cat-btn').classList.add('active'); showGames(categories[0]); }
+            }
+
+            function showGames(cat) {
+                var filteredGames = [];
+                if (cat === 'VR Experience') {
+                    filteredGames = games.filter(function (g) { return g.category === 'VR Experience Regular' || g.category === 'VR Family Sharing' || g.category === 'VR Experience'; });
+                } else if (cat === 'PS Games') {
+                    filteredGames = games.filter(function (g) { if (!g.sub_category) return false; var s = g.sub_category.toUpperCase(); return s.indexOf('PS4') !== -1 || s.indexOf('PS5') !== -1; });
+                } else if (cat === 'Race Simulator') {
+                    filteredGames = games.filter(function (g) { return g.category === 'Race Simulator'; });
+                } else if (cat === 'Game Lounge') {
+                    filteredGames = games.filter(function (g) { if (g.category !== 'Game Lounge') return false; if (!g.sub_category) return true; var s = g.sub_category.toUpperCase(); return s.indexOf('PS4') === -1 && s.indexOf('PS5') === -1; });
+                } else if (cat === 'Paintball') {
+                    filteredGames = games.filter(function (g) { return g.category === 'Paintball'; });
+                } else {
+                    filteredGames = games.filter(function (g) { return g.category === cat; });
+                }
+                var grid = document.getElementById('gamesGrid');
+                if (filteredGames.length === 0) { grid.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>No games available in ' + cat + '</p></div>'; return; }
+                grid.innerHTML = filteredGames.map(function (g) {
+                    var d = formatGameDisplay(g);
+                    return '<div class="game-card" onclick="showDurationSelector(\'' + g.id + '\')"><div class="game-icon">' + d.icon + '</div><div class="game-name">' + escapeHtml(g.sub_category) + '</div><div class="game-detail">' + d.detail + '</div><div class="game-price">KES ' + g.price_ksh.toLocaleString() + '</div></div>';
+                }).join('');
+            }
+
+            function calculatePrice(baseGame, durationMinutes) {
+                if (baseGame.category === 'Paintball') return baseGame.price_ksh;
+                var s = ''; if (baseGame.sub_category) s = baseGame.sub_category.toLowerCase();
+                if (s.indexOf('pool') !== -1) return baseGame.price_ksh * durationMinutes;
+                if (baseGame.category === 'Race Simulator') { var b = Math.ceil(durationMinutes / 15); return baseGame.price_ksh * b; }
+                var bd = parseInt(baseGame.duration_or_quantity) || 30, bp = baseGame.price_ksh;
+                var t = Math.round((bp / bd) * durationMinutes); return Math.ceil(t / 10) * 10;
+            }
+
+            function formatGameDisplay(game) {
+                var s = ''; if (game.sub_category) s = game.sub_category.toLowerCase();
+                if (game.category === 'Paintball') {
+                    var sh = parseInt(game.duration_or_quantity);
+                    var m = { 10: { name: 'Rookie (10 rounds)', icon: '🎯' }, 20: { name: 'Soldier (20 rounds)', icon: '🔫' }, 40: { name: 'Sergeant (40 rounds)', icon: '💂' } };
+                    var r = m[sh] || { name: sh + ' rounds', icon: '🔫' }; return { icon: r.icon, detail: r.name };
+                }
+                if (game.category === 'Race Simulator') return { icon: '🏎️', detail: '15 min blocks' };
+                if (game.category === 'VR Experience Regular' || game.category === 'VR Family Sharing' || game.category === 'VR Experience') return { icon: '🥽', detail: 'Custom duration' };
+                if (s.indexOf('ps5') !== -1) return { icon: '🎮', detail: 'PS5 Gaming' };
+                if (s.indexOf('ps4') !== -1) return { icon: '🕹️', detail: 'PS4 Gaming' };
+                if (game.category === 'Game Lounge') {
+                    if (s.indexOf('pool') !== -1) return { icon: '🎱', detail: 'Per game - KES ' + game.price_ksh + '/game' };
+                    if (s.indexOf('darts') !== -1) return { icon: '🎯', detail: 'Custom duration' };
+                    if (s.indexOf('foosball') !== -1) return { icon: '⚽', detail: 'Custom duration' };
+                    return { icon: '🎮', detail: 'Custom duration' };
+                }
+                return { icon: '🎮', detail: 'Custom duration' };
+            }
+
+            window.showDurationSelector = function (gameId) {
+                var game = games.find(function (g) { return g.id === gameId; }); if (!game) return;
+                pendingGame = game;
+                if (game.category === 'Paintball') { addToCartWithDuration(game, parseInt(game.duration_or_quantity) || 20); return; }
+                var s = ''; if (game.sub_category) s = game.sub_category.toLowerCase();
+                var isPool = s.indexOf('pool') !== -1;
+                var modal = document.getElementById('durationModal');
+                document.getElementById('durationModalTitle').textContent = isPool ? '🎱 Select Number of Games - ' + escapeHtml(game.sub_category) : '⏱️ Select Duration - ' + escapeHtml(game.sub_category);
+                document.getElementById('durationModalLabel').textContent = isPool ? '🎱 Select Number of Games' : '⏱️ Select Time Duration';
+                document.getElementById('durationValue').value = isPool ? 1 : (parseInt(game.duration_or_quantity) || 30);
+                document.getElementById('durationValue').min = 1;
+                document.getElementById('durationValue').step = isPool ? 1 : 5;
+                document.getElementById('durationUnit').innerHTML = isPool ? '<option value="games">Games</option>' : '<option value="minutes">Minutes</option><option value="hours">Hours</option>';
+                document.getElementById('durationUnit').value = isPool ? 'games' : 'minutes';
+                var price = calculatePrice(game, isPool ? 1 : (parseInt(game.duration_or_quantity) || 30));
+                document.getElementById('durationPriceDisplay').textContent = isPool ? 'Price: KES ' + price.toLocaleString() + ' per game' : 'Price: KES ' + price.toLocaleString();
+                var dv = document.getElementById('durationValue'), du = document.getElementById('durationUnit'), pd = document.getElementById('durationPriceDisplay');
+                function up() { var v = parseInt(dv.value) || 0; if (isPool) { if (v > 0) pd.textContent = 'Price: KES ' + calculatePrice(game, v).toLocaleString() + ' (' + v + ' game' + (v > 1 ? 's' : '') + ')'; else pd.textContent = 'Price: KES 0'; } else { var m = du.value === 'hours' ? v * 60 : v; if (m > 0) pd.textContent = 'Price: KES ' + calculatePrice(game, m).toLocaleString(); else pd.textContent = 'Price: KES 0'; } }
+                dv.oninput = up; du.onchange = up;
+                document.getElementById('confirmDurationBtn').onclick = function () { var v = parseInt(dv.value) || 0; if (isPool) { if (v <= 0) { notify('Please enter number of games', 'error'); return; } addToCartWithDuration(pendingGame, v); } else { var m = du.value === 'hours' ? v * 60 : v; if (m <= 0) { notify('Please enter a valid duration', 'error'); return; } addToCartWithDuration(pendingGame, m); } closeDurationModal(); };
+                modal.classList.add('active');
+            };
+
+            function closeDurationModal() { document.getElementById('durationModal').classList.remove('active'); pendingGame = null; }
+
+            function addToCartWithDuration(game, durationMinutes) {
+                var s = ''; if (game.sub_category) s = game.sub_category.toLowerCase();
+                var isPool = s.indexOf('pool') !== -1, isPS5 = s.indexOf('ps5') !== -1, isPS4 = s.indexOf('ps4') !== -1;
+                var stn;
+                if (isPS5) stn = 'PS5'; else if (isPS4) stn = 'PS4';
+                else if (game.category === 'VR Experience Regular' || game.category === 'VR Family Sharing' || game.category === 'VR Experience') stn = 'VR';
+                else if (game.category === 'Race Simulator') stn = 'Race Simulator';
+                else if (isPool) stn = 'Pool'; else if (s.indexOf('darts') !== -1) stn = 'Darts';
+                else if (s.indexOf('foosball') !== -1) stn = 'Foosball';
+                else if (game.category === 'Paintball') stn = 'Paintball'; else stn = 'VR';
+                var st = stations.find(function (x) { return x.station_type === stn && !x.in_use && x.is_active; });
+                if (!st) { notify('No available ' + stn + ' station found!', 'error'); return; }
+                var cp = calculatePrice(game, durationMinutes), sps = 0;
+                if (game.category === 'Paintball') { sps = parseInt(game.duration_or_quantity) || 20; cp = game.price_ksh; }
+                cart.push({ game_id: game.id, game_name: game.sub_category, category: game.category, unit_price: game.price_ksh, total_price: cp, quantity: isPool ? durationMinutes : 1, station_id: st.id, station_name: st.station_name, station_type: st.station_type, duration_per_session: isPool ? 0 : durationMinutes, total_duration: isPool ? 0 : durationMinutes, shots_per_session: sps, total_shots: sps, custom_duration: true, duration_minutes: isPool ? 0 : durationMinutes, is_pool_game: isPool, number_of_games: isPool ? durationMinutes : 0 });
+                notify(game.sub_category + (isPool ? ' - ' + durationMinutes + ' game(s) added! KES ' + cp.toLocaleString() : ' added for ' + durationMinutes + ' mins! KES ' + cp.toLocaleString()));
+                updateCartDisplay();
+            }
+
+            window.addToCart = function (id) { showDurationSelector(id); };
+
+            function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, function (m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m; }); }
+
+            function isCompatible(gn, st) { if (!gn) return false; var s = gn.toLowerCase(); if (s.indexOf('ps5') !== -1) return st === 'PS5'; if (s.indexOf('ps4') !== -1) return st === 'PS4'; if (s.indexOf('pool') !== -1) return st === 'Pool'; if (s.indexOf('darts') !== -1) return st === 'Darts'; if (s.indexOf('foosball') !== -1) return st === 'Foosball'; return false; }
+
+            function updateCartDisplay() {
+                var c = document.getElementById('cartItems'), t = 0;
+                cart.forEach(function (i) { t += i.total_price; });
+                if (cart.length === 0) { c.innerHTML = '<div class="empty-state"><div class="icon">🛒</div><p>Cart is empty</p></div>'; }
+                else { c.innerHTML = cart.map(function (item, i) { var dt = ''; if (item.is_pool_game) dt = item.number_of_games + ' game' + (item.number_of_games > 1 ? 's' : ''); else if (item.duration_per_session > 0) dt = item.duration_per_session + ' mins'; if (item.shots_per_session > 0) dt = item.shots_per_session + ' shots'; var opts = ''; stations.forEach(function (st) { if (isCompatible(item.game_name, st.station_type) && st.is_active) { opts += '<option value="' + st.id + '"' + (st.id === item.station_id ? ' selected' : '') + (st.in_use ? ' disabled' : '') + '>' + escapeHtml(st.station_name) + (st.in_use ? ' [IN USE]' : ' [OPEN]') + '</option>'; } }); return '<div class="cart-item"><div class="cart-item-details"><strong>#' + (i + 1) + ' - ' + escapeHtml(item.game_name) + '</strong><small>' + dt + ' | KES ' + item.total_price.toLocaleString() + '</small><small><select class="cart-item-station-select" onchange="changeCartStation(' + i + ', this.value)">' + opts + '</select></small></div><button class="remove-btn" onclick="removeFromCart(' + i + ')">✕</button></div>'; }).join(''); }
+                document.getElementById('cartTotal').textContent = 'Total: KES ' + t.toLocaleString();
+                setTimeout(updateCartFade, 100);
+            }
+
+            window.changeCartStation = function (i, id) { var st = stations.find(function (s) { return s.id === id; }); if (!st) return; if (st.in_use) { notify('Station in use!', 'error'); updateCartDisplay(); return; } cart[i].station_id = st.id; cart[i].station_name = st.station_name; cart[i].station_type = st.station_type; notify('Station updated: ' + st.station_name); };
+            window.removeFromCart = function (i) { cart.splice(i, 1); updateCartDisplay(); };
+
+            function onStationChange() {
+                var s = document.getElementById('stationSelect'); if (!s.value || cart.length === 0) return;
+                var st = stations.find(function (x) { return x.id === s.value; }); if (!st || st.in_use) { notify('Station unavailable!', 'error'); s.value = ''; return; }
+                var c = 0; cart.forEach(function (item) { if (isCompatible(item.game_name, st.station_type)) { item.station_id = st.id; item.station_name = st.station_name; item.station_type = st.station_type; c++; } });
+                if (c > 0) { updateCartDisplay(); notify('Updated ' + c + ' items to: ' + st.station_name); } else { notify('No compatible items for ' + st.station_type, 'error'); }
+                s.value = '';
+            }
+
+            function setPaymentMethod(m) { selectedPayment = m; document.querySelectorAll('.payment-btn').forEach(function (b) { b.classList.remove('active'); }); if (m === 'Cash') document.getElementById('btnCash').classList.add('active'); else if (m === 'Mpesa') document.getElementById('btnMpesa').classList.add('active'); else document.getElementById('btnCredit').classList.add('active'); }
+            document.getElementById('btnCash').addEventListener('click', function () { setPaymentMethod('Cash'); });
+            document.getElementById('btnMpesa').addEventListener('click', function () { setPaymentMethod('Mpesa'); });
+            document.getElementById('btnCredit').addEventListener('click', function () { setPaymentMethod('Credit'); });
+
+            async function processPayment() {
+                if (cart.length === 0) { notify('Cart is empty!', 'error'); return; }
+                var cn = document.getElementById('customerName').value || 'Guest', cp = document.getElementById('customerPhone').value, t = 0;
+                cart.forEach(function (i) { t += i.total_price; });
+                var su = cart[0] ? cart[0].station_name : 'N/A';
+                try {
+                    var res = await fetch(API_URL + '/transactions', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ customer_name: cn, customer_phone: cp, items: cart, total_amount: t, station_used: su, payment_method: selectedPayment }) });
+                    var data = await res.json();
+                    if (data.success) { currentTx = data.transaction; if (selectedPayment === 'Cash') showCashModal(); else if (selectedPayment === 'Mpesa') showMpesaModal(); else showCreditModal(); }
+                    else notify('Error: ' + (data.error || 'Failed'), 'error');
+                } catch (e) { notify('Connection error', 'error'); }
+            }
+
+            function showCashModal() {
+                document.getElementById('modalTitle').textContent = '💵 Cash Payment';
+                document.getElementById('modalBody').innerHTML = '<p>Total: <strong>KES ' + currentTx.total_amount.toLocaleString() + '</strong></p><input type="number" id="amountPaid" value="' + currentTx.total_amount + '" style="width:100%;padding:12px;margin:10px 0;border:1.5px solid #e0e0e0;border-radius:12px;"><p id="changeAmount" style="color:#28a745;font-weight:bold;"></p>';
+                document.getElementById('modalButtons').innerHTML = '<button class="btn-confirm" id="confirmCash">Confirm</button><button class="btn-cancel" id="cancelCash">Cancel</button>';
+                document.getElementById('confirmCash').addEventListener('click', function () { verifyPayment(null, null, parseFloat(document.getElementById('amountPaid').value)); });
+                document.getElementById('cancelCash').addEventListener('click', function () { closeModal('paymentModal'); });
+                document.getElementById('amountPaid').addEventListener('input', function () { var c = parseFloat(this.value) - currentTx.total_amount; document.getElementById('changeAmount').textContent = c >= 0 ? 'Change: KES ' + c.toLocaleString() : ''; });
+                openModal('paymentModal');
+            }
+
+            // ===== NEW M-PESA STK PUSH MODAL =====
+            function showMpesaModal() {
+                if (stkPollInterval) { clearInterval(stkPollInterval); stkPollInterval = null; }
+
+                document.getElementById('modalTitle').textContent = '📱 M-Pesa Payment';
+                var totalAmount = currentTx.total_amount;
+                var phoneInput = document.getElementById('customerPhone').value;
+
+                document.getElementById('modalBody').innerHTML =
+                    '<div style="text-align:center;padding:5px;">' +
+                    '<p><strong>Paybill: 892700</strong><br><strong>Account: VR</strong></p>' +
+                    '<p style="font-size:18px;color:#28a745;">Amount: <strong>KES ' + totalAmount.toLocaleString() + '</strong></p>' +
+                    '<div id="stkStatus" style="margin:10px 0;padding:10px;border-radius:10px;display:none;font-size:13px;"></div>' +
+                    '<input type="text" id="mpesaPhone" placeholder="M-Pesa Phone (0712345678)" value="' + (phoneInput || '') + '" style="width:100%;padding:12px;margin:8px 0;border:1.5px solid #e0e0e0;border-radius:12px;">' +
+                    '<button class="btn-stk" id="sendStkBtn" style="width:100%;padding:14px;margin:5px 0;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;">📱 Send STK Push (Enter PIN on Phone)</button>' +
+                    '<div style="margin-top:12px;padding-top:12px;border-top:1px solid #eee;">' +
+                    '<p style="font-size:11px;color:#999;margin-bottom:8px;">- OR enter code manually -</p>' +
+                    '<input type="text" id="mpesaCode" placeholder="M-Pesa code (e.g., SHY67H8JKL)" style="width:100%;padding:12px;margin:5px 0;border:1.5px solid #e0e0e0;border-radius:12px;">' +
+                    '</div></div>';
+
+                document.getElementById('modalButtons').innerHTML =
+                    '<button class="btn-confirm" id="confirmMpesaManual" style="flex:3;">✅ Confirm Manual Code</button>' +
+                    '<button class="btn-cancel" id="cancelMpesa" style="flex:1;">Cancel</button>';
+
+                // STK Push button
+                document.getElementById('sendStkBtn').addEventListener('click', async function () {
+                    var phone = document.getElementById('mpesaPhone').value.trim();
+                    if (!phone) { notify('Please enter phone number', 'error'); return; }
+
+                    var stkStatus = document.getElementById('stkStatus');
+                    var sendBtn = document.getElementById('sendStkBtn');
+                    sendBtn.disabled = true;
+                    sendBtn.textContent = '⏳ Sending...';
+                    stkStatus.style.display = 'block';
+                    stkStatus.style.background = '#fff3cd';
+                    stkStatus.style.color = '#856404';
+                    stkStatus.innerHTML = '<p>⏳ Sending prompt to ' + phone + '...</p>';
+
+                    try {
+                        var res = await fetch(API_URL + '/mpesa/stkpush', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                            body: JSON.stringify({ phone: phone, amount: totalAmount, accountReference: 'VR-' + (currentTx.id || Date.now()), transactionDesc: 'Game Payment' })
+                        });
+                        var data = await res.json();
+
+                        if (data.success) {
+                            stkStatus.style.background = '#d4edda';
+                            stkStatus.style.color = '#155724';
+                            stkStatus.innerHTML = '<p>✅ <strong>STK Push sent!</strong></p><p>📱 Check your phone & enter PIN</p><p style="font-size:11px;margin-top:5px;">Waiting for payment <span id="pollDots">.</span></p>';
+
+                            var checkoutID = data.data.CheckoutRequestID;
+                            var pollCount = 0;
+                            var dots = 1;
+
+                            var dotTimer = setInterval(function () { dots = (dots % 3) + 1; var el = document.getElementById('pollDots'); if (el) el.textContent = '.'.repeat(dots); }, 500);
+
+                            stkPollInterval = setInterval(async function () {
+                                pollCount++;
+                                if (pollCount > 20) {
+                                    clearInterval(stkPollInterval); stkPollInterval = null;
+                                    clearInterval(dotTimer);
+                                    stkStatus.style.background = '#fff3cd'; stkStatus.style.color = '#856404';
+                                    stkStatus.innerHTML = '<p>⏰ No response. Enter code manually below.</p>';
+                                    sendBtn.disabled = false; sendBtn.textContent = '📱 Resend STK Push';
+                                    return;
+                                }
+                                try {
+                                    var qr = await fetch(API_URL + '/mpesa/stkquery', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ checkoutRequestID: checkoutID }) });
+                                    var qd = await qr.json();
+                                    if (qd.success && qd.data.ResultCode === '0') {
+                                        clearInterval(stkPollInterval); stkPollInterval = null;
+                                        clearInterval(dotTimer);
+                                        stkStatus.style.background = '#d4edda'; stkStatus.style.color = '#155724';
+                                        stkStatus.innerHTML = '<p>✅ <strong>Paid!</strong> Processing...</p>';
+                                        var receipt = 'STK-' + Date.now();
+                                        if (qd.data.CallbackMetadata && qd.data.CallbackMetadata.Item) {
+                                            var ri = qd.data.CallbackMetadata.Item.find(function (it) { return it.Name === 'MpesaReceiptNumber'; });
+                                            if (ri) receipt = ri.Value;
+                                        }
+                                        setTimeout(function () { verifyPayment(receipt, null, totalAmount); }, 500);
+                                    } else if (qd.data.ResultCode && qd.data.ResultCode !== '0') {
+                                        clearInterval(stkPollInterval); stkPollInterval = null;
+                                        clearInterval(dotTimer);
+                                        stkStatus.style.background = '#f8d7da'; stkStatus.style.color = '#721c24';
+                                        stkStatus.innerHTML = '<p>❌ <strong>Failed:</strong> ' + (qd.data.ResultDesc || 'Cancelled') + '</p>';
+                                        sendBtn.disabled = false; sendBtn.textContent = '📱 Try STK Push Again';
+                                    }
+                                } catch (e) { console.log('Poll error:', e); }
+                            }, 3000);
+                        } else {
+                            stkStatus.style.background = '#f8d7da'; stkStatus.style.color = '#721c24';
+                            stkStatus.innerHTML = '<p>❌ <strong>Failed:</strong> ' + (data.error || 'Error') + '</p>';
+                            sendBtn.disabled = false; sendBtn.textContent = '📱 Try Again';
+                        }
+                    } catch (e) {
+                        stkStatus.style.background = '#f8d7da'; stkStatus.style.color = '#721c24';
+                        stkStatus.innerHTML = '<p>❌ Connection error. Use manual entry.</p>';
+                        sendBtn.disabled = false; sendBtn.textContent = '📱 Retry';
+                    }
+                });
+
+                // Manual code entry
+                document.getElementById('confirmMpesaManual').addEventListener('click', function () {
+                    var code = document.getElementById('mpesaCode').value.trim();
+                    if (!code) { notify('Please enter M-Pesa code', 'error'); return; }
+                    if (stkPollInterval) { clearInterval(stkPollInterval); stkPollInterval = null; }
+                    verifyPayment(code, null, totalAmount);
+                });
+
+                // Cancel button
+                document.getElementById('cancelMpesa').addEventListener('click', function () {
+                    if (stkPollInterval) { clearInterval(stkPollInterval); stkPollInterval = null; }
+                    closeModal('paymentModal');
+                });
+
+                openModal('paymentModal');
+            }
+
+            function showCreditModal() {
+                document.getElementById('creditFullName').value = document.getElementById('customerName').value;
+                document.getElementById('creditPhone').value = document.getElementById('customerPhone').value;
+                openModal('creditModal');
+            }
+
+            function processCreditPayment() {
+                var fn = document.getElementById('creditFullName').value.trim(), ph = document.getElementById('creditPhone').value.trim(), g = document.getElementById('creditGuarantor').value.trim();
+                if (!fn || !ph || !g) { notify('Fill all required fields (*)', 'error'); return; }
+                closeModal('creditModal');
+                verifyPayment(null, { full_name: fn, phone: ph, guarantor: g, guarantor_phone: document.getElementById('creditGuarantorPhone').value, due_date: document.getElementById('creditDueDate').value }, currentTx.total_amount);
+            }
+
+            async function verifyPayment(mc, cd, ca) {
+                var body = { amount_paid: ca || currentTx.total_amount, mpesa_receipt: mc || '', credit_details: cd || null };
+                try {
+                    var res = await fetch(API_URL + '/transactions/' + currentTx.id + '/verify', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(body) });
+                    var data = await res.json();
+                    if (data.success) {
+                        closeModal('paymentModal');
+                        if (cart.some(function (i) { return i.total_duration > 0; })) startStationTimers();
+                        printReceipt({ receipt_no: data.transaction.receipt_no, customer_name: document.getElementById('customerName').value || 'Guest', customer_phone: document.getElementById('customerPhone').value, items: cart, total_amount: data.transaction.total_amount, amount_paid: body.amount_paid, balance: data.transaction.balance, payment_method: selectedPayment, cashier_name: user.full_name || 'Cashier', station_used: cart[0] ? cart[0].station_name : 'N/A', transaction_date: data.transaction.transaction_date, transaction_time: data.transaction.transaction_time });
+                        notify('Payment Successful! Receipt: ' + data.transaction.receipt_no);
+                        cart = []; updateCartDisplay();
+                        document.getElementById('customerName').value = ''; document.getElementById('customerPhone').value = '';
+                        currentTx = null; loadStations();
+                    } else notify('Payment failed: ' + (data.error || 'Error'), 'error');
+                } catch (e) { notify('Error verifying payment', 'error'); }
+            }
+
+            window.openBackdateModal = function () {
+                document.getElementById('backdateDate').value = new Date().toISOString().split('T')[0];
+                document.getElementById('backdateTime').value = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+                document.getElementById('backdateCustomer').value = ''; document.getElementById('backdatePhone').value = '';
+                document.getElementById('backdateGame').value = ''; document.getElementById('backdateStation').value = '';
+                document.getElementById('backdateDuration').value = ''; document.getElementById('backdateAmount').value = '';
+                document.getElementById('backdateMethod').value = 'Cash'; document.getElementById('backdateCashier').value = user.full_name || '';
+                document.getElementById('backdateMpesa').value = ''; document.getElementById('backdateNotes').value = '';
+                openModal('backdateModal');
+            };
+            window.closeBackdateModal = function () { closeModal('backdateModal'); };
+
+            window.submitBackdateTransaction = async function () {
+                var date = document.getElementById('backdateDate').value, time = document.getElementById('backdateTime').value;
+                var game = document.getElementById('backdateGame').value.trim(), station = document.getElementById('backdateStation').value.trim();
+                var amount = parseInt(document.getElementById('backdateAmount').value) || 0;
+                if (!date || !game || !amount) { notify('Date, Game, and Amount required!', 'error'); return; }
+                if (!station) { notify('Station is required!', 'error'); return; }
+                var dv = parseInt(document.getElementById('backdateDuration').value) || 0;
+                var tm = document.getElementById('backdateDurationUnit').value === 'hours' ? dv * 60 : dv;
+                var isPb = game.toLowerCase().indexOf('paintball') >= 0, isPl = game.toLowerCase().indexOf('pool') >= 0;
+                var durV = tm, shV = 0, ngV = 0;
+                if (isPb) { shV = dv || 20; durV = 0; } else if (isPl) { ngV = dv || 1; durV = 0; }
+                try {
+                    var res = await fetch(API_URL + '/transactions/past', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ transaction_date: date, transaction_time: time || '00:00', customer_name: (document.getElementById('backdateCustomer').value || 'Guest').replace(/[<>]/g, ''), customer_phone: document.getElementById('backdatePhone').value.replace(/[<>]/g, ''), past_game: game.replace(/[<>]/g, ''), station_used: station.replace(/[<>]/g, ''), total_amount: amount, amount_paid: amount, payment_method: document.getElementById('backdateMethod').value, payment_status: 'completed', cashier_name: (document.getElementById('backdateCashier').value || 'Manual Entry').replace(/[<>]/g, ''), mpesa_receipt: document.getElementById('backdateMpesa').value.replace(/[<>]/g, ''), notes: document.getElementById('backdateNotes').value.replace(/[<>]/g, ''), is_past: true, total_duration_minutes: durV, total_shots: shV, number_of_games: ngV, is_pool_game: isPl }) });
+                    var data = await res.json();
+                    if (data.success) { notify('Saved! Receipt: ' + data.transaction.receipt_no, 'success'); closeBackdateModal(); printBackdatedReceipt({ receipt_no: data.transaction.receipt_no, customer_name: document.getElementById('backdateCustomer').value || 'Guest', game_name: game, station_used: station, total_amount: amount, amount_paid: amount, payment_method: document.getElementById('backdateMethod').value, cashier_name: document.getElementById('backdateCashier').value || user.full_name, transaction_date: date, transaction_time: time, duration: durV, shots: shV, number_of_games: ngV, is_pool: isPl }); }
+                    else notify(data.error || 'Failed', 'error');
+                } catch (e) { notify('Connection error', 'error'); }
+            };
+
+            function generateBarcodeSVG(data) {
+                var chars = data.split(''), bw = 2, h = 40, x = 0, bars = '';
+                bars += '<rect x="0" y="0" width="' + bw + '" height="' + h + '" fill="black"/>';
+                x = bw * 4;
+                bars += '<rect x="' + (bw * 4) + '" y="0" width="' + (bw * 2) + '" height="' + h + '" fill="black"/>';
+                x = bw * 8;
+                chars.forEach(function (c) { var bin = c.charCodeAt(0).toString(2).padStart(7, '0'); for (var i = 0; i < bin.length; i++) { bars += '<rect x="' + x + '" y="0" width="' + bw + '" height="' + h + '" fill="black"/>'; x += bw * 2; } });
+                bars += '<rect x="' + x + '" y="0" width="' + (bw * 2) + '" height="' + h + '" fill="black"/>';
+                x += bw * 3;
+                bars += '<rect x="' + x + '" y="0" width="' + bw + '" height="' + h + '" fill="black"/>';
+                return '<svg width="' + (x + bw * 2) + '" height="' + (h + 5) + '" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto;">' + bars + '</svg>';
+            }
+
+            function printReceipt(data) {
+                var now = new Date();
+                var ds = data.transaction_date || now.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+                var ts = data.transaction_time || now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+                var rn = data.receipt_no || ('VR-' + Date.now()), ih = '', sth = '', ps = {};
+                var bsv = generateBarcodeSVG(rn.replace(/[^A-Za-z0-9]/g, ''));
+                if (data.items && data.items.length > 0) { data.items.forEach(function (item) { var dl = ''; if (item.is_pool_game) dl = item.number_of_games + ' game' + (item.number_of_games > 1 ? 's' : ''); else if (item.duration_per_session > 0) dl = item.duration_per_session + ' mins'; if (item.shots_per_session > 0) dl = item.shots_per_session + ' shots'; ih += '<tr><td style="text-align:left;">' + escapeHtml(item.game_name) + '</td><td style="text-align:center;">' + escapeHtml(item.station_name) + '</td><td style="text-align:center;">' + dl + '</td><td style="text-align:right;">KES ' + item.total_price.toLocaleString() + '</td></tr>'; if (!ps[item.station_id] && !item.is_pool_game && item.total_duration > 0) { var sm = (item.station_type === 'PS5' || item.station_type === 'PS4') ? 3 : 2, gd = item.total_duration || 30; var bt = new Date(), ast = new Date(bt.getTime() + sm * 60000), et = new Date(ast.getTime() + gd * 60000); sth += '<tr><td style="text-align:left;">' + escapeHtml(item.station_name) + '</td><td style="text-align:center;">' + ast.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }) + '</td><td style="text-align:center;">' + et.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }) + '</td><td style="text-align:right;">' + gd + ' min</td></tr>'; ps[item.station_id] = true; } }); }
+                var cnd = data.customer_name && data.customer_name !== 'Guest' ? '<div class="left info-text"><strong>CUSTOMER:</strong> ' + escapeHtml(data.customer_name) + '</div>' : '';
+                var cpd = data.customer_phone ? '<div class="left info-text"><strong>PHONE:</strong> ' + escapeHtml(data.customer_phone) + '</div>' : '';
+                var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Receipt</title><style>@page{size:80mm auto;margin:0;}body{font-family:"Courier New",monospace;width:80mm;margin:0 auto;padding:10px 8px;font-size:13px;line-height:1.4;}.center{text-align:center;}.left{text-align:left;}.right{text-align:right;}.divider{border-top:1px dashed #000;margin:8px 0;}.bold{font-weight:bold;}.logo-text{font-size:20px;font-weight:bold;letter-spacing:2px;}.info-text{font-size:12px;margin-bottom:3px;}table{width:100%;border-collapse:collapse;margin:5px 0;}th,td{padding:5px 3px;font-size:12px;}th{border-bottom:1px solid #000;text-align:left;}.barcode-container{text-align:center;margin:8px 0;}.barcode-text{font-size:11px;text-align:center;margin-top:3px;letter-spacing:2px;}.footer-text{font-size:11px;}.total-line{font-size:14px;font-weight:bold;margin-top:5px;}@media print{body{width:80mm;margin:0;padding:5px;}}</style></head><body><div class="center"><div class="logo-text">VR LOUNGE</div><div class="company-text">Dintez Solutions LTD</div><div class="info-text">+254740547488</div></div><div class="barcode-container">' + bsv + '</div><div class="barcode-text">*' + rn.replace(/[^A-Za-z0-9]/g, '') + '*</div><div class="center receipt-title">START OF FISCAL RECEIPT</div><div class="divider"></div><div class="left info-text"><strong>RECEIPT:</strong> ' + rn + '</div><div class="left info-text"><strong>DATE:</strong> ' + ds + ' ' + ts + '</div><div class="left info-text"><strong>STORE:</strong> GATEWAY SYOKIMAU</div>' + cnd + cpd + '<div class="divider"></div><table><thead><tr><th>ITEM</th><th>STATION</th><th>DUR</th><th>AMOUNT</th></tr></thead><tbody>' + ih + '</tbody></table><div class="divider"></div><div class="left info-text">LINES: ' + (data.items ? data.items.length : 1) + '</div><div class="total-line">TOTAL: KES ' + data.total_amount.toLocaleString() + '</div>';
+                if (sth) html += '<div class="divider"></div><div class="left info-text"><strong>SESSION TIMES:</strong></div><table><thead><tr><th>STATION</th><th>START</th><th>END</th><th>DUR</th></tr></thead><tbody>' + sth + '</tbody></table>';
+                html += '<div class="divider"></div><div class="left info-text">PAID: KES ' + (data.amount_paid || data.total_amount).toLocaleString() + '</div><div class="left info-text">METHOD: ' + data.payment_method + '</div><div class="divider"></div><div class="left info-text"><strong>SERVED BY:</strong> ' + escapeHtml(data.cashier_name || '-').toUpperCase() + '</div><div class="divider"></div><div class="center bold footer-text">END OF FISCAL RECEIPT</div><div class="center footer-text">THANK YOU! COME AGAIN!</div></body></html>';
+                var w = window.open('', '_blank', 'width=450,height=800'); w.document.write(html); w.document.close();
+                setTimeout(function () { w.print(); }, 800);
+            }
+
+            function printBackdatedReceipt(data) {
+                var rn = data.receipt_no, bsv = generateBarcodeSVG(rn.replace(/[^A-Za-z0-9]/g, ''));
+                var dl = ''; if (data.is_pool) dl = data.number_of_games + ' game' + (data.number_of_games > 1 ? 's' : ''); else if (data.shots > 0) dl = data.shots + ' shots'; else if (data.duration > 0) dl = data.duration + ' mins';
+                var cnd = data.customer_name && data.customer_name !== 'Guest' ? '<div class="left info-text"><strong>CUSTOMER:</strong> ' + escapeHtml(data.customer_name) + '</div>' : '';
+                var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Receipt</title><style>@page{size:80mm auto;margin:0;}body{font-family:"Courier New",monospace;width:80mm;margin:0 auto;padding:10px 8px;font-size:13px;line-height:1.4;}.center{text-align:center;}.left{text-align:left;}.right{text-align:right;}.divider{border-top:1px dashed #000;margin:8px 0;}.bold{font-weight:bold;}.logo-text{font-size:20px;font-weight:bold;letter-spacing:2px;}.info-text{font-size:12px;margin-bottom:3px;}table{width:100%;border-collapse:collapse;margin:5px 0;}th,td{padding:5px 3px;font-size:12px;}th{border-bottom:1px solid #000;text-align:left;}.barcode-container{text-align:center;margin:8px 0;}.barcode-text{font-size:11px;text-align:center;margin-top:3px;letter-spacing:2px;}.footer-text{font-size:11px;}.total-line{font-size:14px;font-weight:bold;margin-top:5px;}@media print{body{width:80mm;margin:0;padding:5px;}}</style></head><body><div class="center"><div class="logo-text">VR LOUNGE</div><div class="company-text">Dintez Solutions LTD</div><div class="info-text">+254740547488</div></div><div class="barcode-container">' + bsv + '</div><div class="barcode-text">*' + rn.replace(/[^A-Za-z0-9]/g, '') + '*</div><div class="center receipt-title">START OF FISCAL RECEIPT</div><div class="divider"></div><div class="left info-text"><strong>RECEIPT:</strong> ' + rn + '</div><div class="left info-text"><strong>DATE:</strong> ' + data.transaction_date + ' ' + data.transaction_time + '</div><div class="left info-text"><strong>STORE:</strong> GATEWAY SYOKIMAU</div>' + cnd + '<div class="divider"></div><table><thead><tr><th>ITEM</th><th>STATION</th><th>DUR</th><th>AMOUNT</th></tr></thead><tbody><tr><td>' + escapeHtml(data.game_name) + '</td><td>' + escapeHtml(data.station_used) + '</td><td>' + dl + '</td><td>KES ' + data.total_amount.toLocaleString() + '</td></tr></tbody></table><div class="divider"></div><div class="total-line">TOTAL: KES ' + data.total_amount.toLocaleString() + '</div>';
+                if (!data.is_pool && data.duration > 0) { var sm = (data.station_used || '').toLowerCase().indexOf('ps') >= 0 ? 3 : 2, gd = data.duration || 30; var tp = (data.transaction_time || '00:00').split(':'); var bt = new Date(); bt.setHours(parseInt(tp[0]) || 0, parseInt(tp[1]) || 0, 0); var ast = new Date(bt.getTime() + sm * 60000), et = new Date(ast.getTime() + gd * 60000); html += '<div class="divider"></div><div class="left info-text"><strong>SESSION TIMES:</strong></div><table><thead><tr><th>STATION</th><th>START</th><th>END</th><th>DUR</th></tr></thead><tbody><tr><td>' + escapeHtml(data.station_used) + '</td><td>' + ast.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }) + '</td><td>' + et.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }) + '</td><td>' + gd + ' min</td></tr></tbody></table>'; }
+                html += '<div class="divider"></div><div class="left info-text">PAID: KES ' + data.amount_paid.toLocaleString() + '</div><div class="left info-text">METHOD: ' + data.payment_method + '</div><div class="divider"></div><div class="left info-text"><strong>SERVED BY:</strong> ' + escapeHtml(data.cashier_name).toUpperCase() + '</div><div class="divider"></div><div class="center bold footer-text">END OF FISCAL RECEIPT</div><div class="center footer-text">THANK YOU! COME AGAIN!</div></body></html>';
+                var w = window.open('', '_blank', 'width=450,height=800'); w.document.write(html); w.document.close();
+                setTimeout(function () { w.print(); }, 800);
+            }
+
+            function startStationTimers() {
+                var sm = {};
+                cart.forEach(function (item) { if (item.is_pool_game || item.total_duration <= 0) return; var k = item.station_id; if (!sm[k]) sm[k] = { station_name: item.station_name, station_type: item.station_type, total_minutes: 0, game_list: [] }; sm[k].game_list.push(item.game_name + ' (' + item.total_duration + 'min)'); sm[k].total_minutes += item.total_duration; });
+                Object.keys(sm).forEach(function (k) { if (!stationTimers[k] && sm[k].total_minutes > 0) { var st = (sm[k].station_type === 'PS5' || sm[k].station_type === 'PS4') ? 3 : 2; sm[k].total_minutes += st; sm[k].setup_time = st; stationTimers[k] = { station_name: sm[k].station_name, station_type: sm[k].station_type, total_minutes: sm[k].total_minutes, setup_time: st, end_time: new Date(Date.now() + sm[k].total_minutes * 60000), remaining_seconds: sm[k].total_minutes * 60, game_list: sm[k].game_list }; var stn = stations.find(function (s) { return s.id === k; }); if (stn) stn.in_use = true; } });
+                updateStationDropdown(); renderStationTimers();
+                if (timerIntervals['global']) clearInterval(timerIntervals['global']);
+                timerIntervals['global'] = setInterval(updateStationTimers, 1000);
+                document.getElementById('timerSection').style.display = 'block';
+                notify(Object.keys(stationTimers).length + ' station(s) active', 'success');
+            }
+
+            function updateStationTimers() {
+                var now = new Date(), allDone = true, sFree = [];
+                Object.keys(stationTimers).forEach(function (sid) { var t = stationTimers[sid], r = Math.round((t.end_time - now) / 1000); if (r <= 0) { r = 0; sFree.push(sid); } else { allDone = false; } t.remaining_seconds = r; });
+                sFree.forEach(function (sid) { var st = stations.find(function (s) { return s.id === sid; }); if (st) st.in_use = false; if (stationTimers[sid] && stationTimers[sid].remaining_seconds <= -30) delete stationTimers[sid]; });
+                updateStationDropdown(); renderStationTimers();
+                if (allDone && Object.keys(stationTimers).length === 0) { clearInterval(timerIntervals['global']); delete timerIntervals['global']; document.getElementById('timerSection').style.display = 'none'; notify('All timers complete!', 'success'); }
+            }
+
+            function renderStationTimers() {
+                var c = document.getElementById('timerStationsList'), ids = Object.keys(stationTimers);
+                if (ids.length === 0) { c.innerHTML = '<p style="color:#999;text-align:center;padding:10px;">No active timers</p>'; document.getElementById('timerSection').style.display = 'none'; return; }
+                document.getElementById('timerSection').style.display = 'block';
+                c.innerHTML = ids.map(function (sid) { var t = stationTimers[sid], r = t.remaining_seconds, m = Math.floor(Math.abs(r) / 60), s = Math.abs(r) % 60, ts = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0'), cc = 'timer-station-card'; if (r <= 0) { cc += ' done'; ts = '00:00'; } else if (r <= 120) cc += ' danger'; else if (r <= 300) cc += ' warning'; var gl = t.game_list ? t.game_list.map(function (g) { return '• ' + escapeHtml(g); }).join('<br>') : ''; return '<div class="' + cc + '"><div class="timer-station-info"><strong>' + escapeHtml(t.station_name) + '</strong><small>' + t.station_type + ' • Setup: ' + (t.setup_time || 0) + ' min • Total: ' + t.total_minutes + ' min</small>' + (gl ? '<small style="display:block;margin-top:3px;color:#555;">' + gl + '</small>' : '') + '</div><div class="timer-station-time">' + ts + '</div></div>'; }).join('');
+                setTimeout(updateTimerFade, 100);
+            }
+
+            function initScrollFades() {
+                var g = document.getElementById('gamesGrid'), gb = document.getElementById('gamesFadeBottom'), gt = document.getElementById('gamesFadeTop');
+                function ug() { if (!g || !gb || !gt) return; var st = g.scrollTop, ms = g.scrollHeight - g.clientHeight; if (st < ms - 10) gb.classList.add('visible'); else gb.classList.remove('visible'); if (st > 10) gt.classList.add('visible'); else gt.classList.remove('visible'); }
+                if (g) { g.addEventListener('scroll', ug); setTimeout(ug, 500); new MutationObserver(function () { setTimeout(ug, 100); }).observe(g, { childList: true, subtree: true }); }
+            }
+
+            function updateCartFade() { var c = document.getElementById('cartItems'), f = document.getElementById('cartFadeBottom'); if (!c || !f) return; var st = c.scrollTop, ms = c.scrollHeight - c.clientHeight; if (st < ms - 5) f.classList.add('visible'); else f.classList.remove('visible'); }
+            function updateTimerFade() { var t = document.getElementById('timerStationsList'), f = document.getElementById('timerFadeBottom'); if (!t || !f) return; var st = t.scrollTop, ms = t.scrollHeight - t.clientHeight; if (st < ms - 5) f.classList.add('visible'); else f.classList.remove('visible'); }
+
+            var cartEl = document.getElementById('cartItems');
+            if (cartEl) { cartEl.addEventListener('scroll', updateCartFade); new MutationObserver(function () { setTimeout(updateCartFade, 100); }).observe(cartEl, { childList: true, subtree: true }); }
+            var timerEl = document.getElementById('timerStationsList');
+            if (timerEl) { timerEl.addEventListener('scroll', updateTimerFade); new MutationObserver(function () { setTimeout(updateTimerFade, 100); }).observe(timerEl, { childList: true, subtree: true }); }
+
+            function openModal(id) { document.getElementById(id).classList.add('active'); }
+            function closeModal(id) { document.getElementById(id).classList.remove('active'); if (id === 'paymentModal' && stkPollInterval) { clearInterval(stkPollInterval); stkPollInterval = null; } }
+
+            document.querySelectorAll('.modal-overlay').forEach(function (m) { m.addEventListener('click', function (e) { if (e.target === this) { if (m.id === 'paymentModal' && stkPollInterval) { clearInterval(stkPollInterval); stkPollInterval = null; } m.classList.remove('active'); } }); });
+            document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { document.querySelectorAll('.modal-overlay.active').forEach(function (m) { if (m.id === 'paymentModal' && stkPollInterval) { clearInterval(stkPollInterval); stkPollInterval = null; } m.classList.remove('active'); }); } });
+
+            document.getElementById('processPaymentBtn').addEventListener('click', processPayment);
+            document.getElementById('confirmCreditBtn').addEventListener('click', processCreditPayment);
+            document.getElementById('cancelCreditBtn').addEventListener('click', function () { closeModal('creditModal'); });
+            window.closeDurationModal = closeDurationModal;
+
+            setTimeout(initScrollFades, 500);
+            loadGames(); loadStations();
+            if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js'); }
+        })();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Past Transactions</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            background: transparent
+        }
+
+        .page-header {
+            margin-bottom: 20px
+        }
+
+        .page-header h2 {
+            color: #333;
+            margin-bottom: 5px
+        }
+
+        .page-header p {
+            color: #666;
+            font-size: 14px
+        }
+
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px
+        }
+
+        .stat-box {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05)
+        }
+
+        .stat-box .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea
+        }
+
+        .stat-box .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            margin-top: 5px
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px
+        }
+
+        .filter-bar input,
+        .filter-bar select {
+            padding: 10px 14px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 13px;
+            background: white;
+            transition: all 0.2s;
+        }
+
+        .filter-bar input:focus,
+        .filter-bar select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white
+        }
+
+        .btn-primary:hover {
+            background: #5a67d8;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #333
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+
+        .refresh-btn {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .refresh-btn:hover {
+            background: #138496;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 11px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-top: 15px
+        }
+
+        th {
+            padding: 14px 12px;
+            text-align: left;
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #e0e0e0;
+            font-size: 13px
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+            color: #333
+        }
+
+        tr:hover {
+            background: #f8f9ff
+        }
+
+        .checkbox-cell {
+            width: 40px;
+            text-align: center;
+        }
+
+        .checkbox-cell input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-block
+        }
+
+        .badge-success {
+            background: #d4edda;
+            color: #155724
+        }
+
+        .badge-info {
+            background: #d1ecf1;
+            color: #0c5460
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px;
+            color: #999
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 14px 24px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 500;
+            z-index: 9999;
+            animation: slideIn 0.3s ease;
+            font-size: 14px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .toast.success {
+            background: #28a745
+        }
+
+        .toast.error {
+            background: #dc3545
+        }
+
+        .toast.info {
+            background: #17a2b8
+        }
+
+        .toast.warning {
+            background: #ffc107;
+            color: #333
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1
+            }
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .selection-bar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 10px 0;
+            margin-bottom: 10px;
+            background: white;
+            border-radius: 8px;
+            padding: 12px 15px;
+        }
+
+        .selection-bar span {
+            font-size: 13px;
+            color: #000000;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+
+            th,
+            td {
+                font-size: 11px;
+                padding: 8px 6px;
+            }
+
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-bar input,
+            .filter-bar select,
+            .filter-bar button {
+                width: 100%;
+            }
+
+            .selection-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .selection-bar button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page-header">
+        <h2>📝 Past Transactions</h2>
+        <p>View and manage manually recorded past transactions from cashier backdating</p>
+    </div>
+
+    <div class="stats-bar" id="statsBar">
+        <div class="stat-box">
+            <div class="stat-value" id="totalCount">-</div>
+            <div class="stat-label">Total Past Transactions</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value" id="totalAmount">-</div>
+            <div class="stat-label">Total Amount (KES)</div>
+        </div>
+    </div>
+
+    <div class="filter-bar">
+        <input type="text" id="searchInput" placeholder="🔍 Search by receipt, customer, game..." onkeyup="debounceFilter()">
+        <input type="date" id="dateFilter" onchange="filterTransactions()">
+        <select id="methodFilter" onchange="filterTransactions()">
+            <option value="">All Payment Methods</option>
+            <option value="Cash">💵 Cash</option>
+            <option value="Mpesa">📱 M-Pesa</option>
+            <option value="Credit">📝 Credit</option>
+        </select>
+        <button class="btn-primary" onclick="filterTransactions()">🔍 Filter</button>
+        <button class="btn-warning" onclick="clearFilters()">✕ Clear</button>
+        <button class="btn-success" onclick="exportPastTransactions()">📥 Export CSV</button>
+        <button class="refresh-btn" onclick="loadPastTransactions()">🔄 Refresh</button>
+    </div>
+
+    <div class="selection-bar">
+        <button class="btn-sm btn-primary" onclick="selectAll()">☑️ Select All</button>
+        <button class="btn-sm btn-warning" onclick="deselectAll()">☐ Deselect All</button>
+        <button class="btn-sm btn-danger" id="deleteSelectedBtn" onclick="deleteSelected()" disabled>🗑️ Delete Selected <span id="selectedCount">0</span></button>
+        <span style="margin-left: auto;">Showing: <strong id="displayCount">0</strong> transactions</span>
+    </div>
+
+    <div style="overflow-x:auto;">
+        <table id="pastTable">
+            <thead>
+                <tr>
+                    <th class="checkbox-cell"><input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()"></th>
+                    <th>Receipt No</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Customer</th>
+                    <th>Game/Service</th>
+                    <th>Station</th>
+                    <th>Amount (KES)</th>
+                    <th>Method</th>
+                    <th>Cashier</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="pastTableBody">
+                <tr>
+                    <td colspan="11" class="empty-state">Loading past transactions...<br><span style="font-size:12px;">Please wait</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // ============ AUTHENTICATION ============
+        if (window.parent === window) { 
+            window.location.href = '/dashboard.html'; 
+        }
+
+        var API_URL = '/api';
+        var token = new URLSearchParams(window.location.search).get('token') || sessionStorage.getItem('token') || (window.parent && window.parent.token) || '';
+
+        if (token) { 
+            sessionStorage.setItem('token', token); 
+        }
+
+        if (!token) {
+            document.body.innerHTML = '<div style="text-align:center;padding:50px;color:#dc3545;"><h3>⚠️ Authentication Error</h3><p>Please refresh the dashboard page and login again.</p></div>';
+            throw new Error('No token available');
+        }
+
+        // ============ GLOBAL VARIABLES ============
+        var allPastTransactions = [];
+        var filteredTransactions = [];
+        var selectedTransactions = {};
+        var filterTimeout = null;
+
+        // ============ LOAD DATA ============
+        async function loadPastTransactions() {
+            var refreshBtn = document.querySelector('.refresh-btn');
+            var originalText = refreshBtn ? refreshBtn.innerHTML : '';
+
+            try {
+                if (refreshBtn) {
+                    refreshBtn.innerHTML = '<span class="spinner"></span> Loading...';
+                    refreshBtn.disabled = true;
+                }
+
+                console.log('Fetching past transactions from:', API_URL + '/transactions/past');
+                console.log('Using token:', token ? 'Yes' : 'No');
+                
+                var res = await fetch(API_URL + '/transactions/past', {
+                    headers: { 
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                console.log('Response status:', res.status);
+
+                if (!res.ok) {
+                    if (res.status === 403) {
+                        throw new Error('Authentication failed. Please logout and login again.');
+                    }
+                    throw new Error('Failed to fetch: ' + res.status);
+                }
+
+                var data = await res.json();
+                console.log('Response data type:', Array.isArray(data) ? 'Array' : typeof data);
+                
+                // Ensure data is an array
+                if (Array.isArray(data)) {
+                    allPastTransactions = data;
+                } else {
+                    console.error('Expected array but got:', data);
+                    allPastTransactions = [];
+                }
+                
+                filteredTransactions = [...allPastTransactions];
+                selectedTransactions = {};
+
+                renderTable();
+                updateStats();
+                updateSelectionInfo();
+
+                if (allPastTransactions.length === 0) {
+                    showToast('No past transactions found. Add one from Cashier page using Backdate button!', 'info');
+                } else {
+                    showToast('Loaded ' + allPastTransactions.length + ' past transactions', 'success');
+                }
+            } catch (e) {
+                console.error('Error loading past transactions:', e);
+                document.getElementById('pastTableBody').innerHTML = '<tr><td colspan="11" class="empty-state">❌ Error: ' + e.message + '<br><br><button class="btn-primary" onclick="loadPastTransactions()" style="margin-top:10px;">🔄 Try Again</button></td></tr>';
+                showToast('Error loading transactions: ' + e.message, 'error');
+            } finally {
+                if (refreshBtn) {
+                    refreshBtn.innerHTML = '🔄 Refresh';
+                    refreshBtn.disabled = false;
+                }
+            }
+        }
+
+        // ============ UPDATE STATS ============
+        function updateStats() {
+            var total = allPastTransactions.length;
+            var totalAmount = allPastTransactions.reduce(function (sum, tx) {
+                return sum + (tx.total_amount || 0);
+            }, 0);
+
+            document.getElementById('totalCount').textContent = total;
+            document.getElementById('totalAmount').textContent = 'KES ' + totalAmount.toLocaleString();
+        }
+
+        // ============ FILTER FUNCTIONS ============
+        function debounceFilter() {
+            clearTimeout(filterTimeout);
+            filterTimeout = setTimeout(filterTransactions, 300);
+        }
+
+        function filterTransactions() {
+            var search = document.getElementById('searchInput').value.toLowerCase();
+            var date = document.getElementById('dateFilter').value;
+            var method = document.getElementById('methodFilter').value;
+
+            filteredTransactions = allPastTransactions.filter(function (tx) {
+                var match = true;
+                if (search) {
+                    var gameName = tx.past_game || '';
+                    try {
+                        var items = JSON.parse(tx.items_json || '[]');
+                        if (items.length > 0) gameName = items[0].game_name || '';
+                    } catch (e) { }
+
+                    match = match && (
+                        (tx.receipt_no || '').toLowerCase().indexOf(search) >= 0 ||
+                        (tx.customer_name || '').toLowerCase().indexOf(search) >= 0 ||
+                        gameName.toLowerCase().indexOf(search) >= 0 ||
+                        (tx.cashier_name || '').toLowerCase().indexOf(search) >= 0 ||
+                        (tx.station_used || '').toLowerCase().indexOf(search) >= 0
+                    );
+                }
+                if (date) {
+                    match = match && tx.transaction_date === date;
+                }
+                if (method) {
+                    match = match && tx.payment_method === method;
+                }
+                return match;
+            });
+
+            selectedTransactions = {};
+            renderTable();
+            updateSelectionInfo();
+            showToast('Found ' + filteredTransactions.length + ' transactions', 'info');
+        }
+
+        function clearFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('dateFilter').value = '';
+            document.getElementById('methodFilter').value = '';
+            filteredTransactions = [...allPastTransactions];
+            selectedTransactions = {};
+            renderTable();
+            updateSelectionInfo();
+            showToast('Filters cleared! Showing all ' + filteredTransactions.length + ' transactions', 'success');
+        }
+
+        // ============ SELECTION FUNCTIONS ============
+        function selectAll() {
+            filteredTransactions.forEach(function (tx) {
+                selectedTransactions[tx.id] = true;
+            });
+            renderTable();
+            updateSelectionInfo();
+            showToast('Selected all ' + filteredTransactions.length + ' transactions', 'success');
+        }
+
+        function deselectAll() {
+            selectedTransactions = {};
+            renderTable();
+            updateSelectionInfo();
+            showToast('Deselected all transactions', 'info');
+        }
+
+        function toggleSelectAll() {
+            var checkbox = document.getElementById('selectAllCheckbox');
+            if (checkbox.checked) {
+                selectAll();
+            } else {
+                deselectAll();
+            }
+        }
+
+        function toggleTransactionSelect(checkbox, id) {
+            if (checkbox.checked) {
+                selectedTransactions[id] = true;
+            } else {
+                delete selectedTransactions[id];
+            }
+            updateSelectionInfo();
+            
+            var selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = Object.keys(selectedTransactions).length === filteredTransactions.length && filteredTransactions.length > 0;
+            }
+        }
+
+        function updateSelectionInfo() {
+            var count = Object.keys(selectedTransactions).length;
+            document.getElementById('selectedCount').textContent = count;
+            document.getElementById('displayCount').textContent = filteredTransactions.length;
+            
+            var deleteBtn = document.getElementById('deleteSelectedBtn');
+            if (deleteBtn) {
+                deleteBtn.disabled = count === 0;
+            }
+        }
+
+        function getSelectedTotal() {
+            var total = 0;
+            var ids = Object.keys(selectedTransactions);
+            for (var i = 0; i < ids.length; i++) {
+                var tx = allPastTransactions.find(function (t) { return t.id === ids[i]; });
+                if (tx) total += (tx.total_amount || 0);
+            }
+            return total;
+        }
+
+        // ============ DELETE FUNCTIONS ============
+        async function deleteSelected() {
+            var ids = Object.keys(selectedTransactions);
+            if (ids.length === 0) {
+                showToast('No transactions selected', 'warning');
+                return;
+            }
+
+            var totalAmount = getSelectedTotal();
+            var confirmMsg = '⚠️ DELETE ' + ids.length + ' TRANSACTION(S) ⚠️\n\n';
+            confirmMsg += 'This will permanently delete:\n';
+            confirmMsg += '• ' + ids.length + ' past transaction(s)\n';
+            confirmMsg += '• Total amount: KES ' + totalAmount.toLocaleString() + '\n\n';
+            confirmMsg += '⚠️ This CANNOT be undone!\n\n';
+            confirmMsg += 'Are you ABSOLUTELY sure?';
+
+            if (!confirm(confirmMsg)) return;
+
+            var password = prompt('🔐 Enter your ADMIN password to delete ' + ids.length + ' transaction(s):');
+            if (!password) {
+                showToast('Delete cancelled - password required', 'warning');
+                return;
+            }
+
+            var deleteBtn = document.getElementById('deleteSelectedBtn');
+            var originalText = deleteBtn ? deleteBtn.innerHTML : '';
+            if (deleteBtn) {
+                deleteBtn.disabled = true;
+                deleteBtn.innerHTML = '<span class="spinner"></span> Deleting...';
+            }
+
+            var successCount = 0;
+            var failCount = 0;
+
+            for (var i = 0; i < ids.length; i++) {
+                try {
+                    console.log('Deleting transaction:', ids[i]);
+                    
+                    var res = await fetch(API_URL + '/transactions/' + ids[i] + '/permanent', {
+                        method: 'DELETE',
+                        headers: { 
+                            'Content-Type': 'application/json', 
+                            'Authorization': 'Bearer ' + token 
+                        },
+                        body: JSON.stringify({ adminPassword: password })
+                    });
+                    
+                    var data = await res.json();
+                    console.log('Delete response:', data);
+                    
+                    if (data.success) {
+                        successCount++;
+                    } else if (data.error === 'Invalid password. Use your own admin login password.') {
+                        showToast('Wrong password! Operation cancelled.', 'error');
+                        break;
+                    } else {
+                        failCount++;
+                    }
+                } catch (e) {
+                    failCount++;
+                    console.error('Delete error for', ids[i], e);
+                }
+            }
+
+            if (deleteBtn) {
+                deleteBtn.disabled = false;
+                deleteBtn.innerHTML = originalText;
+            }
+
+            selectedTransactions = {};
+            
+            if (successCount > 0) {
+                await loadPastTransactions();
+                showToast('✅ Deleted ' + successCount + ' transaction(s) successfully!', 'success');
+            }
+            if (failCount > 0) {
+                showToast('⚠️ Failed to delete ' + failCount + ' transaction(s)', 'error');
+            }
+        }
+
+        async function deleteSingleTransaction(id, receiptNo) {
+            console.log('Deleting single transaction:', id, receiptNo);
+            
+            if (!confirm('⚠️ DELETE TRANSACTION\n\nReceipt: ' + receiptNo + '\n\n⚠️ This CANNOT be undone!\n\nAre you sure?')) {
+                return;
+            }
+
+            var password = prompt('🔐 Enter your ADMIN password to delete this transaction:');
+            if (!password) {
+                showToast('Delete cancelled - password required', 'warning');
+                return;
+            }
+
+            var btns = document.querySelectorAll('button[data-delete-id="' + id + '"]');
+            var targetBtn = null;
+            for (var i = 0; i < btns.length; i++) {
+                targetBtn = btns[i];
+                break;
+            }
+            if (targetBtn) {
+                targetBtn.disabled = true;
+                targetBtn.innerHTML = '<span class="spinner"></span>';
+            }
+
+            try {
+                var res = await fetch(API_URL + '/transactions/' + id + '/permanent', {
+                    method: 'DELETE',
+                    headers: { 
+                        'Content-Type': 'application/json', 
+                        'Authorization': 'Bearer ' + token 
+                    },
+                    body: JSON.stringify({ adminPassword: password })
+                });
+                
+                var data = await res.json();
+
+                if (data.success) {
+                    showToast('✅ Transaction ' + receiptNo + ' deleted successfully!', 'success');
+                    await loadPastTransactions();
+                } else if (data.error === 'Invalid password. Use your own admin login password.') {
+                    showToast('❌ Wrong password! Please use your own admin login password.', 'error');
+                } else if (data.error === 'Admin access required.') {
+                    showToast('❌ Admin access required. Only administrators can delete transactions.', 'error');
+                } else {
+                    showToast('❌ ' + (data.error || 'Delete failed'), 'error');
+                }
+            } catch (e) {
+                console.error('Delete error:', e);
+                showToast('❌ Connection error: ' + e.message, 'error');
+            } finally {
+                if (targetBtn) {
+                    targetBtn.disabled = false;
+                    targetBtn.innerHTML = '🗑️ Delete';
+                }
+            }
+        }
+
+        // ============ RENDER TABLE ============
+        function renderTable() {
+            var tbody = document.getElementById('pastTableBody');
+
+            if (!filteredTransactions.length) {
+                tbody.innerHTML = '<tr><td colspan="11" class="empty-state">📭 No past transactions found<br><span style="font-size:12px;">Use the Backdate button on Cashier page to add transactions</span></td></tr>';
+                document.getElementById('selectAllCheckbox').checked = false;
+                return;
+            }
+
+            filteredTransactions.sort(function (a, b) {
+                var dateA = new Date(a.transaction_date + ' ' + (a.transaction_time || '00:00'));
+                var dateB = new Date(b.transaction_date + ' ' + (b.transaction_time || '00:00'));
+                return dateB - dateA;
+            });
+
+            tbody.innerHTML = filteredTransactions.map(function (tx) {
+                var gameName = tx.past_game || '';
+                try {
+                    var items = JSON.parse(tx.items_json || '[]');
+                    if (items.length > 0) gameName = items[0].game_name || '';
+                } catch (e) { }
+
+                var isChecked = selectedTransactions[tx.id] ? ' checked' : '';
+
+                return '<tr>' +
+                    '<td class="checkbox-cell"><input type="checkbox" data-id="' + tx.id + '"' + isChecked + ' onchange="toggleTransactionSelect(this, \'' + tx.id + '\')"></td>' +
+                    '<td><strong>' + escapeHtml(tx.receipt_no || '-') + '</strong></td>' +
+                    '<td>' + escapeHtml(tx.transaction_date || '-') + '</td>' +
+                    '<td>' + escapeHtml(tx.transaction_time || '-') + '</td>' +
+                    '<td>' + escapeHtml(tx.customer_name || 'Guest') + '</td>' +
+                    '<td>' + escapeHtml(gameName) + '</td>' +
+                    '<td>' + escapeHtml(tx.station_used || '-') + '</td>' +
+                    '<td><strong>KES ' + (tx.total_amount || 0).toLocaleString() + '</strong></td>' +
+                    '<td><span class="badge ' + (tx.payment_method === 'Cash' ? 'badge-success' : 'badge-info') + '">' + escapeHtml(tx.payment_method || '-') + '</span></td>' +
+                    '<td>' + escapeHtml(tx.cashier_name || '-') + '</td>' +
+                    '<td>' +
+                    '<button class="btn-warning btn-sm" onclick="printPastReceipt(\'' + tx.id + '\')" title="Print Receipt">🖨️ Print</button> ' +
+                    '<button class="btn-danger btn-sm" data-delete-id="' + tx.id + '" onclick="deleteSingleTransaction(\'' + tx.id + '\', \'' + escapeHtml(tx.receipt_no) + '\')" title="Delete">🗑️ Delete</button>' +
+                    '</td>' +
+                    '</tr>';
+            }).join('');
+
+            var selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = Object.keys(selectedTransactions).length === filteredTransactions.length && filteredTransactions.length > 0;
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function (m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        // ============ PRINT RECEIPT ============
+        async function printPastReceipt(id) {
+            try {
+                var res = await fetch(API_URL + '/transactions/' + id, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                var tx = await res.json();
+
+                if (tx) {
+                    var items = [];
+                    try {
+                        items = JSON.parse(tx.items_json || '[]');
+                    } catch (e) { }
+
+                    var itemsHTML = '';
+                    if (items.length > 0) {
+                        items.forEach(function (item) {
+                            itemsHTML += '<tr><td style="text-align:left;">' + escapeHtml(item.game_name) + '</td><td style="text-align:right;">KES ' + (item.total_price || 0).toLocaleString() + '.00</td>' + '\n';
+                        });
+                    } else {
+                        itemsHTML = '<tr><td style="text-align:left;">' + escapeHtml(tx.past_game || 'Service') + '</td><td style="text-align:right;">KES ' + (tx.total_amount || 0).toLocaleString() + '.00</td>' + '\n';
+                    }
+
+                    var pastLabel = tx.is_past ? '<p><strong>📅 PAST TRANSACTION (Backdated)</strong></p>' : '';
+
+                    var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Receipt</title>' +
+                        '<style>@page{size:80mm auto;margin:0;}body{font-family:"Courier New",monospace;width:80mm;margin:0 auto;padding:8px;font-size:12px;}' +
+                        '.center{text-align:center;}.divider{border-top:1px dashed #000;margin:6px 0;}.logo-text{font-size:18px;font-weight:bold;}' +
+                        'table{width:100%;border-collapse:collapse;}th,td{padding:3px;}</style></head><body>' +
+                        '<div class="center"><img src="/logo.png" style="width:60px;" onerror="this.style.display=\'none\'">' +
+                        '<div class="logo-text">VR LOUNGE</div><div>Dintez Solutions LTD</div><div>Tel: +254740547488</div>' +
+                        '<div class="divider"></div><p><strong>RECEIPT: ' + (tx.receipt_no || '-') + '</strong></p>' +
+                        pastLabel +
+                        '<p>' + (tx.transaction_date || '-') + ' ' + (tx.transaction_time || '-') + '</p>' +
+                        '<p>Customer: ' + (tx.customer_name || 'Guest') + '</p>' +
+                        '<div class="divider"></div><table><thead><tr><th>ITEM</th><th>AMOUNT</th></tr></thead><tbody>' + itemsHTML + '</tbody></table>' +
+                        '<div class="divider"></div><p><strong>TOTAL: KES ' + (tx.total_amount || 0).toLocaleString() + '</strong></p>' +
+                        '<p>Method: ' + (tx.payment_method || '-') + '</p><div class="divider"></div>' +
+                        '<p>Served by: ' + (tx.cashier_name || '-') + '</p><div class="divider"></div>' +
+                        '<p><strong>THANK YOU! COME AGAIN!</strong></p></div></body></html>';
+
+                    var w = window.open('', '_blank', 'width=400,height=600');
+                    w.document.write(html);
+                    w.document.close();
+                    setTimeout(function () { w.print(); }, 500);
+                }
+            } catch (e) {
+                console.error('Print error:', e);
+                showToast('Error printing receipt', 'error');
+            }
+        }
+
+        // ============ EXPORT CSV ============
+        function exportPastTransactions() {
+            if (!allPastTransactions.length) {
+                showToast('No past transactions to export', 'error');
+                return;
+            }
+
+            var csv = 'Receipt No,Date,Time,Customer,Game/Service,Station,Amount,Payment Method,Cashier,M-Pesa Code,Notes\n';
+            allPastTransactions.forEach(function (tx) {
+                var gameName = tx.past_game || '';
+                try {
+                    var items = JSON.parse(tx.items_json || '[]');
+                    if (items.length > 0) gameName = items[0].game_name || '';
+                } catch (e) { }
+
+                csv += '"' + (tx.receipt_no || '') + '",';
+                csv += '"' + (tx.transaction_date || '') + '",';
+                csv += '"' + (tx.transaction_time || '') + '",';
+                csv += '"' + (tx.customer_name || 'Guest').replace(/"/g, '""') + '",';
+                csv += '"' + gameName.replace(/"/g, '""') + '",';
+                csv += '"' + (tx.station_used || '').replace(/"/g, '""') + '",';
+                csv += (tx.total_amount || 0) + ',';
+                csv += '"' + (tx.payment_method || '') + '",';
+                csv += '"' + (tx.cashier_name || '').replace(/"/g, '""') + '",';
+                csv += '"' + (tx.mpesa_receipt || '').replace(/"/g, '""') + '",';
+                csv += '"' + (tx.notes || '').replace(/"/g, '""') + '"\n';
+            });
+
+            var blob = new Blob([csv], { type: 'text/csv' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'past_transactions_' + new Date().toISOString().split('T')[0] + '.csv';
+            a.click();
+            showToast('Past transactions exported!', 'success');
+        }
+
+        // ============ TOAST NOTIFICATION ============
+        function showToast(msg, type) {
+            type = type || 'success';
+            var t = document.createElement('div');
+            t.className = 'toast ' + type;
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(function () { if (t.parentNode) t.remove(); }, 3000);
+        }
+
+        // ============ EXPORT GLOBAL FUNCTIONS ============
+        window.loadPastTransactions = loadPastTransactions;
+        window.filterTransactions = filterTransactions;
+        window.clearFilters = clearFilters;
+        window.printPastReceipt = printPastReceipt;
+        window.deleteSingleTransaction = deleteSingleTransaction;
+        window.deleteSelected = deleteSelected;
+        window.selectAll = selectAll;
+        window.deselectAll = deselectAll;
+        window.toggleSelectAll = toggleSelectAll;
+        window.toggleTransactionSelect = toggleTransactionSelect;
+        window.exportPastTransactions = exportPastTransactions;
+        window.debounceFilter = debounceFilter;
+
+        // ============ INITIALIZE ============
+        loadPastTransactions();
+    </script>
+</body>
+
+</html>

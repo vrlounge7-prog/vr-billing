@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            background: transparent;
+        }
+
+        .page-header {
+            margin-bottom: 20px;
+        }
+
+        .page-header h2 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .page-header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            border: 1px solid #f0f0f0;
+        }
+
+        .stat-card .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-card .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+
+        .stat-card.cash .stat-value { color: #28a745; }
+        .stat-card.mpesa .stat-value { color: #17a2b8; }
+        .stat-card.credit .stat-value { color: #ffc107; }
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .section h4 {
+            color: #555;
+            margin: 20px 0 10px;
+            font-size: 15px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .export-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .export-card {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .export-card:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.2);
+        }
+
+        .export-card .export-icon { font-size: 40px; margin-bottom: 10px; display: block; }
+        .export-card .export-title { font-weight: bold; color: #333; font-size: 16px; margin-bottom: 5px; }
+        .export-card .export-desc { font-size: 12px; color: #666; }
+
+        .date-picker-row {
+            display: flex;
+            gap: 10px;
+            align-items: end;
+            flex-wrap: wrap;
+        }
+
+        .date-picker-row input[type="date"] {
+            padding: 10px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .date-picker-row input[type="date"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .toggle-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .toggle-label input { width: 18px; height: 18px; margin: 0; cursor: pointer; }
+        .toggle-label:hover { border-color: #667eea; background: #f8f9ff; }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        button:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-info { background: #17a2b8; color: white; }
+
+        /* ===== BREAKDOWN TABLE STYLES ===== */
+        .breakdown-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 13px;
+        }
+
+        .breakdown-table th {
+            padding: 14px 12px;
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+            font-size: 13px;
+            text-align: left;
+        }
+
+        .breakdown-table th.right {
+            text-align: right;
+        }
+
+        .breakdown-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e8e8e8;
+            vertical-align: top;
+        }
+
+        .breakdown-table .category-row {
+            background: #f8f9ff;
+        }
+
+        .breakdown-table .category-row td {
+            font-weight: 700;
+            font-size: 14px;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-top: 14px;
+        }
+
+        .breakdown-table .sub-row td {
+            padding-left: 30px;
+            font-size: 12px;
+            color: #555;
+        }
+
+        .breakdown-table .sub-row .method-icon {
+            width: 20px;
+            display: inline-block;
+        }
+
+        .breakdown-table .total-row td {
+            font-weight: 700;
+            background: #f0f4ff;
+            border-top: 1px solid #667eea;
+        }
+
+        .breakdown-table .amount {
+            text-align: right;
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+        }
+
+        .breakdown-table .separator td {
+            padding: 0;
+            border-bottom: 1px dashed #ddd;
+        }
+
+        .closing-float-box {
+            margin-top: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f0fff4, #e8f5e9);
+            border-radius: 12px;
+            text-align: center;
+            border: 2px solid #28a745;
+        }
+
+        .closing-float-box .float-label {
+            font-size: 13px;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .closing-float-box .float-amount {
+            font-size: 28px;
+            font-weight: bold;
+            color: #155724;
+            margin: 8px 0;
+        }
+
+        .closing-float-box .float-note {
+            font-size: 11px;
+            color: #666;
+        }
+
+        .served-by-box {
+            margin-top: 15px;
+            padding: 12px 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-size: 13px;
+            color: #555;
+        }
+
+        .served-by-box strong {
+            color: #333;
+        }
+
+        .info-banner {
+            background: #e8d5f5;
+            border: 2px solid #6f42c1;
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: #6f42c1;
+        }
+
+        .info-banner .icon { font-size: 20px; }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 500;
+            z-index: 9999;
+            animation: slideIn 0.4s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .toast.success { background: #28a745; }
+        .toast.error { background: #dc3545; }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @media print {
+            body { padding: 0; }
+            .section { box-shadow: none; border: 1px solid #ddd; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page-header">
+        <h2>📈 Reports</h2>
+        <p>Daily sales summaries and export tools</p>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <h3>📅 Select Date</h3>
+            <div class="date-picker-row">
+                <input type="date" id="reportDate" onchange="loadReport()">
+                <label class="toggle-label">
+                    <input type="checkbox" id="includePastCheckbox" onchange="loadReport()">
+                    📜 Include Past Transactions
+                </label>
+                <button class="btn-primary" onclick="loadReport()">🔍 Generate Report</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="infoBanner" class="info-banner" style="display:none;">
+        <span class="icon">📅</span>
+        <span id="infoBannerText"></span>
+    </div>
+
+    <div class="stats-grid" id="statsGrid">
+        <div class="stat-card"><div class="stat-value">-</div><div class="stat-label">Transactions</div></div>
+        <div class="stat-card"><div class="stat-value">-</div><div class="stat-label">Total Revenue</div></div>
+        <div class="stat-card cash"><div class="stat-value">-</div><div class="stat-label">Cash</div></div>
+        <div class="stat-card mpesa"><div class="stat-value">-</div><div class="stat-label">M-Pesa</div></div>
+        <div class="stat-card credit"><div class="stat-value">-</div><div class="stat-label">Credit</div></div>
+    </div>
+
+    <div class="section" id="reportDetails" style="display:none;">
+        <h3>📋 Daily Breakdown</h3>
+        <div id="detailsContent"></div>
+    </div>
+
+    <div class="section">
+        <h3>📥 Export & Print</h3>
+        <div class="export-options">
+            <div class="export-card" onclick="exportCSV()">
+                <span class="export-icon">📊</span>
+                <div class="export-title">Export CSV</div>
+                <div class="export-desc">Download as spreadsheet</div>
+            </div>
+            <div class="export-card" onclick="exportText()">
+                <span class="export-icon">📝</span>
+                <div class="export-title">Export Text</div>
+                <div class="export-desc">Plain text summary</div>
+            </div>
+            <div class="export-card" onclick="printReport()">
+                <span class="export-icon">🖨️</span>
+                <div class="export-title">Print Report</div>
+                <div class="export-desc">Formatted printable report</div>
+            </div>
+            <div class="export-card" onclick="exportAllTransactions()">
+                <span class="export-icon">💾</span>
+                <div class="export-title">Export All Transactions</div>
+                <div class="export-desc">Complete transaction history</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var token = new URLSearchParams(window.location.search).get('token') || sessionStorage.getItem('token') || (window.parent && window.parent.token) || '';
+
+        if (!token) {
+            document.body.innerHTML = '<div style="text-align:center;padding:50px;color:#dc3545;"><h3>⚠️ Authentication Error</h3><p>Please refresh the dashboard page and login again.</p></div>';
+            throw new Error('No token available');
+        }
+
+        sessionStorage.setItem('token', token);
+
+        var API_URL = '/api';
+        var currentReport = null;
+        var today = new Date().toISOString().split('T')[0];
+
+        document.getElementById('reportDate').value = today;
+        loadReport();
+
+        async function loadReport() {
+            var date = document.getElementById('reportDate').value || today;
+            var includePast = document.getElementById('includePastCheckbox')?.checked || false;
+
+            var banner = document.getElementById('infoBanner');
+            if (includePast) {
+                banner.style.display = 'flex';
+                document.getElementById('infoBannerText').textContent = 'Including backdated/past transactions for ' + formatDate(date);
+            } else {
+                banner.style.display = 'none';
+            }
+
+            document.getElementById('statsGrid').innerHTML =
+                '<div class="stat-card"><div class="stat-value">...</div></div>'.repeat(5);
+
+            try {
+                var summaryUrl = API_URL + '/transactions/daily-summary/' + date + (includePast ? '?include_past=true' : '');
+                var summaryRes = await fetch(summaryUrl, { headers: { 'Authorization': 'Bearer ' + token } });
+                var summary = await summaryRes.json();
+
+                var reportUrl = API_URL + '/reports/daily/' + date + (includePast ? '?include_past=true' : '');
+                var reportRes = await fetch(reportUrl, { headers: { 'Authorization': 'Bearer ' + token } });
+                currentReport = await reportRes.json();
+
+                document.getElementById('statsGrid').innerHTML =
+                    '<div class="stat-card"><div class="stat-value">' + (summary.transaction_count || 0) + '</div><div class="stat-label">Transactions</div></div>' +
+                    '<div class="stat-card"><div class="stat-value">KES ' + (summary.total || 0).toLocaleString() + '</div><div class="stat-label">Total Revenue</div></div>' +
+                    '<div class="stat-card cash"><div class="stat-value">KES ' + (summary.cash || 0).toLocaleString() + '</div><div class="stat-label">Cash</div></div>' +
+                    '<div class="stat-card mpesa"><div class="stat-value">KES ' + (summary.mpesa || 0).toLocaleString() + '</div><div class="stat-label">M-Pesa</div></div>' +
+                    '<div class="stat-card credit"><div class="stat-value">KES ' + (summary.credit || 0).toLocaleString() + '</div><div class="stat-label">Credit</div></div>';
+
+                if (currentReport && currentReport.by_method && Object.keys(currentReport.by_method).length > 0) {
+                    showBreakdown(currentReport, date, includePast);
+                } else {
+                    document.getElementById('reportDetails').style.display = 'block';
+                    document.getElementById('detailsContent').innerHTML =
+                        '<p style="text-align:center;padding:30px;color:#999;">📭 No transactions for this date</p>';
+                }
+            } catch (error) {
+                console.error('Report error:', error);
+                showToast('Error loading report: ' + error.message, 'error');
+            }
+        }
+
+        function formatDate(dateStr) {
+            var d = new Date(dateStr);
+            return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+        }
+
+        // ============ NEW BREAKDOWN STRUCTURE ============
+        function showBreakdown(report, date, includePast) {
+            document.getElementById('reportDetails').style.display = 'block';
+
+            // Map stations to categories
+            var categoryMap = {
+                'Pool': { icon: '🎱', name: 'POOL TABLE', stations: ['Pool Table 1', 'Pool Table 2', 'Pool'] },
+                'VR': { icon: '🥽', name: 'VR EXPERIENCE', stations: ['VR Station 1', 'VR Station 2', 'VR', 'Oculus'] },
+                'PlayStation': { icon: '🎮', name: 'PLAYSTATION (PS4/PS5)', stations: ['PS5 Station 1', 'PS5 Station 2', 'PS5 Station 3', 'PS5 Station 4', 'PS4 Station 1', 'PS4 Station 2', 'PS4 Station 3', 'PS4 Station 4', 'PS5', 'PS4'] },
+                'Darts': { icon: '🎯', name: 'DARTS', stations: ['Darts Station 1', 'Darts'] },
+                'Foosball': { icon: '⚽', name: 'FOOSBALL', stations: ['Foosball Station 1', 'Foosball'] },
+                'Paintball': { icon: '🔫', name: 'PAINTBALL', stations: ['Paintball Range', 'Paintball'] },
+                'Race Simulator': { icon: '🏎️', name: 'RACE SIMULATOR', stations: ['Race Simulator'] }
+            };
+
+            // Build category data from stations
+            var categoryData = {};
+            for (var catKey in categoryMap) {
+                categoryData[catKey] = {
+                    name: categoryMap[catKey].name,
+                    icon: categoryMap[catKey].icon,
+                    cash: 0,
+                    mpesa: 0,
+                    credit: 0,
+                    total: 0,
+                    count: 0,
+                    stations: []
+                };
+            }
+            categoryData['Other'] = { name: 'OTHER', icon: '📦', cash: 0, mpesa: 0, credit: 0, total: 0, count: 0, stations: [] };
+
+            // Assign stations to categories
+            if (report.by_station) {
+                for (var stationName in report.by_station) {
+                    var stationData = report.by_station[stationName];
+                    var matched = false;
+
+                    for (var catKey in categoryMap) {
+                        var catStations = categoryMap[catKey].stations;
+                        for (var i = 0; i < catStations.length; i++) {
+                            if (stationName.toLowerCase().indexOf(catStations[i].toLowerCase()) !== -1) {
+                                categoryData[catKey].cash += (stationData.cash || 0);
+                                categoryData[catKey].mpesa += (stationData.mpesa || 0);
+                                categoryData[catKey].credit += (stationData.credit || 0);
+                                categoryData[catKey].total += (stationData.total || 0);
+                                categoryData[catKey].count += (stationData.count || 0);
+                                categoryData[catKey].stations.push(stationName);
+                                matched = true;
+                                break;
+                            }
+                        }
+                        if (matched) break;
+                    }
+
+                    if (!matched) {
+                        categoryData['Other'].cash += (stationData.cash || 0);
+                        categoryData['Other'].mpesa += (stationData.mpesa || 0);
+                        categoryData['Other'].credit += (stationData.credit || 0);
+                        categoryData['Other'].total += (stationData.total || 0);
+                        categoryData['Other'].count += (stationData.count || 0);
+                    }
+                }
+            }
+
+            // Remove empty categories
+            for (var key in categoryData) {
+                if (categoryData[key].total === 0) {
+                    delete categoryData[key];
+                }
+            }
+
+            // Build cashiers served list
+            var cashiersList = [];
+            if (report.by_cashier) {
+                for (var cashier in report.by_cashier) {
+                    cashiersList.push(cashier);
+                }
+            }
+
+            // Calculate totals
+            var grandTotal = 0;
+            var totalCash = 0;
+            var totalMpesa = 0;
+            var totalCredit = 0;
+            var totalCount = 0;
+
+            for (var key in categoryData) {
+                grandTotal += categoryData[key].total;
+                totalCash += categoryData[key].cash;
+                totalMpesa += categoryData[key].mpesa;
+                totalCredit += categoryData[key].credit;
+                totalCount += categoryData[key].count;
+            }
+
+            // Get closing float (today's cash + we'll note to add previous float)
+            var closingFloat = totalCash;
+
+            // ===== BUILD HTML =====
+            var html = '';
+
+            // Past transactions note
+            if (includePast) {
+                var pastCount = report.by_method['Past'] ? report.by_method['Past'].count : 0;
+                if (pastCount > 0) {
+                    html += '<div class="info-banner" style="margin-bottom:20px;background:#e8d5f5;">' +
+                        '<span class="icon">📅</span>' +
+                        '<span><strong>' + pastCount + ' backdated transaction(s)</strong> included for ' + formatDate(date) + '</span>' +
+                        '</div>';
+                }
+            }
+
+            // Date header
+            html += '<div style="text-align:center;margin-bottom:20px;">' +
+                '<h3 style="color:#667eea;margin:0;">📅 ' + formatDate(date) + '</h3>' +
+                '<p style="color:#999;font-size:12px;">Daily Sales Breakdown</p>' +
+                '</div>';
+
+            // Main breakdown table
+            html += '<table class="breakdown-table">';
+            html += '<thead><tr><th>CATEGORY</th><th>PAYMENT METHOD</th><th class="right">AMOUNT (KES)</th></tr></thead>';
+            html += '<tbody>';
+
+            // Sort categories by total (highest first)
+            var sortedCategories = Object.keys(categoryData).sort(function(a, b) {
+                return categoryData[b].total - categoryData[a].total;
+            });
+
+            sortedCategories.forEach(function(catKey, index) {
+                var cat = categoryData[catKey];
+                
+                // Category header row
+                html += '<tr class="category-row">' +
+                    '<td colspan="2">' + cat.icon + ' <strong>' + cat.name + '</strong> <span style="font-size:11px;color:#999;">(' + cat.count + ' txns)</span></td>' +
+                    '<td class="amount"><strong>KES ' + cat.total.toLocaleString() + '</strong></td>' +
+                    '</tr>';
+
+                // Sub-rows for payment methods
+                var methods = [
+                    { key: 'cash', label: '💵 Cash', value: cat.cash },
+                    { key: 'mpesa', label: '📱 M-Pesa', value: cat.mpesa },
+                    { key: 'credit', label: '📝 Credit', value: cat.credit }
+                ];
+
+                methods.forEach(function(method) {
+                    if (method.value > 0) {
+                        html += '<tr class="sub-row">' +
+                            '<td></td>' +
+                            '<td><span class="method-icon"></span>' + method.label + '</td>' +
+                            '<td class="amount">KES ' + method.value.toLocaleString() + '</td>' +
+                            '</tr>';
+                    }
+                });
+
+                // Separator between categories (except last)
+                if (index < sortedCategories.length - 1) {
+                    html += '<tr class="separator"><td colspan="3"></td></tr>';
+                }
+            });
+
+            // Grand total row
+            html += '<tr class="separator"><td colspan="3"></td></tr>';
+            html += '<tr class="total-row">' +
+                '<td colspan="2"><strong>📊 GRAND TOTAL</strong> <span style="font-size:11px;color:#999;">(' + totalCount + ' transactions)</span></td>' +
+                '<td class="amount"><strong>KES ' + grandTotal.toLocaleString() + '</strong></td>' +
+                '</tr>';
+
+            // Payment method summary
+            html += '<tr class="sub-row">' +
+                '<td></td>' +
+                '<td>💵 Total Cash</td>' +
+                '<td class="amount">KES ' + totalCash.toLocaleString() + '</td>' +
+                '</tr>';
+            html += '<tr class="sub-row">' +
+                '<td></td>' +
+                '<td>📱 Total M-Pesa</td>' +
+                '<td class="amount">KES ' + totalMpesa.toLocaleString() + '</td>' +
+                '</tr>';
+            html += '<tr class="sub-row">' +
+                '<td></td>' +
+                '<td>📝 Total Credit</td>' +
+                '<td class="amount">KES ' + totalCredit.toLocaleString() + '</td>' +
+                '</tr>';
+
+            html += '</tbody></table>';
+
+            // Served by
+            if (cashiersList.length > 0) {
+                html += '<div class="served-by-box">' +
+                    '<span><strong>👤 Served by:</strong> ' + cashiersList.join(', ') + '</span>' +
+                    '<span><strong>📋 Total Staff:</strong> ' + cashiersList.length + '</span>' +
+                    '</div>';
+            }
+
+            // Closing float
+            html += '<div class="closing-float-box">' +
+                '<div class="float-label">💰 PETTY CASH / CLOSING FLOAT</div>' +
+                '<div class="float-amount">KES ' + closingFloat.toLocaleString() + '</div>' +
+                '<div class="float-note">This is today\'s cash collection. Add previous day\'s float for total petty cash on hand.</div>' +
+                '<div class="float-note" style="margin-top:5px;"><strong>Total Float = Previous Float + KES ' + closingFloat.toLocaleString() + '</strong></div>' +
+                '</div>';
+
+            document.getElementById('detailsContent').innerHTML = html;
+        }
+
+        function exportCSV() {
+            var date = document.getElementById('reportDate').value;
+            var includePast = document.getElementById('includePastCheckbox')?.checked || false;
+            var url = API_URL + '/reports/export/csv/' + date + (includePast ? '?include_past=true' : '');
+            fetch(url, { headers: { 'Authorization': 'Bearer ' + token } })
+                .then(function (res) { return res.blob(); })
+                .then(function (blob) {
+                    var a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = 'VR_Report_' + date + (includePast ? '_with_past' : '') + '.csv';
+                    a.click();
+                    showToast('CSV exported!');
+                })
+                .catch(function () {
+                    window.open(url + '&token=' + encodeURIComponent(token), '_blank');
+                });
+        }
+
+        function exportText() {
+            var date = document.getElementById('reportDate').value;
+            var includePast = document.getElementById('includePastCheckbox')?.checked || false;
+            var url = API_URL + '/reports/export/text/' + date + (includePast ? '?include_past=true' : '');
+            fetch(url, { headers: { 'Authorization': 'Bearer ' + token } })
+                .then(function (res) { return res.text(); })
+                .then(function (text) {
+                    var w = window.open('', '_blank');
+                    w.document.write('<pre>' + text + '</pre>');
+                    w.document.close();
+                    showToast('Text exported!');
+                })
+                .catch(function () {
+                    window.open(url + '&token=' + encodeURIComponent(token), '_blank');
+                });
+        }
+
+        function printReport() {
+            var date = document.getElementById('reportDate').value;
+            var includePast = document.getElementById('includePastCheckbox')?.checked || false;
+            var url = API_URL + '/reports/export/print/' + date + (includePast ? '?include_past=true' : '');
+            fetch(url, { headers: { 'Authorization': 'Bearer ' + token } })
+                .then(function (res) { return res.text(); })
+                .then(function (html) {
+                    var w = window.open('', '_blank');
+                    w.document.write(html);
+                    w.document.close();
+                    setTimeout(function () { w.print(); }, 1000);
+                    showToast('Print report opened!');
+                })
+                .catch(function () {
+                    window.open(url + '&token=' + encodeURIComponent(token), '_blank');
+                });
+        }
+
+        function exportAllTransactions() {
+            var includePast = document.getElementById('includePastCheckbox')?.checked || false;
+            var url = API_URL + '/transactions/export/csv' + (includePast ? '?include_past=true' : '');
+            fetch(url, { headers: { 'Authorization': 'Bearer ' + token } })
+                .then(function (res) { return res.blob(); })
+                .then(function (blob) {
+                    var a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = 'transactions_all' + (includePast ? '_with_past' : '') + '.csv';
+                    a.click();
+                    showToast('All transactions exported!');
+                })
+                .catch(function () {
+                    window.open(url + '&token=' + encodeURIComponent(token), '_blank');
+                });
+        }
+
+        function showToast(message, type) {
+            type = type || 'success';
+            var toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(function () { if (toast.parentNode) toast.remove(); }, 3000);
+        }
+    </script>
+</body>
+
+</html>

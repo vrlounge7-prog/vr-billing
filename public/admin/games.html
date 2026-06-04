@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Games & Services</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            background: transparent
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px
+        }
+
+        .page-header h2 {
+            color: #333
+        }
+
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px
+        }
+
+        .stat-box {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05)
+        }
+
+        .stat-box .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea
+        }
+
+        .stat-box .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            margin-top: 5px
+        }
+
+        button {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all .2s
+        }
+
+        button:hover {
+            opacity: .9;
+            transform: translateY(-1px)
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white
+        }
+
+        .btn-sm {
+            padding: 5px 12px;
+            font-size: 12px
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05)
+        }
+
+        th {
+            padding: 14px 12px;
+            text-align: left;
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #e0e0e0;
+            font-size: 13px
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+            color: #333
+        }
+
+        tr:hover {
+            background: #f8f9ff
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-block
+        }
+
+        .badge-success {
+            background: #d4edda;
+            color: #155724
+        }
+
+        .badge-danger {
+            background: #f8d7da;
+            color: #721c24
+        }
+
+        .badge-purple {
+            background: #e8d5f5;
+            color: #6f42c1
+        }
+
+        .badge-info {
+            background: #d1ecf1;
+            color: #0c5460
+        }
+
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, .6);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center
+        }
+
+        .modal-overlay.active {
+            display: flex
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            width: 550px;
+            max-width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, .3)
+        }
+
+        .modal-content h3 {
+            margin-bottom: 20px;
+            color: #333
+        }
+
+        .form-group {
+            margin-bottom: 15px
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+            font-size: 13px
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px
+        }
+
+        .info-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: flex-end
+        }
+
+        .error-text {
+            color: #dc3545;
+            font-size: 12px;
+            display: none
+        }
+
+        .error-text.show {
+            display: block
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 500;
+            z-index: 9999;
+            animation: slideIn .4s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .2)
+        }
+
+        .toast.success {
+            background: #28a745
+        }
+
+        .toast.error {
+            background: #dc3545
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page-header">
+        <div>
+            <h2>🎮 Games & Services</h2>
+            <p>Manage pricing and duration-based services</p>
+        </div><button class="btn-success" onclick="showAddForm()">➕ Add Game</button>
+    </div>
+    <div class="stats-bar" id="statsBar"></div>
+    <div style="overflow-x:auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Service</th>
+                    <th>Platform</th>
+                    <th>Duration/Qty</th>
+                    <th>Price (KES)</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr>
+                    <td colspan="7" style="text-align:center;padding:40px;color:#999;">Loading...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="modal-overlay" id="gameModal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Add Game</h3>
+            <div class="error-text" id="modalError"></div>
+            <div class="form-group">
+                <label>Category *</label>
+                <select id="gcategory" onchange="togglePlatformField()">
+                    <option value="VR">VR Experience</option>
+                    <option value="PlayStation">PlayStation (PS4/PS5)</option>
+                    <option value="Game Lounge">Game Lounge (Pool, Darts, Foosball)</option>
+                    <option value="Race Simulator">Race Simulator</option>
+                    <option value="Paintball">Paintball</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Service Name *</label>
+                    <input type="text" id="gsubcat" placeholder="e.g., Gaming Session">
+                </div>
+                <div class="form-group" id="platformGroup">
+                    <label>Platform *</label>
+                    <select id="gplatform">
+                        <option value="PS5">PS5</option>
+                        <option value="PS4">PS4</option>
+                    </select>
+                    <div class="info-text">Select PlayStation console type</div>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Pricing Type</label>
+                    <select id="gpricingType" onchange="togglePricingFields()">
+                        <option value="time">Time-based (per minute)</option>
+                        <option value="fixed">Fixed Price</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Default Duration (minutes)</label>
+                    <input type="number" id="gduration" placeholder="e.g., 30" value="30">
+                </div>
+            </div>
+            <div id="timeBasedFields">
+                <div class="form-group">
+                    <label>Base Price (KES) *</label>
+                    <input type="number" id="gprice" placeholder="e.g., 100">
+                    <div class="info-text">Price for the default duration period</div>
+                </div>
+                <div class="form-group">
+                    <label>Price Per Minute (calculated)</label>
+                    <input type="text" id="gpricePerMin" readonly style="background:#f0f0f0;">
+                </div>
+            </div>
+            <div id="fixedPriceFields" style="display:none;">
+                <div class="form-group">
+                    <label>Fixed Price (KES) *</label>
+                    <input type="number" id="gfixedPrice" placeholder="e.g., 300">
+                </div>
+                <div class="form-group">
+                    <label>Quantity/Description</label>
+                    <input type="text" id="gfixedQty" placeholder="e.g., 20 shots, 1 game">
+                </div>
+            </div>
+            <div id="editOnlyFields" style="display:none;">
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="gstatus">
+                        <option value="1">Active</option>
+                        <option value="0">Inactive</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-danger" onclick="closeModal()">Cancel</button>
+                <button class="btn-success" onclick="saveGame()">💾 Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        if (window.parent === window) { window.location.href = '/dashboard.html'; }
+        var API_URL = '/api', token = new URLSearchParams(window.location.search).get('token') || sessionStorage.getItem('token') || (window.parent && window.parent.token) || '', allGames = [], editingId = null;
+        if (token) { sessionStorage.setItem('token', token); }
+        loadGames();
+
+        function togglePlatformField() {
+            var category = document.getElementById('gcategory').value;
+            var platformGroup = document.getElementById('platformGroup');
+            if (category === 'PlayStation') {
+                platformGroup.style.display = 'block';
+            } else {
+                platformGroup.style.display = 'none';
+            }
+            togglePricingFields();
+        }
+
+        function togglePricingFields() {
+            var category = document.getElementById('gcategory').value;
+            var pricingType = document.getElementById('gpricingType').value;
+            var isPaintball = category === 'Paintball';
+            
+            if (isPaintball || pricingType === 'fixed') {
+                document.getElementById('timeBasedFields').style.display = 'none';
+                document.getElementById('fixedPriceFields').style.display = 'block';
+            } else {
+                document.getElementById('timeBasedFields').style.display = 'block';
+                document.getElementById('fixedPriceFields').style.display = 'none';
+            }
+            
+            updatePricePerMin();
+        }
+        
+        function updatePricePerMin() {
+            var duration = parseInt(document.getElementById('gduration').value) || 0;
+            var price = parseInt(document.getElementById('gprice').value) || 0;
+            var pricePerMin = document.getElementById('gpricePerMin');
+            
+            if (duration > 0 && price > 0) {
+                var perMin = price / duration;
+                pricePerMin.value = 'KES ' + perMin.toFixed(2) + ' per minute';
+            } else {
+                pricePerMin.value = 'Enter duration and price to calculate';
+            }
+        }
+        
+        document.getElementById('gduration').addEventListener('input', updatePricePerMin);
+        document.getElementById('gprice').addEventListener('input', updatePricePerMin);
+
+        async function loadGames() { 
+            try { 
+                var response = await fetch(API_URL + '/games/all', { headers: { 'Authorization': 'Bearer ' + token } }); 
+                allGames = await response.json(); 
+                renderTable(); 
+                updateStats(); 
+            } catch (e) { console.error(e); } 
+        }
+        
+        function updateStats() { 
+            var total = allGames.length, 
+                active = allGames.filter(function (g) { return g.is_active }).length, 
+                categories = new Set(allGames.map(function (g) { return g.category })).size;
+            
+            document.getElementById('statsBar').innerHTML = 
+                '<div class="stat-box"><div class="stat-value">' + total + '</div><div class="stat-label">Total Games</div></div>' +
+                '<div class="stat-box"><div class="stat-value">' + active + '</div><div class="stat-label">Active</div></div>' +
+                '<div class="stat-box"><div class="stat-value">' + categories + '</div><div class="stat-label">Categories</div></div>';
+        }
+        
+        function renderTable() { 
+            document.getElementById('tableBody').innerHTML = allGames.length ? allGames.map(function (game) {
+                var platformText = game.platform ? '<span class="badge badge-warning">' + game.platform + '</span>' : '-';
+                var statusBadge = game.is_active ? 'badge-success' : 'badge-danger';
+                var statusText = game.is_active ? 'Active' : 'Inactive';
+                
+                return '<tr>' +
+                    '<td><span class="badge badge-purple">' + escapeHtml(game.category) + '</span></td>' +
+                    '<td><strong>' + escapeHtml(game.sub_category) + '</strong></td>' +
+                    '<td>' + platformText + '</td>' +
+                    '<td>' + escapeHtml(game.duration_or_quantity || '-') + '</td>' +
+                    '<td><strong>KES ' + (game.price_ksh || 0).toLocaleString() + '</strong></td>' +
+                    '<td><span class="badge ' + statusBadge + '">' + statusText + '</span></td>' +
+                    '<td><button class="btn-primary btn-sm" onclick="showEditForm(\'' + game.id + '\')">✏️ Edit</button> <button class="btn-danger btn-sm" onclick="deleteGame(\'' + game.id + '\')">🗑️ Delete</button></td>' +
+                    '</tr>';
+            }).join('') : '<tr><td colspan="7" style="text-align:center;padding:40px;color:#999;">No games found</td></tr>'; 
+        }
+        
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+        
+        function showAddForm() { 
+            editingId = null; 
+            document.getElementById('modalTitle').textContent = '➕ Add Game'; 
+            document.getElementById('editOnlyFields').style.display = 'none'; 
+            document.getElementById('modalError').classList.remove('show'); 
+            document.getElementById('gsubcat').value = ''; 
+            document.getElementById('gduration').value = '30'; 
+            document.getElementById('gprice').value = ''; 
+            document.getElementById('gfixedPrice').value = '';
+            document.getElementById('gfixedQty').value = '';
+            document.getElementById('gcategory').value = 'VR'; 
+            document.getElementById('gplatform').value = 'PS5';
+            document.getElementById('gpricingType').value = 'time';
+            togglePlatformField();
+            togglePricingFields();
+            document.getElementById('gameModal').classList.add('active'); 
+        }
+        
+        function showEditForm(id) { 
+            var game = allGames.find(function (g) { return g.id === id }); 
+            if (!game) return; 
+            editingId = id; 
+            document.getElementById('modalTitle').textContent = '✏️ Edit Game'; 
+            document.getElementById('editOnlyFields').style.display = ''; 
+            document.getElementById('modalError').classList.remove('show'); 
+            document.getElementById('gcategory').value = game.category; 
+            document.getElementById('gsubcat').value = game.sub_category; 
+            document.getElementById('gplatform').value = game.platform || 'PS5';
+            document.getElementById('gduration').value = game.duration_or_quantity || '30'; 
+            document.getElementById('gprice').value = game.price_ksh; 
+            document.getElementById('gstatus').value = game.is_active ? '1' : '0';
+            
+            var isFixed = game.category === 'Paintball' || game.is_fixed === 1;
+            if (isFixed) {
+                document.getElementById('gpricingType').value = 'fixed';
+                document.getElementById('gfixedPrice').value = game.price_ksh;
+                document.getElementById('gfixedQty').value = game.duration_or_quantity || '';
+            } else {
+                document.getElementById('gpricingType').value = 'time';
+                document.getElementById('gfixedPrice').value = '';
+                document.getElementById('gfixedQty').value = '';
+            }
+            
+            togglePlatformField();
+            togglePricingFields();
+            updatePricePerMin();
+            document.getElementById('gameModal').classList.add('active'); 
+        }
+        
+        async function saveGame() { 
+            var errorEl = document.getElementById('modalError'); 
+            errorEl.classList.remove('show'); 
+            
+            var category = document.getElementById('gcategory').value; 
+            var subCategory = document.getElementById('gsubcat').value.trim(); 
+            var pricingType = document.getElementById('gpricingType').value;
+            var platform = document.getElementById('gplatform').value;
+            var isPaintball = category === 'Paintball';
+            
+            if (!subCategory) { 
+                errorEl.textContent = 'Service name is required.'; 
+                errorEl.classList.add('show'); 
+                return; 
+            }
+            
+            var durationOrQty = '';
+            var price = 0;
+            var isFixed = 0;
+            
+            if (isPaintball || pricingType === 'fixed') {
+                price = parseInt(document.getElementById('gfixedPrice').value) || 0;
+                var qty = document.getElementById('gfixedQty').value.trim() || '';
+                
+                if (price <= 0) { 
+                    errorEl.textContent = 'Valid price is required for this service.'; 
+                    errorEl.classList.add('show'); 
+                    return; 
+                }
+                
+                durationOrQty = qty || (category === 'Paintball' ? '20 shots' : '1 session');
+                isFixed = 1;
+                
+            } else {
+                var duration = parseInt(document.getElementById('gduration').value) || 0;
+                price = parseInt(document.getElementById('gprice').value) || 0;
+                
+                if (duration <= 0) { 
+                    errorEl.textContent = 'Valid duration is required for time-based service.'; 
+                    errorEl.classList.add('show'); 
+                    return; 
+                }
+                
+                if (price <= 0) { 
+                    errorEl.textContent = 'Valid price is required for time-based service.'; 
+                    errorEl.classList.add('show'); 
+                    return; 
+                }
+                
+                durationOrQty = duration.toString();
+                isFixed = 0;
+            }
+            
+            try { 
+                var response; 
+                var bodyData = { 
+                    category: category, 
+                    sub_category: subCategory, 
+                    duration_or_quantity: durationOrQty, 
+                    price_ksh: price, 
+                    is_active: document.getElementById('gstatus') ? document.getElementById('gstatus').value === '1' : true,
+                    is_fixed: isFixed,
+                    platform: platform
+                };
+                
+                if (editingId) { 
+                    response = await fetch(API_URL + '/games/' + editingId, { 
+                        method: 'PUT', 
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, 
+                        body: JSON.stringify(bodyData)
+                    }); 
+                } else { 
+                    response = await fetch(API_URL + '/games', { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, 
+                        body: JSON.stringify(bodyData)
+                    }); 
+                } 
+                
+                var result = await response.json(); 
+                if (result.success) { 
+                    showToast(editingId ? 'Game updated successfully!' : 'Game created successfully!'); 
+                    closeModal(); 
+                    loadGames(); 
+                } else { 
+                    errorEl.textContent = result.error || 'Save failed'; 
+                    errorEl.classList.add('show'); 
+                } 
+            } catch (error) { 
+                console.error('Save error:', error);
+                errorEl.textContent = 'Connection error: ' + error.message; 
+                errorEl.classList.add('show'); 
+            } 
+        }
+        
+        async function deleteGame(id) { 
+            var game = allGames.find(function (g) { return g.id === id }); 
+            if (!game || !confirm('Delete "' + game.sub_category + '"? This action cannot be undone!')) return; 
+            try { 
+                var response = await fetch(API_URL + '/games/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } }); 
+                var result = await response.json(); 
+                if (result.success) { 
+                    showToast(result.message || 'Game deleted successfully!'); 
+                    loadGames(); 
+                } else { 
+                    showToast(result.error || 'Delete failed', 'error'); 
+                } 
+            } catch (error) { 
+                showToast('Connection error: ' + error.message, 'error'); 
+            } 
+        }
+        
+        function closeModal() { 
+            document.getElementById('gameModal').classList.remove('active'); 
+            editingId = null; 
+        }
+        
+        function showToast(message, type) { 
+            type = type || 'success'; 
+            var toast = document.createElement('div'); 
+            toast.className = 'toast ' + type; 
+            toast.textContent = message; 
+            document.body.appendChild(toast); 
+            setTimeout(function () { if (toast.parentNode) toast.remove(); }, 3000); 
+        }
+        
+        document.getElementById('gameModal').addEventListener('click', function (e) { 
+            if (e.target === this) closeModal(); 
+        });
+        document.addEventListener('keydown', function (e) { 
+            if (e.key === 'Escape') closeModal(); 
+        });
+    </script>
+</body>
+
+</html>

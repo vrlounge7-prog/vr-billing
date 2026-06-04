@@ -1,0 +1,137 @@
+[
+  {
+    "id": "c99c879d-0943-456b-a7d1-dcc6f445446e",
+    "category": "VR Experience Regular",
+    "sub_category": "5 mins",
+    "duration_or_quantity": "5",
+    "price_ksh": 200,
+    "is_active": true,
+    "created_at": "2026-04-29T16:48:48.031Z"
+  },
+  {
+    "id": "7727286c-d40e-4535-8afc-d29910aba6b9",
+    "category": "VR Experience Regular",
+    "sub_category": "15 mins",
+    "duration_or_quantity": "15",
+    "price_ksh": 400,
+    "is_active": true,
+    "created_at": "2026-04-29T16:48:48.031Z"
+  },
+  {
+    "id": "50376a05-b4be-4899-aee4-eddf3b74b97b",
+    "category": "VR Experience Regular",
+    "sub_category": "30 mins",
+    "duration_or_quantity": "30",
+    "price_ksh": 600,
+    "is_active": true,
+    "created_at": "2026-04-29T16:48:48.031Z"
+  },
+  {
+    "id": "a2dd744b-ead6-4c27-8160-482b855d7720",
+    "category": "VR Experience Regular",
+    "sub_category": "60 mins",
+    "duration_or_quantity": "60",
+    "price_ksh": 1000,
+    "is_active": true,
+    "created_at": "2026-04-29T16:48:48.031Z"
+  },
+  {
+    "id": "e879326c-2ffc-43bf-974a-0d128a9624f4",
+    "category": "VR Family Sharing",
+    "sub_category": "2 players 15 mins",
+    "duration_or_quantity": "2p_15",
+    "price_ksh": 550,
+    "is_active": true,
+    "created_at": "2026-04-29T16:48:48.031Z"
+  },
+  {
+    "id": "73217f3c-5bbd-4547-baeb-5241cc811467",
+    "category": "VR Family Sharing",
+    "sub_category": "2 players 30 mins",
+    "duration_or_quantity": "2p_30",
+    "price_ksh": 900,
+    "is_active": true,
+    "created_at": "2026-04-29T16:48:48.031Z"
+  },
+  {
+    "id": "79c159a2-3561-420b-89ae-7772b35a5bd7",
+    "category": "Game Lounge",
+    "sub_category": "Pool 1 game",
+    "duration_or_quantity": "1",
+    "price_ksh": 100,
+    "is_active": true,
+    "created_at": "2026-04-29T16:48:48.031Z"
+  },
+  {
+    "id": "53fe0708-125f-4795-bf5f-e123f7d53680",
+    "category": "Game Lounge",
+    "sub_category": "Darts 30 mins",
+    "duration_or_quantity": "30",
+    "price_ksh": 100,
+    "is_active": true,
+    "created_at": "2026-04-29T16:48:48.031Z"
+  },
+  {
+    "id": "e3c3b322-1441-4fbd-bab7-dabe556dc8ec",
+    "category": "Game Lounge",
+    "sub_category": "Foosball 30 mins",
+    "duration_or_quantity": "30",
+    "price_ksh": 100,
+    "is_active": true,
+    "created_at": "2026-04-29T16:48:48.031Z"
+  },
+  {
+    "id": "105ad3b6-014e-49e5-8b34-f4e9a22ba57a",
+    "category": "Paintball",
+    "sub_category": "Rookie 10 shots",
+    "duration_or_quantity": "10",
+    "price_ksh": 300,
+    "is_active": true,
+    "created_at": "2026-04-29T16:48:48.031Z"
+  },
+  {
+    "id": "093e7b82-12fc-487c-9e72-dc76461b61a7",
+    "category": "Paintball",
+    "sub_category": "Soldier 20 shots",
+    "duration_or_quantity": "20",
+    "price_ksh": 500,
+    "is_active": true,
+    "created_at": "2026-04-29T16:48:48.031Z"
+  },
+  {
+    "id": "61515584-6e55-407d-8446-b1e2fcbe443b",
+    "category": "Paintball",
+    "sub_category": "Sergeant 40 shots",
+    "duration_or_quantity": "40",
+    "price_ksh": 800,
+    "is_active": true,
+    "created_at": "2026-04-29T16:48:48.031Z"
+  },
+  {
+    "id": "1ba620df-0fe7-4d5d-a421-f3f57ff3000a",
+    "category": "Game Lounge",
+    "sub_category": "PS5 30 mins",
+    "duration_or_quantity": "30",
+    "price_ksh": 100,
+    "is_active": true,
+    "created_at": "2026-04-30T10:50:23.947Z"
+  },
+  {
+    "id": "15116cd6-3f11-46bd-81d9-18bb07a61213",
+    "category": "Game Lounge",
+    "sub_category": "PS4 30 mins",
+    "duration_or_quantity": "30",
+    "price_ksh": 100,
+    "is_active": true,
+    "created_at": "2026-04-30T10:53:30.561Z"
+  },
+  {
+    "id": "9f24a42e-a020-47c5-bbb5-a33fbbd8087d",
+    "category": "Game Lounge",
+    "sub_category": "PS5",
+    "duration_or_quantity": "1 hour 60",
+    "price_ksh": 200,
+    "is_active": true,
+    "created_at": "2026-05-09T08:39:43.525Z"
+  }
+]

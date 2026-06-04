@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#667eea">
+    <title>VR BILLING - Admin Dashboard</title>
+    <link rel="shortcut icon" href="/favicon.ico" type="image/png">
+    <link rel="manifest" href="/manifest.json">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh
+        }
+
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: white;
+            padding: 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.2)
+        }
+
+        .sidebar-logo {
+            text-align: center;
+            padding: 25px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.2)
+        }
+
+        .sidebar-logo img {
+            width: 45%;
+            height: auto;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            margin-bottom: 5px
+        }
+
+        .sidebar-logo .logo-fallback {
+            display: none;
+            font-size: 48px;
+            margin-bottom: 5px
+        }
+
+        .sidebar-logo h3 {
+            margin: 10px 0 5px;
+            font-size: 18px
+        }
+
+        .sidebar-logo p {
+            font-size: 11px;
+            opacity: 0.7;
+            letter-spacing: 2px;
+            text-transform: uppercase
+        }
+
+        .nav-section {
+            padding: 15px 20px 5px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: rgba(255, 255, 255, 0.4);
+            font-weight: 600
+        }
+
+        .nav-item {
+            padding: 14px 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 4px solid transparent;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 15px;
+            text-decoration: none
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: white
+        }
+
+        .nav-item.active {
+            background: rgba(102, 126, 234, 0.2);
+            border-left-color: #667eea;
+            color: white;
+            font-weight: 600
+        }
+
+        .nav-item .nav-icon {
+            font-size: 20px;
+            width: 30px;
+            text-align: center
+        }
+
+        .nav-item.logout-item {
+            margin-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ff6b6b
+        }
+
+        .nav-item.logout-item:hover {
+            background: rgba(255, 107, 107, 0.2);
+            border-left-color: #ff6b6b
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 25px;
+            min-height: 100vh
+        }
+
+        .header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08)
+        }
+
+        .header h2 {
+            color: #333;
+            font-size: 24px
+        }
+
+        .admin-info {
+            display: flex;
+            align-items: center;
+            gap: 15px
+        }
+
+        .admin-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 20px
+        }
+
+        .admin-name {
+            font-weight: 600;
+            color: #333
+        }
+
+        .admin-role {
+            font-size: 12px;
+            color: #666
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s;
+            cursor: pointer
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12)
+        }
+
+        .stat-card .stat-icon {
+            font-size: 40px;
+            margin-bottom: 10px
+        }
+
+        .stat-card h3 {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+            text-transform: uppercase
+        }
+
+        .stat-card .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text
+        }
+
+        .section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08)
+        }
+
+        .section h3 {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            color: #333
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px
+        }
+
+        .quick-action-btn {
+            padding: 25px 20px;
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px
+        }
+
+        .quick-action-btn:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+            transform: translateY(-3px)
+        }
+
+        .quick-action-btn .action-icon {
+            font-size: 36px;
+            margin-bottom: 10px;
+            display: block
+        }
+
+        .content-frame {
+            width: 100%;
+            min-height: 600px;
+            border: none;
+            border-radius: 15px;
+            background: transparent
+        }
+
+        .loading-frame {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 400px;
+            color: #666;
+            font-size: 16px;
+        }
+
+        @media(max-width:768px) {
+            .sidebar {
+                width: 70px
+            }
+
+            .sidebar .nav-text,
+            .sidebar-logo p,
+            .nav-section,
+            .sidebar-logo h3 {
+                display: none
+            }
+
+            .main-content {
+                margin-left: 70px;
+                padding: 15px
+            }
+
+            .nav-item {
+                justify-content: center;
+                padding: 14px 10px
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+            
+            .stat-card {
+                padding: 15px;
+            }
+            
+            .stat-card .stat-value {
+                font-size: 24px;
+            }
+            
+            .quick-actions {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            
+            .quick-action-btn {
+                padding: 15px 10px;
+            }
+            
+            .quick-action-btn .action-icon {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <div class="sidebar">
+            <div class="sidebar-logo"><img src="/logo.png" alt="VR Billing Logo"
+                    onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+                <div class="logo-fallback">🎮</div>
+                <h3>VR BILLING</h3>
+                <p>Admin Panel</p>
+            </div>
+            <div class="nav-section">Main Menu</div>
+            <a class="nav-item active" data-page="dashboard" onclick="navigateTo('dashboard', this)"><span
+                    class="nav-icon">📊</span><span class="nav-text">Dashboard</span></a>
+            <a class="nav-item" data-page="transactions" onclick="navigateTo('transactions', this)"><span
+                    class="nav-icon">💰</span><span class="nav-text">Transactions</span></a>
+            <a class="nav-item" data-page="accounts" onclick="navigateTo('accounts', this)"><span
+                    class="nav-icon">👥</span><span class="nav-text">User Accounts</span></a>
+            <div class="nav-section">Management</div>
+            <a class="nav-item" data-page="games" onclick="navigateTo('games', this)"><span
+                    class="nav-icon">🎮</span><span class="nav-text">Games & Services</span></a>
+            <a class="nav-item" data-page="stations" onclick="navigateTo('stations', this)"><span
+                    class="nav-icon">🖥️</span><span class="nav-text">Stations</span></a>
+            <a class="nav-item" data-page="inventory" onclick="navigateTo('inventory', this)"><span
+                    class="nav-icon">📦</span><span class="nav-text">Inventory</span></a>
+            <div class="nav-section">Reports & Logs</div>
+            <a class="nav-item" data-page="reports" onclick="navigateTo('reports', this)"><span
+                    class="nav-icon">📈</span><span class="nav-text">Reports</span></a>
+            <a class="nav-item" data-page="past-transactions" onclick="navigateTo('past-transactions', this)"><span
+                    class="nav-icon">📝</span><span class="nav-text">Past Transactions</span></a>
+            <a class="nav-item" data-page="audit" onclick="navigateTo('audit', this)"><span
+                    class="nav-icon">🔒</span><span class="nav-text">Audit Logs</span></a>
+            <div class="nav-section">System</div>
+            <a class="nav-item" data-page="settings" onclick="navigateTo('settings', this)"><span
+                    class="nav-icon">⚙️</span><span class="nav-text">Settings</span></a>
+            <a class="nav-item logout-item" onclick="handleLogout()"><span class="nav-icon">⏻</span><span
+                    class="nav-text">Logout</span></a>
+        </div>
+        <div class="main-content">
+            <div class="header">
+                <h2 id="pageTitle">📊 Dashboard</h2>
+                <div class="admin-info">
+                    <div>
+                        <div class="admin-name" id="adminName">Admin</div>
+                        <div class="admin-role">Administrator</div>
+                    </div>
+                    <div class="admin-avatar" id="adminAvatar">A</div>
+                </div>
+            </div>
+            <div id="contentArea"></div>
+        </div>
+    </div>
+
+    <script>
+        // ===== SESSION STORAGE =====
+        var token = sessionStorage.getItem('token');
+        var user = {};
+        try { user = JSON.parse(sessionStorage.getItem('user') || '{}') } catch (e) { user = {} }
+        if (!token) { window.location.href = '/' }
+
+        // Track current page and iframe
+        var currentPage = 'dashboard';
+        var contentFrame = null;
+
+        // END SESSION ON TAB/WINDOW CLOSE
+        window.addEventListener('beforeunload', function () { if (token) { navigator.sendBeacon('/api/logout', JSON.stringify({})) } });
+        window.addEventListener('unload', function () { if (token) { navigator.sendBeacon('/api/logout', JSON.stringify({})) } });
+        window.addEventListener('pagehide', function () { if (token) { navigator.sendBeacon('/api/logout', JSON.stringify({})) } });
+
+        function initDashboard() {
+            if (token && user && user.role === 'admin') {
+                setupDashboard();
+            } else if (token) {
+                fetch('/api/verify-token', { headers: { 'Authorization': 'Bearer ' + token } })
+                    .then(function (res) { return res.json() })
+                    .then(function (data) {
+                        if (data.valid && data.user && data.user.role === 'admin') {
+                            user = data.user;
+                            sessionStorage.setItem('user', JSON.stringify(data.user));
+                            setupDashboard();
+                        } else {
+                            window.location.href = '/'
+                        }
+                    })
+                    .catch(function () {
+                        setupDashboard();
+                    });
+            } else {
+                window.location.href = '/';
+            }
+        }
+
+        function setupDashboard() {
+            window.token = token; 
+            window.user = user; 
+            sessionStorage.setItem('token', token);
+            var nameElem = document.getElementById('adminName');
+            var avatarElem = document.getElementById('adminAvatar');
+            if (nameElem) nameElem.textContent = user.full_name || 'Admin';
+            if (avatarElem) avatarElem.textContent = (user.full_name || 'A').charAt(0).toUpperCase();
+            showDashboardHome();
+        }
+
+        // ============ FIXED: Navigate with cache-busting timestamp ============
+        function navigateTo(page, navItem) {
+            document.querySelectorAll('.nav-item').forEach(function (i) { i.classList.remove('active') });
+            if (navItem) navItem.classList.add('active');
+            
+            currentPage = page;
+            
+            var titles = { 
+                'dashboard': '📊 Dashboard', 
+                'transactions': '💰 Transactions', 
+                'accounts': '👥 User Accounts', 
+                'games': '🎮 Games & Services', 
+                'stations': '🖥️ Stations', 
+                'inventory': '📦 Inventory', 
+                'reports': '📈 Reports', 
+                'past-transactions': '📝 Past Transactions', 
+                'audit': '🔒 Audit Logs', 
+                'settings': '⚙️ Settings' 
+            };
+            var titleElem = document.getElementById('pageTitle');
+            if (titleElem) titleElem.textContent = titles[page] || page;
+
+            if (page === 'dashboard') {
+                showDashboardHome();
+            } else {
+                var contentArea = document.getElementById('contentArea');
+                if (contentArea) {
+                    contentArea.innerHTML = '<div class="loading-frame">Loading ' + titles[page] + '...</div>';
+                    setTimeout(function() {
+                        // Add timestamp to force fresh load every time
+                        var timestamp = new Date().getTime();
+                        contentArea.innerHTML = '<iframe src="/admin/' + page + '.html?token=' + encodeURIComponent(token) + '&t=' + timestamp + '" class="content-frame" id="contentFrame" onload="resizeIframe(this)"></iframe>';
+                    }, 50);
+                }
+            }
+        }
+
+        function resizeIframe(iframe) { 
+            try { 
+                var h = iframe.contentWindow.document.body.scrollHeight; 
+                iframe.style.height = Math.max(h + 50, 600) + 'px'; 
+            } catch (e) { 
+                iframe.style.height = '700px'; 
+            } 
+        }
+
+        // ============ FIXED: Refresh current iframe when tab is clicked again ============
+        function refreshCurrentPage() {
+            if (currentPage === 'dashboard') {
+                showDashboardHome();
+                return;
+            }
+            
+            var contentArea = document.getElementById('contentArea');
+            if (contentArea) {
+                var timestamp = new Date().getTime();
+                contentArea.innerHTML = '<iframe src="/admin/' + currentPage + '.html?token=' + encodeURIComponent(token) + '&t=' + timestamp + '" class="content-frame" id="contentFrame" onload="resizeIframe(this)"></iframe>';
+            }
+        }
+
+        function showDashboardHome() {
+            currentPage = 'dashboard';
+            var contentArea = document.getElementById('contentArea');
+            if (contentArea) {
+                contentArea.innerHTML = '<div class="stats-grid"><div class="stat-card" onclick="navigateTo(\'transactions\')"><div class="stat-icon">💰</div><h3>Transactions</h3><div class="stat-value">View</div></div><div class="stat-card" onclick="navigateTo(\'accounts\')"><div class="stat-icon">👥</div><h3>Users</h3><div class="stat-value" id="userCount">-</div></div><div class="stat-card" onclick="navigateTo(\'games\')"><div class="stat-icon">🎮</div><h3>Games</h3><div class="stat-value" id="gameCount">-</div></div><div class="stat-card" onclick="navigateTo(\'stations\')"><div class="stat-icon">🖥️</div><h3>Stations</h3><div class="stat-value" id="stationCount">-</div></div></div><div class="section"><h3>Quick Actions</h3><div class="quick-actions"><button class="quick-action-btn" onclick="navigateTo(\'transactions\')"><span class="action-icon">💰</span>Transactions</button><button class="quick-action-btn" onclick="navigateTo(\'accounts\')"><span class="action-icon">👥</span>Users</button><button class="quick-action-btn" onclick="navigateTo(\'games\')"><span class="action-icon">🎮</span>Games</button><button class="quick-action-btn" onclick="navigateTo(\'stations\')"><span class="action-icon">🖥️</span>Stations</button><button class="quick-action-btn" onclick="navigateTo(\'reports\')"><span class="action-icon">📈</span>Reports</button><button class="quick-action-btn" onclick="navigateTo(\'audit\')"><span class="action-icon">🔒</span>Audit</button></div></div><div class="section"><h3>System Status</h3><p>Status: <span style="color:#28a745;font-weight:bold;">● Online</span></p><p>Logged in as: ' + (user.full_name || 'Admin') + '</p><p>Version: 2.0.0</p><p>Database: SQLite3</p></div>';
+                loadDashboardStats();
+            }
+        }
+
+        async function loadDashboardStats() {
+            try {
+                var headers = { 'Authorization': 'Bearer ' + token };
+                var responses = await Promise.all([
+                    fetch('/api/users', { headers: headers }), 
+                    fetch('/api/games/all', { headers: headers }), 
+                    fetch('/api/stations/all', { headers: headers })
+                ]);
+                var users = await responses[0].json(); 
+                var games = await responses[1].json(); 
+                var stations = await responses[2].json();
+                var ue = document.getElementById('userCount'); 
+                var ge = document.getElementById('gameCount'); 
+                var se = document.getElementById('stationCount');
+                if (ue) ue.textContent = users ? users.length : '0'; 
+                if (ge) ge.textContent = games ? games.length : '0'; 
+                if (se) se.textContent = stations ? stations.length : '0';
+            } catch (e) { 
+                console.error('Stats error:', e);
+                var ue = document.getElementById('userCount'); 
+                var ge = document.getElementById('gameCount'); 
+                var se = document.getElementById('stationCount');
+                if (ue) ue.textContent = '?'; 
+                if (ge) ge.textContent = '?'; 
+                if (se) se.textContent = '?';
+            }
+        }
+
+        async function handleLogout() {
+            if (!confirm('Are you sure you want to logout?')) return;
+            try { await fetch('/api/logout', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } }) } catch (e) { }
+            sessionStorage.clear();
+            window.location.href = '/';
+        }
+
+        // ============ AUTO-REFRESH: Listen for messages from iframes ============
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'REFRESH_TRANSACTIONS') {
+                console.log('Received refresh request from transactions iframe');
+                if (currentPage === 'transactions') {
+                    refreshCurrentPage();
+                }
+            }
+        });
+
+        // Make functions global
+        window.navigateTo = navigateTo;
+        window.handleLogout = handleLogout;
+        window.resizeIframe = resizeIframe;
+        window.refreshCurrentPage = refreshCurrentPage;
+
+        initDashboard();
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js');
+        }
+    </script>
+</body>
+
+</html>

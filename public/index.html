@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#667eea">
+    <title>VR BILLING - Login</title>
+    <link rel="shortcut icon" href="/favicon.ico" type="image/png">
+    <link rel="manifest" href="/manifest.json">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            width: 420px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3)
+        }
+
+        .logo img {
+            width: 120px;
+            height: auto;
+            margin-bottom: 10px;
+            border-radius: 15px
+        }
+
+        .logo .logo-fallback {
+            display: none;
+            font-size: 64px;
+            margin-bottom: 10px
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 5px;
+            font-size: 28px
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 25px
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 600;
+            font-size: 13px
+        }
+
+        .password-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .password-container input {
+            flex: 1;
+            padding-right: 45px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 0;
+            width: auto;
+            color: #667eea;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 5px
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4)
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none
+        }
+
+        .error {
+            color: #dc3545;
+            margin-top: 15px;
+            font-size: 14px;
+            display: none
+        }
+
+        .error.show {
+            display: block
+        }
+
+        .credentials {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            font-size: 12px;
+            color: #666;
+            text-align: left;
+            line-height: 1.8
+        }
+
+        .credentials strong {
+            color: #333
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg)
+            }
+        }
+
+        .role-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px
+        }
+
+        .role-tab {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            background: #f8f9fa;
+            color: #666;
+            transition: all 0.3s
+        }
+
+        .role-tab.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea
+        }
+
+        .role-tab:hover:not(.active) {
+            border-color: #667eea
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <img src="/logo.png" alt="VR Billing Logo"
+                onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+            <div class="logo-fallback">🎮</div>
+            <h1>VR BILLING</h1>
+            <p class="subtitle">Awaken your inner child Magic</p>
+        </div>
+
+        <div class="role-tabs">
+            <div class="role-tab active" onclick="selectRole('admin', this)">👑 Admin</div>
+            <div class="role-tab" onclick="selectRole('cashier', this)">💵 Cashier</div>
+        </div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label id="roleLabel">Admin Username</label>
+                <input type="text" id="username" placeholder="Enter username" required autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <div class="password-container">
+                    <input type="password" id="password" placeholder="Enter password" required
+                        autocomplete="current-password">
+                    <button type="button" class="toggle-password" onclick="togglePasswordVisibility()" tabindex="-1">
+                        👁️
+                    </button>
+                </div>
+            </div>
+            <button type="button" id="loginBtn">🔐 Login as Admin</button>
+        </form>
+
+        <div id="error" class="error"></div>
+
+        <!--<div class="credentials">
+            <strong>Demo Credentials:</strong><br>
+            👑 Admin: username: <strong>admin</strong> | password: <strong>Admin@2026!</strong><br>
+            💵 Cashier: username: <strong>cashier</strong> | password: <strong>Cashier@2026!</strong>
+        </div>-->
+    </div>
+
+    <script>
+        (function () {
+            var API_URL = '/api';
+            var selectedRole = 'admin';
+
+            window.togglePasswordVisibility = function () {
+                var passwordInput = document.getElementById('password');
+                var toggleBtn = document.querySelector('.toggle-password');
+
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    toggleBtn.textContent = '🙈';
+                } else {
+                    passwordInput.type = 'password';
+                    toggleBtn.textContent = '👁️';
+                }
+            };
+
+            window.selectRole = function (role, tab) {
+                selectedRole = role;
+                document.querySelectorAll('.role-tab').forEach(function (t) { t.classList.remove('active') });
+                tab.classList.add('active');
+                document.getElementById('roleLabel').textContent = role === 'admin' ? 'Admin Username' : 'Cashier Username';
+                document.getElementById('loginBtn').textContent = '🔐 Login as ' + (role === 'admin' ? 'Admin' : 'Cashier');
+                document.getElementById('username').placeholder = 'Enter ' + (role === 'admin' ? 'admin' : 'cashier') + ' username';
+
+                document.getElementById('password').value = '';
+                document.getElementById('error').classList.remove('show');
+            };
+
+            document.getElementById('loginBtn').addEventListener('click', async function () {
+                var username = document.getElementById('username').value.trim();
+                var password = document.getElementById('password').value;
+                var errorDiv = document.getElementById('error');
+                var loginBtn = document.getElementById('loginBtn');
+
+                errorDiv.classList.remove('show');
+                if (!username || !password) {
+                    errorDiv.textContent = 'Please enter both username and password.';
+                    errorDiv.classList.add('show');
+                    return;
+                }
+
+                loginBtn.disabled = true;
+                loginBtn.innerHTML = '<span class="spinner"></span> Logging in...';
+
+                try {
+                    var response = await fetch(API_URL + '/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: username, password: password })
+                    });
+                    var data = await response.json();
+
+                    if (response.ok && data.success) {
+                        if (data.user.role !== selectedRole) {
+                            if (selectedRole === 'cashier' && data.user.role === 'admin') {
+                                errorDiv.textContent = 'This is an Admin account. Please select "Admin" tab to login.';
+                            } else {
+                                errorDiv.textContent = 'This is a Cashier account. Please select "Cashier" tab to login.';
+                            }
+                            errorDiv.classList.add('show');
+                            loginBtn.disabled = false;
+                            loginBtn.innerHTML = '🔐 Login as ' + (selectedRole === 'admin' ? 'Admin' : 'Cashier');
+                            return;
+                        }
+
+                        sessionStorage.setItem('token', data.token);
+                        sessionStorage.setItem('user', JSON.stringify(data.user));
+
+                        if (data.user.role === 'admin') {
+                            window.location.href = '/dashboard.html';
+                        } else {
+                            window.location.href = '/cashier.html';
+                        }
+                    } else {
+                        errorDiv.textContent = data.error || 'Login failed.';
+                        errorDiv.classList.add('show');
+                        loginBtn.disabled = false;
+                        loginBtn.innerHTML = '🔐 Login as ' + (selectedRole === 'admin' ? 'Admin' : 'Cashier');
+                    }
+                } catch (err) {
+                    errorDiv.textContent = 'Connection error. Make sure the server is running.';
+                    errorDiv.classList.add('show');
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = '🔐 Login as ' + (selectedRole === 'admin' ? 'Admin' : 'Cashier');
+                }
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') document.getElementById('loginBtn').click();
+            });
+
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/sw.js');
+            }
+        })();
+    </script>
+</body>
+
+</html>

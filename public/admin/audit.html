@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Logs</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            background: transparent
+        }
+
+        .page-header {
+            margin-bottom: 20px
+        }
+
+        .page-header h2 {
+            color: #333;
+            margin-bottom: 5px
+        }
+
+        .page-header p {
+            color: #666;
+            font-size: 14px
+        }
+
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px
+        }
+
+        .stat-box {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05)
+        }
+
+        .stat-box .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea
+        }
+
+        .stat-box .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            margin-top: 5px
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px
+        }
+
+        .filter-bar input,
+        .filter-bar select {
+            padding: 10px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 13px;
+            background: white
+        }
+
+        .filter-bar input:focus,
+        .filter-bar select:focus {
+            outline: none;
+            border-color: #667eea
+        }
+
+        .filter-bar input[type="text"] {
+            flex: 1;
+            min-width: 200px
+        }
+
+        button {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all .2s;
+            white-space: nowrap
+        }
+
+        button:hover {
+            opacity: .9;
+            transform: translateY(-1px)
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white
+        }
+
+        .btn-info {
+            background: #17a2b8;
+            color: white
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #333
+        }
+
+        .btn-sm {
+            padding: 5px 12px;
+            font-size: 11px
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05)
+        }
+
+        th {
+            padding: 14px 12px;
+            text-align: left;
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #e0e0e0;
+            font-size: 13px;
+            white-space: nowrap
+        }
+
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 12px;
+            color: #333
+        }
+
+        tr:hover {
+            background: #f8f9ff
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-block
+        }
+
+        .badge-info {
+            background: #d1ecf1;
+            color: #0c5460
+        }
+
+        .badge-success {
+            background: #d4edda;
+            color: #155724
+        }
+
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404
+        }
+
+        .badge-danger {
+            background: #f8d7da;
+            color: #721c24
+        }
+
+        .badge-purple {
+            background: #e8d5f5;
+            color: #6f42c1
+        }
+
+        .pagination {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            margin-top: 20px
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 500;
+            z-index: 9999;
+            animation: slideIn .4s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .2)
+        }
+
+        .toast.success {
+            background: #28a745
+        }
+
+        .toast.error {
+            background: #dc3545
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1
+            }
+        }
+
+        .checkbox-cell {
+            width: 35px;
+            text-align: center;
+        }
+
+        .checkbox-cell input {
+            width: 15px;
+            height: 15px;
+            cursor: pointer;
+        }
+
+        .actions-bar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 10px 0;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page-header">
+        <h2>🔒 Audit Logs</h2>
+        <p>Track all system activities</p>
+    </div>
+    <div class="stats-bar" id="statsBar"></div>
+    <div class="filter-bar">
+        <input type="text" id="searchInput" placeholder="Search logs..." onkeyup="debounceSearch()">
+        <select id="actionFilter" onchange="applyFilters()">
+            <option value="">All Actions</option>
+        </select>
+        <input type="date" id="dateFrom" title="From date" onchange="applyFilters()">
+        <input type="date" id="dateTo" title="To date" onchange="applyFilters()">
+        <button class="btn-primary" onclick="applyFilters()">🔍 Filter</button>
+        <button class="btn-info" onclick="exportCSV()">📥 Export CSV</button>
+        <button class="btn-danger" onclick="clearFilters()">✕ Clear Filters</button>
+    </div>
+    <div class="actions-bar">
+        <button class="btn-sm btn-primary" onclick="selectAllLogs()">☑️ Select All</button>
+        <button class="btn-sm btn-warning" onclick="deselectAllLogs()">☐ Deselect All</button>
+        <button class="btn-sm btn-danger" onclick="deleteSelectedLogs()">🗑️ Delete Selected</button>
+        <button class="btn-sm btn-danger" onclick="deleteAllFilteredLogs()" style="background:#c82333;">⚠️ Delete All
+            Filtered</button>
+        <span id="selectedLogCount" style="font-size:13px;color:#666;"></span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th class="checkbox-cell"><input type="checkbox" id="selectAllCb"
+                            onchange="toggleSelectAllLogs(this)"></th>
+                    <th>Date/Time</th>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Details</th>
+                    <th>IP Address</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr>
+                    <td colspan="6" class="empty-state">Loading...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="pagination" id="pagination"></div>
+
+    <script>
+        if (window.parent === window) { window.location.href = '/dashboard.html' }
+        var API_URL = '/api',
+            token = new URLSearchParams(window.location.search).get('token') || sessionStorage.getItem('token') || (window.parent && window.parent.token) || '',
+            allLogs = [],
+            filteredLogs = [],
+            currentPage = 1,
+            perPage = 50,
+            searchTimeout,
+            selectedLogs = {};
+        if (token) { sessionStorage.setItem('token', token); }
+        loadData();
+
+        async function loadData() {
+            try {
+                var e = await Promise.all([
+                    fetch(API_URL + '/audit', { headers: { 'Authorization': 'Bearer ' + token } }),
+                    fetch(API_URL + '/audit/actions', { headers: { 'Authorization': 'Bearer ' + token } }),
+                    fetch(API_URL + '/audit/stats', { headers: { 'Authorization': 'Bearer ' + token } })
+                ]);
+                allLogs = await e[0].json();
+                var t = await e[1].json(),
+                    a = await e[2].json(),
+                    o = document.getElementById('actionFilter');
+                o.innerHTML = '<option value="">All Actions</option>';
+                t.forEach(function (e) { o.innerHTML += '<option value="' + e + '">' + e + '</option>' });
+                updateStats(a);
+                applyFilters();
+            } catch (e) { console.error(e); }
+        }
+
+        function updateStats(e) {
+            var t = e.top_actions ? e.top_actions.slice(0, 5).map(function (e) { return '<div style="font-size:11px;margin:3px 0;">' + e.action + ': <strong>' + e.count + '</strong></div>' }).join('') : '';
+            document.getElementById('statsBar').innerHTML = '<div class="stat-box"><div class="stat-value">' + (e.total_logs || 0) + '</div><div class="stat-label">Total Logs</div></div><div class="stat-box"><div class="stat-value">' + (e.today_logs || 0) + '</div><div class="stat-label">Today</div></div><div class="stat-box"><div class="stat-value" style="font-size:14px;">' + t + '</div><div class="stat-label">Top Actions</div></div>';
+        }
+
+        function applyFilters() {
+            filteredLogs = allLogs.slice();
+            var e = document.getElementById('searchInput').value.toLowerCase(),
+                t = document.getElementById('actionFilter').value,
+                a = document.getElementById('dateFrom').value,
+                o = document.getElementById('dateTo').value;
+            e && (filteredLogs = filteredLogs.filter(function (t) { return (t.action || '').toLowerCase().indexOf(e) >= 0 || (t.details || '').toLowerCase().indexOf(e) >= 0 || (t.user_name || '').toLowerCase().indexOf(e) >= 0 }));
+            t && (filteredLogs = filteredLogs.filter(function (e) { return e.action === t }));
+            a && (filteredLogs = filteredLogs.filter(function (e) { return new Date(e.created_at) >= new Date(a) }));
+            o && (function () { var e = new Date(o); e.setHours(23, 59, 59, 999); filteredLogs = filteredLogs.filter(function (t) { return new Date(t.created_at) <= e }) })();
+            selectedLogs = {};
+            currentPage = 1;
+            renderPage();
+        }
+
+        function renderPage() {
+            var e = Math.ceil(filteredLogs.length / perPage),
+                t = (currentPage - 1) * perPage,
+                a = filteredLogs.slice(t, t + perPage),
+                o = { LOGIN_SUCCESS: 'badge-success', LOGIN_FAILED: 'badge-danger', LOGOUT: 'badge-warning', TRANSACTION_CREATED: 'badge-info', PAYMENT_VERIFIED: 'badge-success', TRANSACTION_VOIDED: 'badge-danger', TRANSACTION_DELETED_PERMANENTLY: 'badge-danger', TRANSACTION_ARCHIVED: 'badge-warning', USER_CREATED: 'badge-info', USER_UPDATED: 'badge-warning', USER_DELETED: 'badge-danger', USER_PASSWORD_RESET: 'badge-warning', PASSWORD_CHANGED: 'badge-purple', GAME_CREATED: 'badge-info', GAME_UPDATED: 'badge-warning', GAME_DELETED: 'badge-danger', STATION_CREATED: 'badge-info', STATION_UPDATED: 'badge-warning', STATION_DELETED: 'badge-danger', INVENTORY_ADDED: 'badge-info', INVENTORY_UPDATED: 'badge-warning', INVENTORY_DELETED: 'badge-danger' };
+            document.getElementById('tableBody').innerHTML = a.length ? a.map(function (e) {
+                var checked = selectedLogs[e.id] ? ' checked' : '';
+                return '<tr><td class="checkbox-cell"><input type="checkbox" data-id="' + e.id + '"' + checked + ' onchange="toggleLogSelect(this)"></td><td>' + new Date(e.created_at).toLocaleString() + '</td><td><strong>' + (e.user_name || 'System') + '</strong></td><td><span class="badge ' + (o[e.action] || 'badge-info') + '">' + e.action + '</span></td><td>' + (e.details || '-') + '</td><td style="font-family:monospace;font-size:11px;">' + (e.ip_address || '-') + '</td></tr>';
+            }).join('') : '<tr><td colspan="6" class="empty-state">No audit logs found</td></tr>';
+            document.getElementById('pagination').innerHTML = e > 1 ? '<button class="btn-primary" onclick="goToPage(' + (currentPage - 1) + ')" ' + (currentPage === 1 ? 'disabled' : '') + '>← Prev</button><span style="font-size:14px;">Page ' + currentPage + ' of ' + e + ' (' + filteredLogs.length + ' logs)</span><button class="btn-primary" onclick="goToPage(' + (currentPage + 1) + ')" ' + (currentPage === e ? 'disabled' : '') + '>Next →</button>' : filteredLogs.length > 0 ? '<span style="font-size:14px;color:#666;">Showing ' + filteredLogs.length + ' logs</span>' : '';
+            updateSelectedCount();
+        }
+
+        function goToPage(e) { var t = Math.ceil(filteredLogs.length / perPage); if (e >= 1 && e <= t) { currentPage = e; renderPage(); } }
+
+        function debounceSearch() { clearTimeout(searchTimeout); searchTimeout = setTimeout(applyFilters, 300); }
+
+        function clearFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('actionFilter').value = '';
+            document.getElementById('dateFrom').value = '';
+            document.getElementById('dateTo').value = '';
+            applyFilters();
+            showToast('Filters cleared!', 'success');
+        }
+
+        // ============ LOG SELECTION ============
+        function toggleLogSelect(cb) {
+            var id = cb.getAttribute('data-id');
+            if (cb.checked) { selectedLogs[id] = true; } else { delete selectedLogs[id]; }
+            updateSelectedCount();
+        }
+
+        function toggleSelectAllLogs(mainCb) {
+            var start = (currentPage - 1) * perPage;
+            var pageLogs = filteredLogs.slice(start, start + perPage);
+            if (mainCb.checked) {
+                pageLogs.forEach(function (log) { selectedLogs[log.id] = true; });
+            } else {
+                pageLogs.forEach(function (log) { delete selectedLogs[log.id]; });
+            }
+            renderPage();
+        }
+
+        function selectAllLogs() {
+            filteredLogs.forEach(function (log) { selectedLogs[log.id] = true; });
+            renderPage();
+        }
+
+        function deselectAllLogs() {
+            selectedLogs = {};
+            renderPage();
+        }
+
+        function updateSelectedCount() {
+            var count = Object.keys(selectedLogs).length;
+            document.getElementById('selectedLogCount').textContent = count > 0 ? count + ' selected' : '';
+            var start = (currentPage - 1) * perPage;
+            var pageLogs = filteredLogs.slice(start, start + perPage);
+            var allPageChecked = pageLogs.length > 0 && pageLogs.every(function (log) { return selectedLogs[log.id]; });
+            document.getElementById('selectAllCb').checked = allPageChecked;
+        }
+
+        // ============ DELETE LOGS ============
+        async function deleteSelectedLogs() {
+            var ids = Object.keys(selectedLogs);
+            if (ids.length === 0) { showToast('No logs selected', 'error'); return; }
+            if (!confirm('Delete ' + ids.length + ' selected log(s)?\n\n⚠️ This CANNOT be undone!')) return;
+            try {
+                var password = prompt('🔐 Enter your admin password to delete ' + ids.length + ' log(s):');
+                if (!password) return;
+                for (var i = 0; i < ids.length; i++) {
+                    await fetch(API_URL + '/audit/' + ids[i], {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                        body: JSON.stringify({ adminPassword: password })
+                    });
+                }
+                selectedLogs = {};
+                showToast(ids.length + ' log(s) deleted!', 'success');
+                loadData();
+            } catch (e) { showToast('Error deleting logs', 'error'); }
+        }
+
+        async function deleteAllFilteredLogs() {
+            if (filteredLogs.length === 0) { showToast('No logs to delete', 'error'); return; }
+            if (!confirm('⚠️ Delete ALL ' + filteredLogs.length + ' filtered log(s)?\n\nThis CANNOT be undone!')) return;
+            try {
+                var password = prompt('🔐 Enter your admin password to delete ALL ' + filteredLogs.length + ' logs:');
+                if (!password) return;
+                for (var i = 0; i < filteredLogs.length; i++) {
+                    await fetch(API_URL + '/audit/' + filteredLogs[i].id, {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                        body: JSON.stringify({ adminPassword: password })
+                    });
+                }
+                selectedLogs = {};
+                showToast(filteredLogs.length + ' log(s) deleted!', 'success');
+                loadData();
+            } catch (e) { showToast('Error deleting logs', 'error'); }
+        }
+
+        function exportCSV() {
+            var e = document.getElementById('dateFrom').value,
+                t = document.getElementById('dateTo').value,
+                a = API_URL + '/audit/export/csv',
+                n = [];
+            e && n.push('date_from=' + e);
+            t && n.push('date_to=' + t);
+            n.length && (a += '?' + n.join('&'));
+            fetch(a, { headers: { 'Authorization': 'Bearer ' + token } }).then(function (r) { return r.blob(); }).then(function (b) { var d = document.createElement('a'); d.href = URL.createObjectURL(b); d.download = 'audit_logs.csv'; d.click(); showToast('Audit logs exported!'); }).catch(function () { showToast('Export failed', 'error'); });
+        }
+
+        function showToast(e, t) { t = t || 'success'; var a = document.createElement('div'); a.className = 'toast ' + t; a.textContent = e; document.body.appendChild(a); setTimeout(function () { a.parentNode && a.remove(); }, 3000); }
+    </script>
+</body>
+
+</html>

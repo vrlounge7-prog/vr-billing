@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stations</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            background: transparent
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px
+        }
+
+        .page-header h2 {
+            color: #333
+        }
+
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px
+        }
+
+        .stat-box {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05)
+        }
+
+        .stat-box .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea
+        }
+
+        .stat-box .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            margin-top: 5px
+        }
+
+        button {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all .2s
+        }
+
+        button:hover {
+            opacity: .9;
+            transform: translateY(-1px)
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white
+        }
+
+        .btn-sm {
+            padding: 5px 12px;
+            font-size: 12px
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05)
+        }
+
+        th {
+            padding: 14px 12px;
+            text-align: left;
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #e0e0e0;
+            font-size: 13px;
+            white-space: nowrap
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+            color: #333
+        }
+
+        tr:hover {
+            background: #f8f9ff
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-block
+        }
+
+        .badge-success {
+            background: #d4edda;
+            color: #155724
+        }
+
+        .badge-danger {
+            background: #f8d7da;
+            color: #721c24
+        }
+
+        .badge-info {
+            background: #d1ecf1;
+            color: #0c5460
+        }
+
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404
+        }
+
+        .badge-purple {
+            background: #e8d5f5;
+            color: #6f42c1
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, .6);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center
+        }
+
+        .modal-overlay.active {
+            display: flex
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            width: 500px;
+            max-width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, .3)
+        }
+
+        .modal-content h3 {
+            margin-bottom: 20px;
+            color: #333
+        }
+
+        .form-group {
+            margin-bottom: 15px
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+            font-size: 13px
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px
+        }
+
+        .info-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: flex-end
+        }
+
+        .error-text {
+            color: #dc3545;
+            font-size: 12px;
+            display: none
+        }
+
+        .error-text.show {
+            display: block
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 500;
+            z-index: 9999;
+            animation: slideIn .4s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .2)
+        }
+
+        .toast.success {
+            background: #28a745
+        }
+
+        .toast.error {
+            background: #dc3545
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page-header">
+        <div>
+            <h2>🖥️ Stations</h2>
+            <p>Manage gaming stations and their operating settings</p>
+        </div>
+        <button class="btn-success" onclick="showAddForm()">➕ Add Station</button>
+    </div>
+    <div class="stats-bar" id="statsBar"></div>
+    <div style="overflow-x:auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Number</th>
+                    <th>Setup Time</th>
+                    <th>Status</th>
+                    <th>In Use</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr>
+                    <td colspan="7" style="text-align:center;padding:40px;color:#999;">Loading...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="modal-overlay" id="stationModal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Add Station</h3>
+            <div class="error-text" id="modalError"></div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Station Name *</label>
+                    <input type="text" id="sname" placeholder="e.g., PS5 Station 1">
+                </div>
+                <div class="form-group">
+                    <label>Type *</label>
+                    <select id="stype">
+                        <option value="PS5">PS5</option>
+                        <option value="PS4">PS4</option>
+                        <option value="VR">VR</option>
+                        <option value="Race Simulator">Race Simulator</option>
+                        <option value="Pool">Pool Table</option>
+                        <option value="Foosball">Foosball</option>
+                        <option value="Darts">Darts</option>
+                        <option value="Paintball">Paintball Range</option>
+                    </select>
+                </div>
+            </div>
+            <div id="addOnlyFields">
+                <div class="form-group">
+                    <label>Number</label>
+                    <input type="number" id="snumber" placeholder="Station number">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Setup Time (minutes)</label>
+                <input type="number" id="ssetupTime" value="2" min="0" max="15" step="1">
+                <div class="info-text">Time needed to prepare the station (PS5/PS4: 3 min, Others: 2 min)</div>
+            </div>
+            <div id="editOnlyFields" style="display:none;">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="sstatus">
+                            <option value="1">Active</option>
+                            <option value="0">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>In Use</label>
+                        <select id="sinuse">
+                            <option value="0">Available</option>
+                            <option value="1">In Use</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-danger" onclick="closeModal()">Cancel</button>
+                <button class="btn-success" onclick="saveStation()">💾 Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        if (window.parent === window) { window.location.href = '/dashboard.html'; }
+        var API_URL = '/api', token = new URLSearchParams(window.location.search).get('token') || sessionStorage.getItem('token') || (window.parent && window.parent.token) || '', allStations = [], editingId = null;
+        if (token) { sessionStorage.setItem('token', token); }
+        loadStations();
+
+        async function loadStations() { 
+            try { 
+                var e = await fetch(API_URL + '/stations/all', { headers: { 'Authorization': 'Bearer ' + token } }); 
+                allStations = await e.json(); 
+                renderTable(); 
+                updateStats(); 
+            } catch (e) { console.error(e); } 
+        }
+        
+        function updateStats() { 
+            var e = allStations.length, 
+                t = allStations.filter(function (e) { return e.is_active }).length, 
+                a = allStations.filter(function (e) { return e.in_use }).length,
+                ps5 = allStations.filter(function(s) { return s.station_type === 'PS5' }).length,
+                ps4 = allStations.filter(function(s) { return s.station_type === 'PS4' }).length,
+                vr = allStations.filter(function(s) { return s.station_type === 'VR' }).length,
+                race = allStations.filter(function(s) { return s.station_type === 'Race Simulator' }).length;
+            
+            document.getElementById('statsBar').innerHTML = 
+                '<div class="stat-box"><div class="stat-value">' + e + '</div><div class="stat-label">Total</div></div>' +
+                '<div class="stat-box"><div class="stat-value">' + t + '</div><div class="stat-label">Active</div></div>' +
+                '<div class="stat-box"><div class="stat-value">' + a + '</div><div class="stat-label">In Use</div></div>' +
+                '<div class="stat-box"><div class="stat-value">' + ps5 + '</div><div class="stat-label">PS5</div></div>' +
+                '<div class="stat-box"><div class="stat-value">' + ps4 + '</div><div class="stat-label">PS4</div></div>' +
+                '<div class="stat-box"><div class="stat-value">' + vr + '</div><div class="stat-label">VR</div></div>' +
+                '<div class="stat-box"><div class="stat-value">' + race + '</div><div class="stat-label">Race</div></div>';
+        }
+        
+        function renderTable() { 
+            document.getElementById('tableBody').innerHTML = allStations.length ? allStations.map(function (e) {
+                var setupTime = e.setup_time || (e.station_type === 'PS5' || e.station_type === 'PS4' ? 3 : 2);
+                var typeColor = e.station_type === 'PS5' ? 'badge-info' : (e.station_type === 'PS4' ? 'badge-info' : (e.station_type === 'Race Simulator' ? 'badge-warning' : 'badge-purple'));
+                
+                return '<tr>' +
+                    '<td><strong>' + e.station_name + '</strong></td>' +
+                    '<td><span class="badge ' + typeColor + '">' + e.station_type + '</span></td>' +
+                    '<td>' + (e.station_number || '-') + '</td>' +
+                    '<td>' + setupTime + ' min' + (setupTime > 0 ? ' ⏱️' : '') + '</td>' +
+                    '<td><span class="badge ' + (e.is_active ? 'badge-success' : 'badge-danger') + '">' + (e.is_active ? 'Active' : 'Inactive') + '</span></td>' +
+                    '<td><span class="badge ' + (e.in_use ? 'badge-warning' : 'badge-success') + '">' + (e.in_use ? 'In Use' : 'Available') + '</span></td>' +
+                    '<td><button class="btn-primary btn-sm" onclick="showEditForm(\'' + e.id + '\')">✏️ Edit</button> <button class="btn-danger btn-sm" onclick="deleteStation(\'' + e.id + '\')">🗑️ Delete</button></td>' +
+                    '</tr>';
+            }).join('') : '<tr><td colspan="7" style="text-align:center;padding:40px;color:#999;">No stations found</td></tr>'; 
+        }
+        
+        function showAddForm() { 
+            editingId = null; 
+            document.getElementById('modalTitle').textContent = '➕ Add Station'; 
+            document.getElementById('addOnlyFields').style.display = ''; 
+            document.getElementById('editOnlyFields').style.display = 'none'; 
+            document.getElementById('modalError').classList.remove('show'); 
+            document.getElementById('sname').value = ''; 
+            document.getElementById('stype').value = 'PS5'; 
+            document.getElementById('snumber').value = ''; 
+            document.getElementById('ssetupTime').value = '';
+            document.getElementById('stationModal').classList.add('active'); 
+        }
+        
+        function showEditForm(e) { 
+            var t = allStations.find(function (t) { return t.id === e }); 
+            if (!t) return; 
+            editingId = e; 
+            document.getElementById('modalTitle').textContent = '✏️ Edit Station'; 
+            document.getElementById('addOnlyFields').style.display = 'none'; 
+            document.getElementById('editOnlyFields').style.display = ''; 
+            document.getElementById('modalError').classList.remove('show'); 
+            document.getElementById('sname').value = t.station_name; 
+            document.getElementById('stype').value = t.station_type; 
+            document.getElementById('sstatus').value = t.is_active ? '1' : '0'; 
+            document.getElementById('sinuse').value = t.in_use ? '1' : '0'; 
+            document.getElementById('ssetupTime').value = t.setup_time || (t.station_type === 'PS5' || t.station_type === 'PS4' ? 3 : 2);
+            document.getElementById('stationModal').classList.add('active'); 
+        }
+        
+        async function saveStation() { 
+            var e = document.getElementById('modalError'); 
+            e.classList.remove('show'); 
+            var t = document.getElementById('sname').value.trim(); 
+            if (!t) { 
+                e.textContent = 'Station name is required.'; 
+                e.classList.add('show'); 
+                return; 
+            }
+            
+            var setupTime = parseInt(document.getElementById('ssetupTime').value);
+            if (isNaN(setupTime)) {
+                var stationType = document.getElementById('stype').value;
+                setupTime = (stationType === 'PS5' || stationType === 'PS4') ? 3 : 2;
+            }
+            if (setupTime < 0) setupTime = 0;
+            if (setupTime > 30) setupTime = 30;
+            
+            try { 
+                var a; 
+                if (editingId) { 
+                    a = await fetch(API_URL + '/stations/' + editingId, { 
+                        method: 'PUT', 
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, 
+                        body: JSON.stringify({ 
+                            station_name: t, 
+                            is_active: document.getElementById('sstatus').value === '1', 
+                            in_use: document.getElementById('sinuse').value === '1',
+                            setup_time: setupTime
+                        }) 
+                    }); 
+                } else { 
+                    a = await fetch(API_URL + '/stations', { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, 
+                        body: JSON.stringify({ 
+                            station_name: t, 
+                            station_type: document.getElementById('stype').value, 
+                            station_number: parseInt(document.getElementById('snumber').value) || null,
+                            setup_time: setupTime
+                        }) 
+                    }); 
+                } 
+                var o = await a.json(); 
+                if (o.success) { 
+                    showToast(editingId ? 'Station updated!' : 'Station created!'); 
+                    closeModal(); 
+                    loadStations(); 
+                } else { 
+                    e.textContent = o.error || 'Save failed'; 
+                    e.classList.add('show'); 
+                } 
+            } catch (t) { 
+                e.textContent = 'Connection error'; 
+                e.classList.add('show'); 
+            } 
+        }
+        
+        async function deleteStation(e) { 
+            var t = allStations.find(function (t) { return t.id === e }); 
+            if (!t || !confirm('Delete "' + t.station_name + '"?')) return; 
+            try { 
+                var a = await fetch(API_URL + '/stations/' + e, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } }); 
+                var o = await a.json(); 
+                o.success ? (showToast(o.message), loadStations()) : showToast(o.error || 'Delete failed', 'error'); 
+            } catch (e) { showToast('Connection error', 'error'); } 
+        }
+        
+        function closeModal() { document.getElementById('stationModal').classList.remove('active'); editingId = null; }
+        
+        function showToast(e, t) { 
+            t = t || 'success'; 
+            var a = document.createElement('div'); 
+            a.className = 'toast ' + t; 
+            a.textContent = e; 
+            document.body.appendChild(a); 
+            setTimeout(function () { a.parentNode && a.remove(); }, 3000); 
+        }
+        
+        document.getElementById('stationModal').addEventListener('click', function (e) { e.target === this && closeModal(); });
+        document.addEventListener('keydown', function (e) { e.key === 'Escape' && closeModal(); });
+    </script>
+</body>
+
+</html>
