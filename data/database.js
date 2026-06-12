@@ -25,9 +25,77 @@ function initDatabase() {
                 return;
             }
             console.log('Connected to SQLite database');
-            createTables().then(resolve).catch(reject);
+            createTables().then(() => {
+                // Run migrations to add missing columns
+                return runMigrations();
+            }).then(resolve).catch(reject);
         });
     });
+}
+
+// Function to add missing columns to existing tables
+async function runMigrations() {
+    console.log('Running database migrations...');
+    
+    // Check and add past_game column to transactions table
+    await new Promise((resolve) => {
+        db.run(`ALTER TABLE transactions ADD COLUMN past_game TEXT DEFAULT ''`, (err) => {
+            if (err) {
+                if (err.message.includes('duplicate column name')) {
+                    console.log('✓ Column past_game already exists');
+                } else {
+                    console.log('Note:', err.message);
+                }
+            } else {
+                console.log('✓ Added column past_game to transactions');
+            }
+            resolve();
+        });
+    });
+    
+    // Check and add platform column to games table
+    await new Promise((resolve) => {
+        db.run(`ALTER TABLE games ADD COLUMN platform TEXT DEFAULT ''`, (err) => {
+            if (err) {
+                if (err.message.includes('duplicate column name')) {
+                    console.log('✓ Column platform already exists');
+                }
+            } else {
+                console.log('✓ Added column platform to games');
+            }
+            resolve();
+        });
+    });
+    
+    // Check and add is_fixed column to games table
+    await new Promise((resolve) => {
+        db.run(`ALTER TABLE games ADD COLUMN is_fixed INTEGER DEFAULT 0`, (err) => {
+            if (err) {
+                if (err.message.includes('duplicate column name')) {
+                    console.log('✓ Column is_fixed already exists');
+                }
+            } else {
+                console.log('✓ Added column is_fixed to games');
+            }
+            resolve();
+        });
+    });
+    
+    // Check and add setup_time column to stations table
+    await new Promise((resolve) => {
+        db.run(`ALTER TABLE stations ADD COLUMN setup_time INTEGER DEFAULT 2`, (err) => {
+            if (err) {
+                if (err.message.includes('duplicate column name')) {
+                    console.log('✓ Column setup_time already exists');
+                }
+            } else {
+                console.log('✓ Added column setup_time to stations');
+            }
+            resolve();
+        });
+    });
+    
+    console.log('Migrations complete!');
 }
 
 async function createTables() {
@@ -58,6 +126,8 @@ async function createTables() {
             duration_or_quantity TEXT DEFAULT '',
             price_ksh INTEGER NOT NULL,
             is_active INTEGER DEFAULT 1,
+            platform TEXT DEFAULT '',
+            is_fixed INTEGER DEFAULT 0,
             created_at TEXT NOT NULL
         )`,
         
@@ -68,6 +138,7 @@ async function createTables() {
             station_number INTEGER,
             is_active INTEGER DEFAULT 1,
             in_use INTEGER DEFAULT 0,
+            setup_time INTEGER DEFAULT 2,
             created_at TEXT NOT NULL
         )`,
         
@@ -95,6 +166,7 @@ async function createTables() {
             is_past INTEGER DEFAULT 0,
             archived INTEGER DEFAULT 0,
             notes TEXT DEFAULT '',
+            past_game TEXT DEFAULT '',
             created_at TEXT NOT NULL
         )`,
         
@@ -116,6 +188,12 @@ async function createTables() {
             quantity INTEGER DEFAULT 0,
             notes TEXT DEFAULT '',
             last_updated TEXT NOT NULL
+        )`,
+        
+        `CREATE TABLE IF NOT EXISTS receipt_sequence (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            last_number INTEGER DEFAULT 0,
+            updated_at TEXT NOT NULL
         )`
     ];
 
@@ -137,22 +215,34 @@ async function createTables() {
     const indexQueries = [
         `CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(transaction_date)`,
         `CREATE INDEX IF NOT EXISTS idx_transactions_receipt ON transactions(receipt_no)`,
+        `CREATE INDEX IF NOT EXISTS idx_transactions_cashier_id ON transactions(cashier_id)`,
+        `CREATE INDEX IF NOT EXISTS idx_transactions_payment_status ON transactions(payment_status)`,
+        `CREATE INDEX IF NOT EXISTS idx_transactions_archived ON transactions(archived)`,
+        `CREATE INDEX IF NOT EXISTS idx_transactions_void ON transactions(is_void)`,
         `CREATE INDEX IF NOT EXISTS idx_logs_created ON logs(created_at)`,
         `CREATE INDEX IF NOT EXISTS idx_logs_user ON logs(user_id)`,
+        `CREATE INDEX IF NOT EXISTS idx_logs_action ON logs(action)`,
         `CREATE INDEX IF NOT EXISTS idx_games_category ON games(category)`,
         `CREATE INDEX IF NOT EXISTS idx_stations_type ON stations(station_type)`,
-        `CREATE INDEX IF NOT EXISTS idx_transactions_archived ON transactions(archived)`,
-        `CREATE INDEX IF NOT EXISTS idx_transactions_void ON transactions(is_void)`
+        `CREATE INDEX IF NOT EXISTS idx_inventory_station_id ON inventory(station_id)`
     ];
 
     for (const sql of indexQueries) {
         await new Promise((resolve) => {
             db.run(sql, (err) => {
                 if (err) console.error('Index warning:', err.message);
-                resolve(); // Don't fail on index errors
+                resolve();
             });
         });
     }
+
+    // Initialize receipt sequence table if empty
+    await new Promise((resolve) => {
+        db.run(`INSERT OR IGNORE INTO receipt_sequence (id, last_number, updated_at) VALUES (1, 0, ?)`, [new Date().toISOString()], (err) => {
+            if (err) console.error('Sequence init warning:', err.message);
+            resolve();
+        });
+    });
 
     console.log('All tables created successfully');
     await initializeDefaultData();
@@ -222,18 +312,21 @@ async function initializeDefaultData() {
     const gameCount = await getCount('games');
     if (gameCount === 0) {
         const defaultGames = [
-            { category: 'VR Experience Regular', sub_category: '5 mins', duration_or_quantity: '5', price_ksh: 200 },
-            { category: 'VR Experience Regular', sub_category: '15 mins', duration_or_quantity: '15', price_ksh: 400 },
-            { category: 'VR Experience Regular', sub_category: '30 mins', duration_or_quantity: '30', price_ksh: 600 },
-            { category: 'VR Experience Regular', sub_category: '60 mins', duration_or_quantity: '60', price_ksh: 1000 },
-            { category: 'VR Family Sharing', sub_category: '2 players 15 mins', duration_or_quantity: '2p_15', price_ksh: 550 },
-            { category: 'VR Family Sharing', sub_category: '2 players 30 mins', duration_or_quantity: '2p_30', price_ksh: 900 },
-            { category: 'Game Lounge', sub_category: 'Pool 1 game', duration_or_quantity: '1', price_ksh: 100 },
-            { category: 'Game Lounge', sub_category: 'Darts 30 mins', duration_or_quantity: '30', price_ksh: 100 },
-            { category: 'Game Lounge', sub_category: 'Foosball 30 mins', duration_or_quantity: '30', price_ksh: 100 },
-            { category: 'Paintball', sub_category: 'Rookie 10 shots', duration_or_quantity: '10', price_ksh: 300 },
-            { category: 'Paintball', sub_category: 'Soldier 20 shots', duration_or_quantity: '20', price_ksh: 500 },
-            { category: 'Paintball', sub_category: 'Sergeant 40 shots', duration_or_quantity: '40', price_ksh: 800 }
+            { category: 'VR Experience Regular', sub_category: '5 mins', duration_or_quantity: '5', price_ksh: 200, platform: '', is_fixed: 0 },
+            { category: 'VR Experience Regular', sub_category: '15 mins', duration_or_quantity: '15', price_ksh: 400, platform: '', is_fixed: 0 },
+            { category: 'VR Experience Regular', sub_category: '30 mins', duration_or_quantity: '30', price_ksh: 600, platform: '', is_fixed: 0 },
+            { category: 'VR Experience Regular', sub_category: '60 mins', duration_or_quantity: '60', price_ksh: 1000, platform: '', is_fixed: 0 },
+            { category: 'VR Family Sharing', sub_category: '2 players 15 mins', duration_or_quantity: '2p_15', price_ksh: 550, platform: '', is_fixed: 0 },
+            { category: 'VR Family Sharing', sub_category: '2 players 30 mins', duration_or_quantity: '2p_30', price_ksh: 900, platform: '', is_fixed: 0 },
+            { category: 'Game Lounge', sub_category: 'Pool 1 game', duration_or_quantity: '1', price_ksh: 100, platform: '', is_fixed: 1 },
+            { category: 'Game Lounge', sub_category: 'Darts 30 mins', duration_or_quantity: '30', price_ksh: 100, platform: '', is_fixed: 0 },
+            { category: 'Game Lounge', sub_category: 'Foosball 30 mins', duration_or_quantity: '30', price_ksh: 100, platform: '', is_fixed: 0 },
+            { category: 'Paintball', sub_category: 'Rookie 10 shots', duration_or_quantity: '10', price_ksh: 300, platform: '', is_fixed: 1 },
+            { category: 'Paintball', sub_category: 'Soldier 20 shots', duration_or_quantity: '20', price_ksh: 500, platform: '', is_fixed: 1 },
+            { category: 'Paintball', sub_category: 'Sergeant 40 shots', duration_or_quantity: '40', price_ksh: 800, platform: '', is_fixed: 1 },
+            { category: 'Race Simulator', sub_category: '15 mins', duration_or_quantity: '15', price_ksh: 200, platform: '', is_fixed: 0 },
+            { category: 'Race Simulator', sub_category: '30 mins', duration_or_quantity: '30', price_ksh: 350, platform: '', is_fixed: 0 },
+            { category: 'Race Simulator', sub_category: '60 mins', duration_or_quantity: '60', price_ksh: 600, platform: '', is_fixed: 0 }
         ];
         
         for (const game of defaultGames) {
@@ -251,15 +344,16 @@ async function initializeDefaultData() {
     const stationCount = await getCount('stations');
     if (stationCount === 0) {
         const defaultStations = [
-            ['PS5 Station 1', 'PS5', 1], ['PS5 Station 2', 'PS5', 2], ['PS5 Station 3', 'PS5', 3],
-            ['PS4 Station 1', 'PS4', 1], ['PS4 Station 2', 'PS4', 2],
-            ['VR Station 1', 'VR', 1], ['VR Station 2', 'VR', 2],
-            ['Pool Table 1', 'Pool', 1], ['Pool Table 2', 'Pool', 2],
-            ['Darts Station 1', 'Darts', 1], ['Foosball Station 1', 'Foosball', 1],
-            ['Paintball Range', 'Paintball', 1]
+            ['PS5 Station 1', 'PS5', 1, 3], ['PS5 Station 2', 'PS5', 2, 3], ['PS5 Station 3', 'PS5', 3, 3],
+            ['PS4 Station 1', 'PS4', 1, 3], ['PS4 Station 2', 'PS4', 2, 3],
+            ['VR Station 1', 'VR', 1, 2], ['VR Station 2', 'VR', 2, 2],
+            ['Pool Table 1', 'Pool', 1, 2], ['Pool Table 2', 'Pool', 2, 2],
+            ['Darts Station 1', 'Darts', 1, 2], ['Foosball Station 1', 'Foosball', 1, 2],
+            ['Paintball Range', 'Paintball', 1, 5],
+            ['Race Simulator 1', 'Race Simulator', 1, 2], ['Race Simulator 2', 'Race Simulator', 2, 2]
         ];
         
-        for (const [name, type, num] of defaultStations) {
+        for (const [name, type, num, setupTime] of defaultStations) {
             await insertStation({
                 id: generateId(),
                 station_name: name,
@@ -267,6 +361,7 @@ async function initializeDefaultData() {
                 station_number: num,
                 is_active: 1,
                 in_use: 0,
+                setup_time: setupTime,
                 created_at: new Date().toISOString()
             });
         }
@@ -355,9 +450,9 @@ function updateUser(id, fields) {
 function insertGame(game) {
     return new Promise((resolve, reject) => {
         db.run(
-            `INSERT INTO games (id, category, sub_category, duration_or_quantity, price_ksh, is_active, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [game.id, game.category, game.sub_category, game.duration_or_quantity, game.price_ksh, game.is_active, game.created_at],
+            `INSERT INTO games (id, category, sub_category, duration_or_quantity, price_ksh, is_active, platform, is_fixed, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [game.id, game.category, game.sub_category, game.duration_or_quantity, game.price_ksh, game.is_active, game.platform || '', game.is_fixed || 0, game.created_at],
             (err) => err ? reject(err) : resolve()
         );
     });
@@ -379,9 +474,9 @@ function updateGame(id, fields) {
 function insertStation(station) {
     return new Promise((resolve, reject) => {
         db.run(
-            `INSERT INTO stations (id, station_name, station_type, station_number, is_active, in_use, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [station.id, station.station_name, station.station_type, station.station_number, station.is_active, station.in_use, station.created_at],
+            `INSERT INTO stations (id, station_name, station_type, station_number, is_active, in_use, setup_time, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [station.id, station.station_name, station.station_type, station.station_number, station.is_active, station.in_use, station.setup_time || 2, station.created_at],
             (err) => err ? reject(err) : resolve()
         );
     });
@@ -405,12 +500,12 @@ function insertTransaction(tx) {
         db.run(
             `INSERT INTO transactions (id, receipt_no, customer_name, customer_phone, total_amount, amount_paid, balance, 
              payment_method, payment_status, cashier_id, cashier_name, transaction_date, transaction_time, items_json, 
-             station_used, total_duration_minutes, total_shots, credit_details, mpesa_receipt, is_void, is_past, archived, notes, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             station_used, total_duration_minutes, total_shots, credit_details, mpesa_receipt, is_void, is_past, archived, notes, past_game, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [tx.id, tx.receipt_no, tx.customer_name, tx.customer_phone, tx.total_amount, tx.amount_paid, tx.balance,
              tx.payment_method, tx.payment_status, tx.cashier_id, tx.cashier_name, tx.transaction_date, tx.transaction_time,
              tx.items_json, tx.station_used, tx.total_duration_minutes, tx.total_shots, tx.credit_details, tx.mpesa_receipt,
-             tx.is_void || 0, tx.is_past || 0, tx.archived || 0, tx.notes || '', tx.created_at],
+             tx.is_void || 0, tx.is_past || 0, tx.archived || 0, tx.notes || '', tx.past_game || '', tx.created_at],
             (err) => err ? reject(err) : resolve()
         );
     });
@@ -433,7 +528,52 @@ function updateTransaction(id, fields) {
     });
 }
 
-// HARD DELETE - Permanently removes transaction from database
+async function getNextReceiptNo() {
+    const now = new Date().toISOString();
+    const year = new Date().getFullYear();
+    const month = String(new Date().getMonth() + 1).padStart(2, '0');
+    const day = String(new Date().getDate()).padStart(2, '0');
+    const prefix = `${year}${month}${day}`;
+    
+    return new Promise((resolve, reject) => {
+        db.serialize(() => {
+            db.run('BEGIN IMMEDIATE', (err) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                
+                db.get(`SELECT last_number FROM receipt_sequence WHERE id = 1`, (err, row) => {
+                    if (err) {
+                        db.run('ROLLBACK');
+                        reject(err);
+                        return;
+                    }
+                    
+                    let nextNum = (row ? row.last_number : 0) + 1;
+                    const receiptNo = `${prefix}-${String(nextNum).padStart(6, '0')}`;
+                    
+                    db.run(`UPDATE receipt_sequence SET last_number = ?, updated_at = ? WHERE id = 1`, [nextNum, now], (err) => {
+                        if (err) {
+                            db.run('ROLLBACK');
+                            reject(err);
+                            return;
+                        }
+                        
+                        db.run('COMMIT', (err) => {
+                            if (err) {
+                                reject(err);
+                            } else {
+                                resolve(receiptNo);
+                            }
+                        });
+                    });
+                });
+            });
+        });
+    });
+}
+
 function hardDeleteTransaction(id) {
     return new Promise((resolve, reject) => {
         console.log('hardDeleteTransaction called for ID:', id);
@@ -487,6 +627,7 @@ function updateInventoryItem(id, fields) {
 function getTransactions(filters = {}) {
     let sql = `SELECT * FROM transactions WHERE 1=1`;
     const params = [];
+    
     if (filters.date) { sql += ` AND transaction_date = ?`; params.push(filters.date); }
     if (filters.status) { sql += ` AND payment_status = ?`; params.push(filters.status); }
     if (filters.payment_method) { sql += ` AND payment_method = ?`; params.push(filters.payment_method); }
@@ -499,8 +640,13 @@ function getTransactions(filters = {}) {
         const search = `%${filters.search}%`;
         params.push(search, search, search, search, search);
     }
+    
     sql += ` ORDER BY created_at DESC`;
-    if (filters.limit) { sql += ` LIMIT ?`; params.push(parseInt(filters.limit)); }
+    
+    if (filters.limit && !isNaN(parseInt(filters.limit))) { 
+        sql += ` LIMIT ?`; 
+        params.push(parseInt(filters.limit)); 
+    }
     
     return new Promise((resolve, reject) => {
         db.all(sql, params, (err, rows) => {
@@ -551,23 +697,6 @@ function getDailySummary(date, includePast = false) {
         db.get(sql, [date], (err, row) => {
             if (err) reject(err);
             else resolve(row || { transaction_count: 0, cash: 0, mpesa: 0, credit: 0, total: 0 });
-        });
-    });
-}
-
-function getNextReceiptNo() {
-    return new Promise((resolve, reject) => {
-        db.get(`SELECT receipt_no FROM transactions ORDER BY created_at DESC LIMIT 1`, (err, row) => {
-            if (err) reject(err);
-            else {
-                let lastNum = 0;
-                if (row && row.receipt_no) {
-                    const match = row.receipt_no.match(/VR-(\d+)/);
-                    if (match) lastNum = parseInt(match[1]);
-                }
-                const newNum = String(lastNum + 1).padStart(6, '0');
-                resolve(`VR-${newNum}`);
-            }
         });
     });
 }

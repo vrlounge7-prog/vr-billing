@@ -6,6 +6,7 @@ const { authenticateToken } = require('../middleware/auth');
 const PRINTER_IP = process.env.PRINTER_IP || '192.168.0.200';
 const PRINTER_PORT = process.env.PRINTER_PORT || 9100;
 
+// Fixed: Added proper error handling and response
 router.post('/receipt', authenticateToken, (req, res) => {
     const { receiptHTML, receiptNo } = req.body;
     if (!receiptHTML) return res.status(400).json({ error: 'Receipt data is required.' });
@@ -13,11 +14,14 @@ router.post('/receipt', authenticateToken, (req, res) => {
     const printData = convertToEscPos(receiptHTML);
     const cutCommands = generateCutCommands();
 
+    let isResponded = false;
+
     const client = new net.Socket();
-    client.setTimeout(15000);
+    client.setTimeout(10000);
 
     client.connect(PRINTER_PORT, PRINTER_IP, () => {
         console.log(`📠 Connected to printer at ${PRINTER_IP}:${PRINTER_PORT}`);
+        
         sendInChunks(client, printData, 512, () => {
             console.log('📄 Print data sent, waiting for buffer...');
             setTimeout(() => {
@@ -26,7 +30,10 @@ router.post('/receipt', authenticateToken, (req, res) => {
                     console.log('✅ Cut command sent');
                     setTimeout(() => {
                         client.end();
-                        console.log('🔌 Connection closed');
+                        if (!isResponded) {
+                            isResponded = true;
+                            res.json({ success: true, message: 'Receipt sent to printer.' });
+                        }
                     }, 400);
                 });
             }, 1200);
@@ -34,19 +41,33 @@ router.post('/receipt', authenticateToken, (req, res) => {
     });
 
     client.on('close', () => {
-        console.log('✅ Receipt printed and cut');
+        console.log('🔌 Printer connection closed');
     });
 
     client.on('error', (err) => {
         console.error('❌ Printer error:', err.message);
+        if (!isResponded) {
+            isResponded = true;
+            res.status(500).json({ 
+                success: false, 
+                error: `Printer connection failed: ${err.message}`,
+                details: 'Please check printer is powered on and connected to network.'
+            });
+        }
+        client.destroy();
     });
 
     client.on('timeout', () => {
         console.error('❌ Printer connection timeout');
+        if (!isResponded) {
+            isResponded = true;
+            res.status(500).json({ 
+                success: false, 
+                error: 'Printer connection timeout. Please check printer status.' 
+            });
+        }
         client.destroy();
     });
-
-    res.json({ success: true, message: 'Receipt sent to printer.' });
 });
 
 function sendInChunks(client, data, chunkSize, callback) {

@@ -306,7 +306,7 @@
             </thead>
             <tbody id="tableBody">
                 <tr>
-                    <td colspan="7" style="text-align:center;padding:40px;color:#999;">Loading...</td>
+                    <td colspan="7" style="text-align:center;padding:40px;color:#999;">Loading...<\/td>
                 </tr>
             </tbody>
         </table>
@@ -402,7 +402,7 @@
                 '<div class="stat-box"><div class="stat-value">' + ps5 + '</div><div class="stat-label">PS5</div></div>' +
                 '<div class="stat-box"><div class="stat-value">' + ps4 + '</div><div class="stat-label">PS4</div></div>' +
                 '<div class="stat-box"><div class="stat-value">' + vr + '</div><div class="stat-label">VR</div></div>' +
-                '<div class="stat-box"><div class="stat-value">' + race + '</div><div class="stat-label">Race</div></div>';
+                '<div class="stat-box"><div class="stat-value">' + race + '</div><div class="stat-label">Race Sim</div></div>';
         }
         
         function renderTable() { 
@@ -419,7 +419,7 @@
                     '<td><span class="badge ' + (e.in_use ? 'badge-warning' : 'badge-success') + '">' + (e.in_use ? 'In Use' : 'Available') + '</span></td>' +
                     '<td><button class="btn-primary btn-sm" onclick="showEditForm(\'' + e.id + '\')">✏️ Edit</button> <button class="btn-danger btn-sm" onclick="deleteStation(\'' + e.id + '\')">🗑️ Delete</button></td>' +
                     '</tr>';
-            }).join('') : '<tr><td colspan="7" style="text-align:center;padding:40px;color:#999;">No stations found</td></tr>'; 
+            }).join('') : '<tr><td colspan="7" style="text-align:center;padding:40px;color:#999;">No stations found<\/td><\/tr>'; 
         }
         
         function showAddForm() { 

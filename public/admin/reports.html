@@ -61,9 +61,17 @@
             margin-top: 5px;
         }
 
-        .stat-card.cash .stat-value { color: #28a745; }
-        .stat-card.mpesa .stat-value { color: #17a2b8; }
-        .stat-card.credit .stat-value { color: #ffc107; }
+        .stat-card.cash .stat-value {
+            color: #28a745;
+        }
+
+        .stat-card.mpesa .stat-value {
+            color: #17a2b8;
+        }
+
+        .stat-card.credit .stat-value {
+            color: #ffc107;
+        }
 
         .section {
             background: white;
@@ -78,12 +86,6 @@
             margin-bottom: 15px;
             padding-bottom: 10px;
             border-bottom: 2px solid #667eea;
-        }
-
-        .section h4 {
-            color: #555;
-            margin: 20px 0 10px;
-            font-size: 15px;
         }
 
         .section-header {
@@ -117,9 +119,23 @@
             box-shadow: 0 5px 20px rgba(102, 126, 234, 0.2);
         }
 
-        .export-card .export-icon { font-size: 40px; margin-bottom: 10px; display: block; }
-        .export-card .export-title { font-weight: bold; color: #333; font-size: 16px; margin-bottom: 5px; }
-        .export-card .export-desc { font-size: 12px; color: #666; }
+        .export-card .export-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .export-card .export-title {
+            font-weight: bold;
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .export-card .export-desc {
+            font-size: 12px;
+            color: #666;
+        }
 
         .date-picker-row {
             display: flex;
@@ -154,8 +170,17 @@
             color: #555;
         }
 
-        .toggle-label input { width: 18px; height: 18px; margin: 0; cursor: pointer; }
-        .toggle-label:hover { border-color: #667eea; background: #f8f9ff; }
+        .toggle-label input {
+            width: 18px;
+            height: 18px;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .toggle-label:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
 
         button {
             padding: 10px 20px;
@@ -167,11 +192,16 @@
             transition: all 0.2s;
         }
 
-        button:hover { opacity: 0.9; transform: translateY(-1px); }
-        .btn-primary { background: #667eea; color: white; }
-        .btn-info { background: #17a2b8; color: white; }
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
 
-        /* ===== BREAKDOWN TABLE STYLES ===== */
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
         .breakdown-table {
             width: 100%;
             border-collapse: collapse;
@@ -216,11 +246,6 @@
             color: #555;
         }
 
-        .breakdown-table .sub-row .method-icon {
-            width: 20px;
-            display: inline-block;
-        }
-
         .breakdown-table .total-row td {
             font-weight: 700;
             background: #f0f4ff;
@@ -236,6 +261,30 @@
         .breakdown-table .separator td {
             padding: 0;
             border-bottom: 1px dashed #ddd;
+        }
+
+        .paintball-section {
+            margin-top: 30px;
+            border-top: 3px double #dc3545;
+            padding-top: 20px;
+        }
+
+        .paintball-section h4 {
+            color: #dc3545;
+            font-size: 18px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .paintball-badge {
+            background: #dc3545;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
         }
 
         .closing-float-box {
@@ -296,7 +345,9 @@
             color: #6f42c1;
         }
 
-        .info-banner .icon { font-size: 20px; }
+        .info-banner .icon {
+            font-size: 20px;
+        }
 
         .toast {
             position: fixed;
@@ -311,17 +362,35 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
         }
 
-        .toast.success { background: #28a745; }
-        .toast.error { background: #dc3545; }
+        .toast.success {
+            background: #28a745;
+        }
+
+        .toast.error {
+            background: #dc3545;
+        }
 
         @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
         }
 
         @media print {
-            body { padding: 0; }
-            .section { box-shadow: none; border: 1px solid #ddd; }
+            body {
+                padding: 0;
+            }
+
+            .section {
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
         }
     </style>
 </head>
@@ -329,7 +398,7 @@
 <body>
     <div class="page-header">
         <h2>📈 Reports</h2>
-        <p>Daily sales summaries and export tools</p>
+        <p>Daily sales summaries and export tools - Paintball isolated in its own section</p>
     </div>
 
     <div class="section">
@@ -352,11 +421,26 @@
     </div>
 
     <div class="stats-grid" id="statsGrid">
-        <div class="stat-card"><div class="stat-value">-</div><div class="stat-label">Transactions</div></div>
-        <div class="stat-card"><div class="stat-value">-</div><div class="stat-label">Total Revenue</div></div>
-        <div class="stat-card cash"><div class="stat-value">-</div><div class="stat-label">Cash</div></div>
-        <div class="stat-card mpesa"><div class="stat-value">-</div><div class="stat-label">M-Pesa</div></div>
-        <div class="stat-card credit"><div class="stat-value">-</div><div class="stat-label">Credit</div></div>
+        <div class="stat-card">
+            <div class="stat-value">-</div>
+            <div class="stat-label">Transactions</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">-</div>
+            <div class="stat-label">Total Revenue</div>
+        </div>
+        <div class="stat-card cash">
+            <div class="stat-value">-</div>
+            <div class="stat-label">Cash</div>
+        </div>
+        <div class="stat-card mpesa">
+            <div class="stat-value">-</div>
+            <div class="stat-label">M-Pesa</div>
+        </div>
+        <div class="stat-card credit">
+            <div class="stat-value">-</div>
+            <div class="stat-label">Credit</div>
+        </div>
     </div>
 
     <div class="section" id="reportDetails" style="display:none;">
@@ -392,18 +476,15 @@
 
     <script>
         var token = new URLSearchParams(window.location.search).get('token') || sessionStorage.getItem('token') || (window.parent && window.parent.token) || '';
-
         if (!token) {
             document.body.innerHTML = '<div style="text-align:center;padding:50px;color:#dc3545;"><h3>⚠️ Authentication Error</h3><p>Please refresh the dashboard page and login again.</p></div>';
             throw new Error('No token available');
         }
-
         sessionStorage.setItem('token', token);
 
         var API_URL = '/api';
         var currentReport = null;
         var today = new Date().toISOString().split('T')[0];
-
         document.getElementById('reportDate').value = today;
         loadReport();
 
@@ -419,8 +500,7 @@
                 banner.style.display = 'none';
             }
 
-            document.getElementById('statsGrid').innerHTML =
-                '<div class="stat-card"><div class="stat-value">...</div></div>'.repeat(5);
+            document.getElementById('statsGrid').innerHTML = '<div class="stat-card"><div class="stat-value">...</div></div>'.repeat(5);
 
             try {
                 var summaryUrl = API_URL + '/transactions/daily-summary/' + date + (includePast ? '?include_past=true' : '');
@@ -431,6 +511,11 @@
                 var reportRes = await fetch(reportUrl, { headers: { 'Authorization': 'Bearer ' + token } });
                 currentReport = await reportRes.json();
 
+                // Validate that we received valid data
+                if (!currentReport || typeof currentReport !== 'object') {
+                    throw new Error('Invalid report data received');
+                }
+
                 document.getElementById('statsGrid').innerHTML =
                     '<div class="stat-card"><div class="stat-value">' + (summary.transaction_count || 0) + '</div><div class="stat-label">Transactions</div></div>' +
                     '<div class="stat-card"><div class="stat-value">KES ' + (summary.total || 0).toLocaleString() + '</div><div class="stat-label">Total Revenue</div></div>' +
@@ -438,16 +523,17 @@
                     '<div class="stat-card mpesa"><div class="stat-value">KES ' + (summary.mpesa || 0).toLocaleString() + '</div><div class="stat-label">M-Pesa</div></div>' +
                     '<div class="stat-card credit"><div class="stat-value">KES ' + (summary.credit || 0).toLocaleString() + '</div><div class="stat-label">Credit</div></div>';
 
-                if (currentReport && currentReport.by_method && Object.keys(currentReport.by_method).length > 0) {
+                if (currentReport && currentReport.total_transactions > 0) {
                     showBreakdown(currentReport, date, includePast);
                 } else {
                     document.getElementById('reportDetails').style.display = 'block';
-                    document.getElementById('detailsContent').innerHTML =
-                        '<p style="text-align:center;padding:30px;color:#999;">📭 No transactions for this date</p>';
+                    document.getElementById('detailsContent').innerHTML = '<p style="text-align:center;padding:30px;color:#999;">📭 No transactions for this date</p>';
                 }
             } catch (error) {
                 console.error('Report error:', error);
                 showToast('Error loading report: ' + error.message, 'error');
+                document.getElementById('reportDetails').style.display = 'block';
+                document.getElementById('detailsContent').innerHTML = '<p style="text-align:center;padding:30px;color:#dc3545;">❌ Failed to load report: ' + error.message + '</p>';
             }
         }
 
@@ -456,74 +542,51 @@
             return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
         }
 
-        // ============ NEW BREAKDOWN STRUCTURE ============
         function showBreakdown(report, date, includePast) {
             document.getElementById('reportDetails').style.display = 'block';
 
-            // Map stations to categories
-            var categoryMap = {
-                'Pool': { icon: '🎱', name: 'POOL TABLE', stations: ['Pool Table 1', 'Pool Table 2', 'Pool'] },
-                'VR': { icon: '🥽', name: 'VR EXPERIENCE', stations: ['VR Station 1', 'VR Station 2', 'VR', 'Oculus'] },
-                'PlayStation': { icon: '🎮', name: 'PLAYSTATION (PS4/PS5)', stations: ['PS5 Station 1', 'PS5 Station 2', 'PS5 Station 3', 'PS5 Station 4', 'PS4 Station 1', 'PS4 Station 2', 'PS4 Station 3', 'PS4 Station 4', 'PS5', 'PS4'] },
-                'Darts': { icon: '🎯', name: 'DARTS', stations: ['Darts Station 1', 'Darts'] },
-                'Foosball': { icon: '⚽', name: 'FOOSBALL', stations: ['Foosball Station 1', 'Foosball'] },
-                'Paintball': { icon: '🔫', name: 'PAINTBALL', stations: ['Paintball Range', 'Paintball'] },
-                'Race Simulator': { icon: '🏎️', name: 'RACE SIMULATOR', stations: ['Race Simulator'] }
+            // Game category display configuration
+            var categoryConfig = {
+                'POOL': { icon: '🎱', name: 'POOL TABLE', isPaintball: false },
+                'VR': { icon: '🥽', name: 'VR EXPERIENCE', isPaintball: false },
+                'PLAYSTATION': { icon: '🎮', name: 'PLAYSTATION (PS4/PS5)', isPaintball: false },
+                'DARTS': { icon: '🎯', name: 'DARTS', isPaintball: false },
+                'FOOSBALL': { icon: '⚽', name: 'FOOSBALL', isPaintball: false },
+                'RACE SIMULATOR': { icon: '🏎️', name: 'RACE SIMULATOR', isPaintball: false },
+                'PAINTBALL': { icon: '🔫', name: 'PAINTBALL (ISOLATED)', isPaintball: true }
             };
 
-            // Build category data from stations
-            var categoryData = {};
-            for (var catKey in categoryMap) {
-                categoryData[catKey] = {
-                    name: categoryMap[catKey].name,
-                    icon: categoryMap[catKey].icon,
-                    cash: 0,
-                    mpesa: 0,
-                    credit: 0,
-                    total: 0,
-                    count: 0,
-                    stations: []
-                };
-            }
-            categoryData['Other'] = { name: 'OTHER', icon: '📦', cash: 0, mpesa: 0, credit: 0, total: 0, count: 0, stations: [] };
+            // Build category data from backend response
+            var categories = {};
+            var hasData = false;
+            var paintballData = null;
 
-            // Assign stations to categories
-            if (report.by_station) {
-                for (var stationName in report.by_station) {
-                    var stationData = report.by_station[stationName];
-                    var matched = false;
+            if (report.by_station_type) {
+                for (var catKey in report.by_station_type) {
+                    var backendCat = report.by_station_type[catKey];
+                    var config = categoryConfig[catKey];
 
-                    for (var catKey in categoryMap) {
-                        var catStations = categoryMap[catKey].stations;
-                        for (var i = 0; i < catStations.length; i++) {
-                            if (stationName.toLowerCase().indexOf(catStations[i].toLowerCase()) !== -1) {
-                                categoryData[catKey].cash += (stationData.cash || 0);
-                                categoryData[catKey].mpesa += (stationData.mpesa || 0);
-                                categoryData[catKey].credit += (stationData.credit || 0);
-                                categoryData[catKey].total += (stationData.total || 0);
-                                categoryData[catKey].count += (stationData.count || 0);
-                                categoryData[catKey].stations.push(stationName);
-                                matched = true;
-                                break;
-                            }
+                    if (config) {
+                        var categoryObj = {
+                            key: catKey,
+                            name: config.name,
+                            icon: config.icon,
+                            isPaintball: config.isPaintball,
+                            cash: backendCat.cash || 0,
+                            mpesa: backendCat.mpesa || 0,
+                            credit: backendCat.credit || 0,
+                            total: backendCat.total || 0,
+                            count: backendCat.count || 0
+                        };
+
+                        categories[catKey] = categoryObj;
+
+                        if (config.isPaintball) {
+                            paintballData = categoryObj;
+                        } else if (backendCat.total > 0) {
+                            hasData = true;
                         }
-                        if (matched) break;
                     }
-
-                    if (!matched) {
-                        categoryData['Other'].cash += (stationData.cash || 0);
-                        categoryData['Other'].mpesa += (stationData.mpesa || 0);
-                        categoryData['Other'].credit += (stationData.credit || 0);
-                        categoryData['Other'].total += (stationData.total || 0);
-                        categoryData['Other'].count += (stationData.count || 0);
-                    }
-                }
-            }
-
-            // Remove empty categories
-            for (var key in categoryData) {
-                if (categoryData[key].total === 0) {
-                    delete categoryData[key];
                 }
             }
 
@@ -531,115 +594,149 @@
             var cashiersList = [];
             if (report.by_cashier) {
                 for (var cashier in report.by_cashier) {
-                    cashiersList.push(cashier);
+                    if (cashier && cashier !== 'Unknown') {
+                        cashiersList.push(cashier);
+                    }
                 }
             }
 
-            // Calculate totals
-            var grandTotal = 0;
-            var totalCash = 0;
-            var totalMpesa = 0;
-            var totalCredit = 0;
-            var totalCount = 0;
+            // Calculate totals for other games (excluding paintball)
+            var grandTotal = 0, totalCash = 0, totalMpesa = 0, totalCredit = 0, totalCount = 0;
+            var paintballTotal = 0, paintballCash = 0, paintballMpesa = 0, paintballCredit = 0, paintballCount = 0;
 
-            for (var key in categoryData) {
-                grandTotal += categoryData[key].total;
-                totalCash += categoryData[key].cash;
-                totalMpesa += categoryData[key].mpesa;
-                totalCredit += categoryData[key].credit;
-                totalCount += categoryData[key].count;
+            for (var key in categories) {
+                var cat = categories[key];
+                if (cat.isPaintball) {
+                    paintballTotal += cat.total;
+                    paintballCash += cat.cash;
+                    paintballMpesa += cat.mpesa;
+                    paintballCredit += cat.credit;
+                    paintballCount += cat.count;
+                } else {
+                    grandTotal += cat.total;
+                    totalCash += cat.cash;
+                    totalMpesa += cat.mpesa;
+                    totalCredit += cat.credit;
+                    totalCount += cat.count;
+                }
             }
 
-            // Get closing float (today's cash + we'll note to add previous float)
-            var closingFloat = totalCash;
+            var overallTotal = grandTotal + paintballTotal;
 
-            // ===== BUILD HTML =====
+            // Build HTML
             var html = '';
 
             // Past transactions note
-            if (includePast) {
-                var pastCount = report.by_method['Past'] ? report.by_method['Past'].count : 0;
-                if (pastCount > 0) {
-                    html += '<div class="info-banner" style="margin-bottom:20px;background:#e8d5f5;">' +
-                        '<span class="icon">📅</span>' +
-                        '<span><strong>' + pastCount + ' backdated transaction(s)</strong> included for ' + formatDate(date) + '</span>' +
-                        '</div>';
-                }
+            if (includePast && report.past_count > 0) {
+                html += '<div class="info-banner" style="margin-bottom:20px;background:#e8d5f5;">' +
+                    '<span class="icon">📅</span>' +
+                    '<span><strong>' + report.past_count + ' backdated transaction(s)</strong> included for ' + formatDate(date) + '</span>' +
+                    '</div>';
             }
 
             // Date header
             html += '<div style="text-align:center;margin-bottom:20px;">' +
                 '<h3 style="color:#667eea;margin:0;">📅 ' + formatDate(date) + '</h3>' +
-                '<p style="color:#999;font-size:12px;">Daily Sales Breakdown</p>' +
+                '<p style="color:#999;font-size:12px;">Daily Sales Breakdown - Paintball Separated</p>' +
                 '</div>';
 
-            // Main breakdown table
+            // Main breakdown table (excluding paintball)
+            html += '<h4 style="margin:15px 0 10px 0;color:#333;">🎮 OTHER GAMES & SERVICES</h4>';
             html += '<table class="breakdown-table">';
             html += '<thead><tr><th>CATEGORY</th><th>PAYMENT METHOD</th><th class="right">AMOUNT (KES)</th></tr></thead>';
             html += '<tbody>';
 
-            // Sort categories by total (highest first)
-            var sortedCategories = Object.keys(categoryData).sort(function(a, b) {
-                return categoryData[b].total - categoryData[a].total;
-            });
+            // Display in specific order (excluding paintball)
+            var displayOrder = ['POOL', 'VR', 'PLAYSTATION', 'DARTS', 'FOOSBALL', 'RACE SIMULATOR'];
 
-            sortedCategories.forEach(function(catKey, index) {
-                var cat = categoryData[catKey];
-                
+            for (var d = 0; d < displayOrder.length; d++) {
+                var catKey = displayOrder[d];
+                var cat = categories[catKey];
+                if (!cat || cat.total === 0) continue;
+
                 // Category header row
                 html += '<tr class="category-row">' +
                     '<td colspan="2">' + cat.icon + ' <strong>' + cat.name + '</strong> <span style="font-size:11px;color:#999;">(' + cat.count + ' txns)</span></td>' +
                     '<td class="amount"><strong>KES ' + cat.total.toLocaleString() + '</strong></td>' +
                     '</tr>';
 
-                // Sub-rows for payment methods
-                var methods = [
-                    { key: 'cash', label: '💵 Cash', value: cat.cash },
-                    { key: 'mpesa', label: '📱 M-Pesa', value: cat.mpesa },
-                    { key: 'credit', label: '📝 Credit', value: cat.credit }
-                ];
-
-                methods.forEach(function(method) {
-                    if (method.value > 0) {
-                        html += '<tr class="sub-row">' +
-                            '<td></td>' +
-                            '<td><span class="method-icon"></span>' + method.label + '</td>' +
-                            '<td class="amount">KES ' + method.value.toLocaleString() + '</td>' +
-                            '</tr>';
-                    }
-                });
-
-                // Separator between categories (except last)
-                if (index < sortedCategories.length - 1) {
-                    html += '<tr class="separator"><td colspan="3"></td></tr>';
+                // Payment method sub-rows
+                if (cat.cash > 0) {
+                    html += '<tr class="sub-row"><td></td><td>💵 Cash</td><td class="amount">KES ' + cat.cash.toLocaleString() + '</td></tr>';
                 }
-            });
+                if (cat.mpesa > 0) {
+                    html += '<tr class="sub-row"><td><\/td><td>📱 M-Pesa<\/td><td class="amount">KES ' + cat.mpesa.toLocaleString() + '<\/td><\/tr>';
+                }
+                if (cat.credit > 0) {
+                    html += '<tr class="sub-row"><td><\/td><td>📝 Credit<\/td><td class="amount">KES ' + cat.credit.toLocaleString() + '<\/td><\/tr>';
+                }
 
-            // Grand total row
-            html += '<tr class="separator"><td colspan="3"></td></tr>';
-            html += '<tr class="total-row">' +
-                '<td colspan="2"><strong>📊 GRAND TOTAL</strong> <span style="font-size:11px;color:#999;">(' + totalCount + ' transactions)</span></td>' +
-                '<td class="amount"><strong>KES ' + grandTotal.toLocaleString() + '</strong></td>' +
-                '</tr>';
+                // Separator
+                html += '<tr class="separator"><td colspan="3"><\/td><\/tr>';
+            }
 
-            // Payment method summary
-            html += '<tr class="sub-row">' +
-                '<td></td>' +
-                '<td>💵 Total Cash</td>' +
-                '<td class="amount">KES ' + totalCash.toLocaleString() + '</td>' +
-                '</tr>';
-            html += '<tr class="sub-row">' +
-                '<td></td>' +
-                '<td>📱 Total M-Pesa</td>' +
-                '<td class="amount">KES ' + totalMpesa.toLocaleString() + '</td>' +
-                '</tr>';
-            html += '<tr class="sub-row">' +
-                '<td></td>' +
-                '<td>📝 Total Credit</td>' +
-                '<td class="amount">KES ' + totalCredit.toLocaleString() + '</td>' +
-                '</tr>';
+            if (totalCount === 0) {
+                html += '<tr><td colspan="3" style="text-align:center;padding:30px;color:#999;">No other game transactions for this date<\/td><\/tr>';
+            } else {
+                // Grand total row for other games
+                html += '<tr class="total-row">' +
+                    '<td colspan="2"><strong>📊 SUBTOTAL (Other Games)</strong> <span style="font-size:11px;color:#999;">(' + totalCount + ' transactions)</span></td>' +
+                    '<td class="amount"><strong>KES ' + grandTotal.toLocaleString() + '</strong></td>' +
+                    '</tr>';
+            }
 
             html += '</tbody></table>';
+
+            // PAINTBALL ISOLATED SECTION
+            html += '<div class="paintball-section">';
+            html += '<h4><span>🔫</span> PAINTBALL SECTION (ISOLATED) <span class="paintball-badge">Separate Report</span></h4>';
+
+            if (paintballData && paintballData.total > 0) {
+                html += '<table class="breakdown-table" style="border:2px solid #dc3545;">';
+                html += '<thead><tr><th>CATEGORY</th><th>PAYMENT METHOD</th><th class="right">AMOUNT (KES)</th></tr></thead>';
+                html += '<tbody>';
+                html += '<tr class="category-row" style="background:#fff0f0;">' +
+                    '<td colspan="2">🔫 <strong>' + paintballData.name + '</strong> <span style="font-size:11px;color:#999;">(' + paintballData.count + ' txns)</span></td>' +
+                    '<td class="amount"><strong>KES ' + paintballData.total.toLocaleString() + '</strong></td>' +
+                    '</tr>';
+
+                if (paintballData.cash > 0) {
+                    html += '<tr class="sub-row"><td><\/td><td>💵 Cash<\/td><td class="amount">KES ' + paintballData.cash.toLocaleString() + '<\/td><\/tr>';
+                }
+                if (paintballData.mpesa > 0) {
+                    html += '<tr class="sub-row"><td><\/td><td>📱 M-Pesa<\/td><td class="amount">KES ' + paintballData.mpesa.toLocaleString() + '<\/td><\/tr>';
+                }
+                if (paintballData.credit > 0) {
+                    html += '<tr class="sub-row"><td><\/td><td>📝 Credit<\/td><td class="amount">KES ' + paintballData.credit.toLocaleString() + '<\/td><\/tr>';
+                }
+
+                html += '<tr class="total-row" style="background:#ffe0e0;">' +
+                    '<td colspan="2"><strong>🎯 PAINTBALL TOTAL</strong> <span style="font-size:11px;color:#999;">(' + paintballData.count + ' transactions)</span></td>' +
+                    '<td class="amount"><strong>KES ' + paintballData.total.toLocaleString() + '</strong></td>' +
+                    '<tr>';
+                html += '</tbody>赶到';
+            } else {
+                html += '<div style="padding:20px;text-align:center;background:#f8f9fa;border:2px dashed #dc3545;border-radius:8px;">' +
+                    '<span style="font-size:24px;">🔫</span>' +
+                    '<p style="margin-top:10px;color:#666;">No Paintball transactions for this date</p>' +
+                    '</div>';
+            }
+            html += '</div>';
+
+            // Payment method summary (combined)
+            var totalCashCombined = totalCash + paintballCash;
+            var totalMpesaCombined = totalMpesa + paintballMpesa;
+            var totalCreditCombined = totalCredit + paintballCredit;
+
+            html += '<div style="margin-top:20px;">';
+            html += '<h4 style="margin:15px 0 10px 0;color:#333;">💰 COMBINED PAYMENT SUMMARY</h4>';
+            html += '<div class="payment-summary" style="display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin:10px 0;">' +
+                '<div class="payment-card cash" style="background:#fff;padding:15px;border-radius:8px;text-align:center;border:2px solid #28a745;"><strong>💵 Cash</strong><br>KES ' + totalCashCombined.toLocaleString() + '</div>' +
+                '<div class="payment-card mpesa" style="background:#fff;padding:15px;border-radius:8px;text-align:center;border:2px solid #17a2b8;"><strong>📱 M-Pesa</strong><br>KES ' + totalMpesaCombined.toLocaleString() + '</div>' +
+                '<div class="payment-card credit" style="background:#fff;padding:15px;border-radius:8px;text-align:center;border:2px solid #ffc107;"><strong>📝 Credit</strong><br>KES ' + totalCreditCombined.toLocaleString() + '</div>' +
+                '<div class="payment-card total" style="background:#fff;padding:15px;border-radius:8px;text-align:center;border:2px solid #667eea;"><strong>💰 GRAND TOTAL</strong><br>KES ' + overallTotal.toLocaleString() + '</div>' +
+                '</div>';
+            html += '</div>';
 
             // Served by
             if (cashiersList.length > 0) {
@@ -649,12 +746,12 @@
                     '</div>';
             }
 
-            // Closing float
+            // Closing float (Cash only - total cash from all games including paintball)
             html += '<div class="closing-float-box">' +
                 '<div class="float-label">💰 PETTY CASH / CLOSING FLOAT</div>' +
-                '<div class="float-amount">KES ' + closingFloat.toLocaleString() + '</div>' +
-                '<div class="float-note">This is today\'s cash collection. Add previous day\'s float for total petty cash on hand.</div>' +
-                '<div class="float-note" style="margin-top:5px;"><strong>Total Float = Previous Float + KES ' + closingFloat.toLocaleString() + '</strong></div>' +
+                '<div class="float-amount">KES ' + totalCashCombined.toLocaleString() + '</div>' +
+                '<div class="float-note">This is today\'s total cash collection (includes all games including Paintball). Add previous day\'s float for total petty cash on hand.</div>' +
+                '<div class="float-note" style="margin-top:5px;"><strong>Total Float = Previous Float + KES ' + totalCashCombined.toLocaleString() + '</strong></div>' +
                 '</div>';
 
             document.getElementById('detailsContent').innerHTML = html;
@@ -673,9 +770,7 @@
                     a.click();
                     showToast('CSV exported!');
                 })
-                .catch(function () {
-                    window.open(url + '&token=' + encodeURIComponent(token), '_blank');
-                });
+                .catch(function () { window.open(url + '&token=' + encodeURIComponent(token), '_blank'); });
         }
 
         function exportText() {
@@ -690,9 +785,7 @@
                     w.document.close();
                     showToast('Text exported!');
                 })
-                .catch(function () {
-                    window.open(url + '&token=' + encodeURIComponent(token), '_blank');
-                });
+                .catch(function () { window.open(url + '&token=' + encodeURIComponent(token), '_blank'); });
         }
 
         function printReport() {
@@ -708,9 +801,7 @@
                     setTimeout(function () { w.print(); }, 1000);
                     showToast('Print report opened!');
                 })
-                .catch(function () {
-                    window.open(url + '&token=' + encodeURIComponent(token), '_blank');
-                });
+                .catch(function () { window.open(url + '&token=' + encodeURIComponent(token), '_blank'); });
         }
 
         function exportAllTransactions() {
@@ -725,9 +816,7 @@
                     a.click();
                     showToast('All transactions exported!');
                 })
-                .catch(function () {
-                    window.open(url + '&token=' + encodeURIComponent(token), '_blank');
-                });
+                .catch(function () { window.open(url + '&token=' + encodeURIComponent(token), '_blank'); });
         }
 
         function showToast(message, type) {

@@ -32,7 +32,8 @@ router.post('/', ...adminOnly, async (req, res) => {
         const { station_name, station_type, station_number } = req.body;
         if (!station_name || !station_type) return res.status(400).json({ error: 'Station name and type are required.' });
 
-        const validTypes = ['PS5', 'PS4', 'VR', 'Pool', 'Foosball', 'Darts', 'Racing', 'Paintball'];
+        // FIXED: Using 'Race Simulator' (not 'Racing')
+        const validTypes = ['PS5', 'PS4', 'VR', 'Pool', 'Foosball', 'Darts', 'Race Simulator', 'Paintball'];
         if (!validTypes.includes(station_type)) {
             return res.status(400).json({ error: `Invalid type. Valid: ${validTypes.join(', ')}` });
         }

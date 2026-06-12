@@ -3,38 +3,45 @@ const router = express.Router();
 const store = require('../data/store');
 const { authenticateToken } = require('../middleware/auth');
 
-// ============ PAST TRANSACTIONS ROUTES - MUST come before /:id routes ============
+// ============ PAST TRANSACTIONS ROUTES ============
 router.get('/past', authenticateToken, async (req, res) => {
     try {
         console.log('📊 GET /past - Fetching past transactions');
         
-        // Get ALL transactions from database
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 50;
+        const offset = (page - 1) * limit;
+        
         const allTransactions = await store.getAll('transactions');
         
-        // Ensure we have an array
         if (!allTransactions || !Array.isArray(allTransactions)) {
             console.log('No transactions found or invalid format');
-            return res.json([]);
+            return res.json({ data: [], total: 0, page: 1, totalPages: 0 });
         }
         
-        // Filter to only past transactions (is_past = 1)
-        const pastTransactions = allTransactions.filter(tx => tx.is_past === 1);
+        let pastTransactions = allTransactions.filter(tx => tx.is_past === 1);
         
-        // Sort by date (newest first)
         pastTransactions.sort((a, b) => {
             const dateA = new Date(a.transaction_date + ' ' + (a.transaction_time || '00:00'));
             const dateB = new Date(b.transaction_date + ' ' + (b.transaction_time || '00:00'));
             return dateB - dateA;
         });
         
-        console.log(`📊 Past transactions found: ${pastTransactions.length}`);
+        const total = pastTransactions.length;
+        const paginatedData = pastTransactions.slice(offset, offset + limit);
         
-        // Always return an array
-        res.json(pastTransactions);
+        console.log(`📊 Past transactions found: ${total}, showing page ${page} (${limit} items)`);
+        
+        res.json({
+            data: paginatedData,
+            total: total,
+            page: page,
+            limit: limit,
+            totalPages: Math.ceil(total / limit)
+        });
     } catch (error) {
         console.error('Error loading past transactions:', error);
-        // Return empty array on error, not an error object
-        res.json([]);
+        res.json({ data: [], total: 0, page: 1, totalPages: 0 });
     }
 });
 
@@ -89,6 +96,7 @@ router.post('/past', authenticateToken, async (req, res) => {
             is_past: 1,
             archived: 0,
             notes: notes || '',
+            past_game: past_game,
             created_at: store.now()
         };
 
@@ -104,9 +112,13 @@ router.post('/past', authenticateToken, async (req, res) => {
     }
 });
 
-// ============ REGULAR TRANSACTIONS ============
+// ============ REGULAR TRANSACTIONS with PAGINATION ============
 router.get('/', authenticateToken, async (req, res) => {
     try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 100;
+        const offset = (page - 1) * limit;
+        
         const filters = {
             date: req.query.date,
             status: req.query.status,
@@ -114,21 +126,28 @@ router.get('/', authenticateToken, async (req, res) => {
             include_void: req.query.include_void,
             include_past: req.query.include_past,
             search: req.query.search,
-            limit: req.query.limit,
             archived: req.query.archived || 'false'
         };
 
         let transactions = await store.getTransactions(filters);
         
-        // Ensure we return an array
         if (!transactions || !Array.isArray(transactions)) {
             transactions = [];
         }
         
-        res.json(transactions);
+        const total = transactions.length;
+        const paginatedData = transactions.slice(offset, offset + limit);
+        
+        res.json({
+            data: paginatedData,
+            total: total,
+            page: page,
+            limit: limit,
+            totalPages: Math.ceil(total / limit)
+        });
     } catch (error) {
         console.error('Error listing transactions:', error);
-        res.json([]);
+        res.json({ data: [], total: 0, page: 1, totalPages: 0 });
     }
 });
 
@@ -182,7 +201,7 @@ router.get('/daily-summary/:date', authenticateToken, async (req, res) => {
     }
 });
 
-// ============ SINGLE TRANSACTION (must come AFTER specific routes) ============
+// ============ SINGLE TRANSACTION ============
 router.get('/:id', authenticateToken, async (req, res) => {
     try {
         const tx = await store.getTransactionById(req.params.id);
@@ -194,20 +213,37 @@ router.get('/:id', authenticateToken, async (req, res) => {
     }
 });
 
+// ============ CREATE TRANSACTION - NO STATION LOCKING! ============
+// FIXED: Completely removed all station locking from transaction creation
+// Cashiers can create receipts ANY TIME (before, during, or after play)
 router.post('/', authenticateToken, async (req, res) => {
     try {
         const { customer_name, customer_phone, items, total_amount, station_used, payment_method } = req.body;
+        
+        console.log('📝 CREATE TRANSACTION - Request received');
+        console.log('  Customer:', customer_name || 'Guest');
+        console.log('  Total Amount:', total_amount);
+        console.log('  Payment Method:', payment_method);
+        console.log('  Items count:', items ? items.length : 0);
+        
+        // Validation
         if (!items || !Array.isArray(items) || items.length === 0) {
+            console.log('  ERROR: No items in cart');
             return res.status(400).json({ error: 'At least one item is required.' });
         }
         if (!total_amount || total_amount <= 0) {
+            console.log('  ERROR: Invalid amount');
             return res.status(400).json({ error: 'Valid total amount is required.' });
         }
         if (!payment_method) {
+            console.log('  ERROR: No payment method');
             return res.status(400).json({ error: 'Payment method is required.' });
         }
 
+        // Generate receipt number
         const receiptNo = await store.getNextReceiptNo();
+        console.log(`  Receipt Number: ${receiptNo}`);
+        
         const totalDuration = items.reduce((sum, item) => sum + (item.total_duration || 0), 0);
         const totalShots = items.reduce((sum, item) => sum + (item.total_shots || 0), 0);
 
@@ -235,18 +271,25 @@ router.post('/', authenticateToken, async (req, res) => {
             is_past: 0,
             archived: 0,
             notes: '',
+            past_game: '',
             created_at: store.now()
         };
 
         await store.createTransaction(newTx);
         await store.addLog(req.user.id, 'TRANSACTION_CREATED', `Created receipt ${receiptNo}`, req.ip, req.headers['user-agent']);
+        
+        console.log(`✅ TRANSACTION CREATED SUCCESSFULLY: ${receiptNo}`);
         res.status(201).json({ success: true, transaction: newTx });
+        
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Failed to create transaction.' });
+        console.error('❌ ERROR creating transaction:', error);
+        console.error('  Error message:', error.message);
+        console.error('  Stack trace:', error.stack);
+        res.status(500).json({ error: 'Failed to create transaction: ' + error.message });
     }
 });
 
+// ============ VERIFY PAYMENT ============
 router.post('/:id/verify', authenticateToken, async (req, res) => {
     try {
         const tx = await store.getTransactionById(req.params.id);
@@ -273,6 +316,7 @@ router.post('/:id/verify', authenticateToken, async (req, res) => {
     }
 });
 
+// ============ VOID TRANSACTION ============
 router.post('/:id/void', authenticateToken, async (req, res) => {
     try {
         const tx = await store.getTransactionById(req.params.id);
@@ -290,6 +334,7 @@ router.post('/:id/void', authenticateToken, async (req, res) => {
     }
 });
 
+// ============ ARCHIVE / UNARCHIVE ============
 router.post('/:id/archive', authenticateToken, async (req, res) => {
     try {
         const tx = await store.getTransactionById(req.params.id);

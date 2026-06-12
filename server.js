@@ -61,6 +61,23 @@ const apiLimiter = rateLimit({
 app.use('/api/login', loginLimiter);
 app.use('/api', apiLimiter);
 
+// Add this function after the existing middleware (around line 18-28)
+
+// XSS Sanitize for query parameters as well
+function sanitizeQueryParams(req, res, next) {
+    if (req.query) {
+        for (let key in req.query) {
+            if (typeof req.query[key] === 'string') {
+                req.query[key] = xss(req.query[key]);
+            }
+        }
+    }
+    next();
+}
+
+// Then add this line after your existing body sanitizer, before app.use(express.json)
+app.use(sanitizeQueryParams);
+
 // ============ ROUTES ============
 app.use('/api', healthRoutes);
 app.use('/api', authRoutes);

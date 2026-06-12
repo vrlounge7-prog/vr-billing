@@ -7,28 +7,18 @@ router.get('/daily/:date', authenticateToken, async (req, res) => {
     try {
         const date = req.params.date;
         const includePast = req.query.include_past === 'true';
-        
-        // Get ALL transactions for this date (both regular and past)
-        // When includePast is true, also get past transactions from OTHER dates
+
         const filters = { date: date, include_void: 'false' };
-        
-        if (includePast) {
-            // Include past transactions from ANY date
-            filters.include_past = 'true';
-        }
-        // When includePast is false, we still want past transactions for THIS date
-        
+        if (includePast) filters.include_past = 'true';
+
         let transactions = await store.getTransactions(filters);
         transactions = transactions.filter(tx => tx.payment_status === 'completed');
 
-        // If NOT including past from other dates, but we still want past for THIS date
         if (!includePast) {
-            // Keep: regular transactions for this date + past transactions for this date
             transactions = transactions.filter(tx => {
                 return !tx.is_past || tx.transaction_date === date;
             });
         }
-        // If including past, keep all returned transactions (already filtered by date in backend)
 
         const byMethod = {};
         const byHour = {};
@@ -61,50 +51,126 @@ router.get('/daily/:date', authenticateToken, async (req, res) => {
             else if (tx.payment_method === 'Credit') byStation[stn].credit += tx.total_amount;
         });
 
-        const stationTypeMap = {
-            'Pool': ['Pool Table 1', 'Pool Table 2', 'Pool'],
-            'VR': ['VR Station 1', 'VR Station 2', 'VR'],
-            'Darts': ['Darts Station 1', 'Darts'],
-            'Foosball': ['Foosball Station 1', 'Foosball'],
-            'Paintball': ['Paintball Range', 'Paintball'],
-            'PlayStation': ['PS5 Station 1', 'PS5 Station 2', 'PS5 Station 3', 'PS4 Station 1', 'PS4 Station 2', 'PS5', 'PS4']
+        // Define game categories with their station name patterns
+        // PAINTBALL is now ISOLATED - will have its own separate section
+        const categoryDefinitions = {
+            'POOL': {
+                name: 'POOL TABLE',
+                icon: '🎱',
+                patterns: ['pool', 'billiard', '8 ball', '9 ball']
+            },
+            'VR': {
+                name: 'VR EXPERIENCE',
+                icon: '🥽',
+                patterns: ['vr', 'virtual reality', 'oculus', 'quest', 'headset']
+            },
+            'PLAYSTATION': {
+                name: 'PLAYSTATION (PS4/PS5)',
+                icon: '🎮',
+                patterns: ['ps5', 'ps4', 'playstation', 'play station', 'console']
+            },
+            'DARTS': {
+                name: 'DARTS',
+                icon: '🎯',
+                patterns: ['dart', 'bullseye']
+            },
+            'FOOSBALL': {
+                name: 'FOOSBALL',
+                icon: '⚽',
+                patterns: ['foosball', 'foos ball', 'table football', 'foos']
+            },
+            'RACE SIMULATOR': {
+                name: 'RACE SIMULATOR',
+                icon: '🏎️',
+                patterns: ['race', 'racing', 'simulator', 'sim racing', 'wheel']
+            },
+            'PAINTBALL': {
+                name: 'PAINTBALL (ISOLATED)',
+                icon: '🔫',
+                patterns: ['paintball', 'paint ball', 'paint'],
+                isolated: true  // Flag to indicate this category is isolated
+            }
         };
 
+        // Initialize categories
         const byStationType = {};
-        for (const [type, stationNames] of Object.entries(stationTypeMap)) {
-            byStationType[type] = { cash: 0, mpesa: 0, credit: 0, total: 0, count: 0 };
+        for (const [categoryKey, categoryData] of Object.entries(categoryDefinitions)) {
+            byStationType[categoryKey] = {
+                name: categoryData.name,
+                icon: categoryData.icon,
+                cash: 0,
+                mpesa: 0,
+                credit: 0,
+                total: 0,
+                count: 0,
+                isolated: categoryData.isolated || false
+            };
         }
-        byStationType['Other'] = { cash: 0, mpesa: 0, credit: 0, total: 0, count: 0 };
 
-        for (const [stationName, data] of Object.entries(byStation)) {
+        // Track unmatched stations for debugging
+        const unmatchedStations = new Set();
+        // Track if we found any paintball transactions
+        let paintballFound = false;
+
+        for (const [stationName, stationData] of Object.entries(byStation)) {
             let matched = false;
-            for (const [type, stationNames] of Object.entries(stationTypeMap)) {
-                if (stationNames.some(name => stationName.toLowerCase().includes(name.toLowerCase()))) {
-                    byStationType[type].cash += data.cash || 0;
-                    byStationType[type].mpesa += data.mpesa || 0;
-                    byStationType[type].credit += data.credit || 0;
-                    byStationType[type].total += data.total || 0;
-                    byStationType[type].count += data.count || 0;
+            const stationLower = stationName.toLowerCase().trim();
+
+            for (const [categoryKey, categoryDef] of Object.entries(categoryDefinitions)) {
+                const isMatch = categoryDef.patterns.some(pattern =>
+                    stationLower.includes(pattern)
+                );
+
+                if (isMatch) {
+                    // Add to the matched category
+                    byStationType[categoryKey].cash += stationData.cash || 0;
+                    byStationType[categoryKey].mpesa += stationData.mpesa || 0;
+                    byStationType[categoryKey].credit += stationData.credit || 0;
+                    byStationType[categoryKey].total += stationData.total || 0;
+                    byStationType[categoryKey].count += stationData.count || 0;
                     matched = true;
+
+                    // Track if paintball was found
+                    if (categoryKey === 'PAINTBALL') {
+                        paintballFound = true;
+                    }
                     break;
                 }
             }
-            if (!matched) {
-                byStationType['Other'].cash += data.cash || 0;
-                byStationType['Other'].mpesa += data.mpesa || 0;
-                byStationType['Other'].credit += data.credit || 0;
-                byStationType['Other'].total += data.total || 0;
-                byStationType['Other'].count += data.count || 0;
+
+            if (!matched && stationName !== 'Unknown' && stationName !== 'Manual Entry') {
+                unmatchedStations.add(stationName);
             }
         }
 
-        for (const type of Object.keys(byStationType)) {
-            if (byStationType[type].total === 0) {
-                delete byStationType[type];
+        // Log unmatched stations for debugging
+        if (unmatchedStations.size > 0) {
+            console.log('⚠️ UNMATCHED STATIONS - Need to update patterns:');
+            unmatchedStations.forEach(station => {
+                console.log(`  - "${station}"`);
+            });
+        }
+
+        // Remove empty non-paintball categories (keep paintball even if empty for visibility)
+        for (const categoryKey of Object.keys(byStationType)) {
+            if (categoryKey === 'PAINTBALL') {
+                // Always keep paintball in the response, even if zero
+                if (byStationType[categoryKey].total === 0) {
+                    console.log('Paintball category has no transactions - showing zero');
+                }
+            } else if (byStationType[categoryKey].total === 0) {
+                delete byStationType[categoryKey];
             }
         }
 
-        // Count past transactions in this report
+        // If we have transactions but no categories matched, log the station names
+        if (Object.keys(byStationType).length === 0 && transactions.length > 0) {
+            console.log('❌ NO CATEGORIES MATCHED! Station names in database:');
+            Object.keys(byStation).forEach(station => {
+                console.log(`  - "${station}"`);
+            });
+        }
+
         const pastCount = transactions.filter(tx => tx.is_past === 1 || tx.is_past === true).length;
 
         res.json({
@@ -116,14 +182,16 @@ router.get('/daily/:date', authenticateToken, async (req, res) => {
             by_hour: byHour,
             by_cashier: byCashier,
             by_station: byStation,
-            by_station_type: byStationType
+            by_station_type: byStationType,
+            paintball_found: paintballFound  // Add flag for frontend
         });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Failed to generate report.' });
+        console.error('Report generation error:', error);
+        res.status(500).json({ error: 'Failed to generate report: ' + error.message });
     }
 });
 
+// Other routes remain unchanged...
 router.get('/range', authenticateToken, async (req, res) => {
     try {
         const { from, to } = req.query;
@@ -156,26 +224,22 @@ router.get('/export/csv/:date', authenticateToken, async (req, res) => {
         const date = req.params.date;
         const includePast = req.query.include_past === 'true';
         const filters = { date: date, include_void: 'false' };
-        
-        if (includePast) {
-            filters.include_past = 'true';
-        }
-        
+        if (includePast) filters.include_past = 'true';
+
         let transactions = await store.getTransactions(filters);
         transactions = transactions.filter(tx => tx.payment_status === 'completed');
-        
-        // Always include past transactions for the selected date
+
         if (!includePast) {
             transactions = transactions.filter(tx => {
                 return !tx.is_past || tx.transaction_date === date;
             });
         }
-        
+
         transactions.sort((a, b) => (a.transaction_time || '').localeCompare(b.transaction_time || ''));
 
         const totalRevenue = transactions.reduce((sum, tx) => sum + tx.total_amount, 0);
         const pastCount = transactions.filter(tx => tx.is_past === 1 || tx.is_past === true).length;
-        
+
         const rows = [
             'VR LOUNGE - DAILY SALES REPORT',
             `Date: ${date}`,
@@ -215,15 +279,11 @@ router.get('/export/text/:date', authenticateToken, async (req, res) => {
         const date = req.params.date;
         const includePast = req.query.include_past === 'true';
         const filters = { date: date, include_void: 'false' };
-        
-        if (includePast) {
-            filters.include_past = 'true';
-        }
-        
+        if (includePast) filters.include_past = 'true';
+
         let transactions = await store.getTransactions(filters);
         transactions = transactions.filter(tx => tx.payment_status === 'completed');
-        
-        // Always include past transactions for the selected date
+
         if (!includePast) {
             transactions = transactions.filter(tx => {
                 return !tx.is_past || tx.transaction_date === date;
@@ -236,56 +296,73 @@ router.get('/export/text/:date', authenticateToken, async (req, res) => {
         const creditTotal = transactions.filter(tx => tx.payment_method === 'Credit').reduce((sum, tx) => sum + tx.total_amount, 0);
         const pastCount = transactions.filter(tx => tx.is_past === 1 || tx.is_past === true).length;
 
-        const stationTypeMap = {
-            'POOL': ['Pool Table 1', 'Pool Table 2', 'Pool'],
-            'VR': ['VR Station 1', 'VR Station 2', 'VR'],
-            'DARTS': ['Darts Station 1', 'Darts'],
-            'FOOSBALL': ['Foosball Station 1', 'Foosball'],
-            'PAINTBALL': ['Paintball Range', 'Paintball'],
-            'PLAYSTATION': ['PS5 Station 1', 'PS5 Station 2', 'PS5 Station 3', 'PS4 Station 1', 'PS4 Station 2', 'PS5', 'PS4']
+        // Category definitions with isolated Paintball
+        const categoryDefinitions = {
+            'POOL': { name: 'POOL TABLE', patterns: ['pool', 'billiard'] },
+            'VR': { name: 'VR EXPERIENCE', patterns: ['vr', 'virtual reality', 'oculus', 'quest'] },
+            'PLAYSTATION': { name: 'PLAYSTATION (PS4/PS5)', patterns: ['ps5', 'ps4', 'playstation', 'play station'] },
+            'DARTS': { name: 'DARTS', patterns: ['dart'] },
+            'FOOSBALL': { name: 'FOOSBALL', patterns: ['foosball', 'foos ball', 'foos'] },
+            'RACE SIMULATOR': { name: 'RACE SIMULATOR', patterns: ['race', 'racing', 'simulator'] },
+            'PAINTBALL': { name: 'PAINTBALL (ISOLATED)', patterns: ['paintball', 'paint ball'], isolated: true }
         };
 
         const byStationType = {};
-        for (const [type, stationNames] of Object.entries(stationTypeMap)) {
-            byStationType[type] = { cash: 0, mpesa: 0, credit: 0, total: 0 };
+        for (const [type, data] of Object.entries(categoryDefinitions)) {
+            byStationType[type] = { name: data.name, cash: 0, mpesa: 0, credit: 0, total: 0, isolated: data.isolated || false };
         }
-        byStationType['OTHER'] = { cash: 0, mpesa: 0, credit: 0, total: 0 };
 
         transactions.forEach(tx => {
-            const stn = tx.station_used || 'Unknown';
-            let matched = false;
-            for (const [type, stationNames] of Object.entries(stationTypeMap)) {
-                if (stationNames.some(name => stn.toLowerCase().includes(name.toLowerCase()))) {
+            const stn = (tx.station_used || '').toLowerCase().trim();
+            for (const [type, data] of Object.entries(categoryDefinitions)) {
+                if (data.patterns.some(pattern => stn.includes(pattern))) {
                     if (tx.payment_method === 'Cash') byStationType[type].cash += tx.total_amount;
                     else if (tx.payment_method === 'Mpesa') byStationType[type].mpesa += tx.total_amount;
                     else if (tx.payment_method === 'Credit') byStationType[type].credit += tx.total_amount;
                     byStationType[type].total += tx.total_amount;
-                    matched = true;
                     break;
                 }
-            }
-            if (!matched) {
-                if (tx.payment_method === 'Cash') byStationType['OTHER'].cash += tx.total_amount;
-                else if (tx.payment_method === 'Mpesa') byStationType['OTHER'].mpesa += tx.total_amount;
-                else if (tx.payment_method === 'Credit') byStationType['OTHER'].credit += tx.total_amount;
-                byStationType['OTHER'].total += tx.total_amount;
             }
         });
 
         let stationBreakdown = '';
+        let paintballBreakdown = '';
+        let otherGamesTotal = 0;
+        let paintballTotal = 0;
+
         for (const [type, data] of Object.entries(byStationType)) {
-            if (data.total > 0) {
-                stationBreakdown += `\n${type}:\n`;
-                stationBreakdown += `  Total Cash:    KES ${data.cash.toLocaleString()}\n`;
-                stationBreakdown += `  Total M-Pesa:  KES ${data.mpesa.toLocaleString()}\n`;
-                stationBreakdown += `  Total Credit:  KES ${data.credit.toLocaleString()}\n`;
-                stationBreakdown += `  TOTAL AMOUNT:  KES ${data.total.toLocaleString()}\n`;
+            if (data.total > 0 || type === 'PAINTBALL') {
+                const breakdownText = `\n${data.name}:\n` +
+                    `  Total Cash:    KES ${data.cash.toLocaleString()}\n` +
+                    `  Total M-Pesa:  KES ${data.mpesa.toLocaleString()}\n` +
+                    `  Total Credit:  KES ${data.credit.toLocaleString()}\n` +
+                    `  TOTAL AMOUNT:  KES ${data.total.toLocaleString()}\n`;
+
+                if (data.isolated || type === 'PAINTBALL') {
+                    paintballBreakdown += breakdownText;
+                    paintballTotal += data.total;
+                } else {
+                    stationBreakdown += breakdownText;
+                    otherGamesTotal += data.total;
+                }
             }
         }
 
         let pastNote = '';
         if (pastCount > 0) {
             pastNote = `\n📅 NOTE: This report includes ${pastCount} backdated/past transaction(s) for this date.\n`;
+        }
+
+        let paintballSection = '';
+        if (paintballBreakdown) {
+            paintballSection = `\n========================================
+       PAINTBALL SECTION (ISOLATED)
+========================================${paintballBreakdown}`;
+        } else {
+            paintballSection = `\n========================================
+       PAINTBALL SECTION (ISOLATED)
+========================================
+No Paintball transactions for this date.\n`;
         }
 
         const text = `========================================
@@ -305,17 +382,22 @@ M-Pesa:             KES ${mpesaTotal.toLocaleString()}
 Credit:             KES ${creditTotal.toLocaleString()}
 
 ========================================
-       STATION BREAKDOWN
-========================================${stationBreakdown}
+       OTHER GAMES BREAKDOWN
+========================================${stationBreakdown || 'No other game transactions for this date.\n'}
+========================================
+       PAINTBALL BREAKDOWN (ISOLATED)
+========================================${paintballSection}
 ========================================
          CLOSING SUMMARY
 ========================================
-TOTAL CASH:         KES ${cashTotal.toLocaleString()}
-TOTAL M-PESA:       KES ${mpesaTotal.toLocaleString()}
-TOTAL CREDIT:       KES ${creditTotal.toLocaleString()}
-GRAND TOTAL:        KES ${totalRevenue.toLocaleString()}
+OTHER GAMES TOTAL:   KES ${otherGamesTotal.toLocaleString()}
+PAINTBALL TOTAL:     KES ${paintballTotal.toLocaleString()}
+TOTAL CASH:          KES ${cashTotal.toLocaleString()}
+TOTAL M-PESA:        KES ${mpesaTotal.toLocaleString()}
+TOTAL CREDIT:        KES ${creditTotal.toLocaleString()}
+GRAND TOTAL:         KES ${totalRevenue.toLocaleString()}
 
-CLOSING FLOAT AMT:  KES ${cashTotal.toLocaleString()}
+CLOSING FLOAT AMT:   KES ${cashTotal.toLocaleString()}
 (Petty Cash to Bank)
 
 ========================================
@@ -335,21 +417,17 @@ router.get('/export/print/:date', authenticateToken, async (req, res) => {
         const date = req.params.date;
         const includePast = req.query.include_past === 'true';
         const filters = { date: date, include_void: 'false' };
-        
-        if (includePast) {
-            filters.include_past = 'true';
-        }
-        
+        if (includePast) filters.include_past = 'true';
+
         let transactions = await store.getTransactions(filters);
         transactions = transactions.filter(tx => tx.payment_status === 'completed');
-        
-        // Always include past transactions for the selected date
+
         if (!includePast) {
             transactions = transactions.filter(tx => {
                 return !tx.is_past || tx.transaction_date === date;
             });
         }
-        
+
         transactions.sort((a, b) => (a.transaction_time || '').localeCompare(b.transaction_time || ''));
 
         const totalRevenue = transactions.reduce((sum, tx) => sum + tx.total_amount, 0);
@@ -368,8 +446,8 @@ router.get('/export/print/:date', authenticateToken, async (req, res) => {
             <td style="text-align:center;font-size:14px;">${tx.payment_method}</td>
             <td style="text-align:left;font-size:14px;">${tx.cashier_name || '-'}</td>
             <td style="text-align:left;font-size:14px;">${tx.station_used || '-'}</td>
-            </tr>
-        `}).join('');
+            </tr>`;
+        }).join('');
 
         const pastNote = pastCount > 0 ? `<p style="background:#e8d5f5;padding:10px;border-radius:8px;margin-bottom:15px;"><strong>📅 Note:</strong> This report includes ${pastCount} backdated/past transaction(s) for this date.</p>` : '';
 

@@ -452,6 +452,25 @@
         .pending-banner .icon {
             font-size: 18px;
         }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 10px;
+        }
+
+        .pagination button {
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+
+        .pagination .page-info {
+            font-size: 14px;
+            color: #666;
+        }
     </style>
 </head>
 
@@ -476,7 +495,7 @@
         </div>
         <div class="filter-bar">
             <input type="text" id="searchInput" placeholder="Search by receipt, customer, cashier..."
-                onkeyup="applyFilters()">
+                onkeyup="debounceFilter()">
             <input type="date" id="dateFilter" onchange="applyFilters()">
             <select id="statusFilter" onchange="applyFilters()">
                 <option value="">All Statuses</option>
@@ -497,6 +516,7 @@
             <button class="btn-info" onclick="exportCSV()">📥 Export CSV</button>
             <button class="btn-danger" onclick="clearAllPending()" style="background:#dc3545;">🧹 Clear All
                 Pending</button>
+            <button class="refresh-btn" onclick="loadTransactions()">🔄 Refresh</button>
         </div>
         <div id="pastInfoBanner" class="info-banner" style="display:none;">
             <span class="icon">📅</span>
@@ -520,11 +540,12 @@
                 </thead>
                 <tbody id="txTableBody">
                     <tr>
-                        <td colspan="10" class="empty-state">Loading...</td>
+                        <td colspan="10" class="empty-state">Loading...<\/td>
                     </tr>
                 </tbody>
             </table>
         </div>
+        <div class="pagination" id="pagination"></div>
     </div>
 
     <div id="archivedTab" class="hidden">
@@ -557,11 +578,12 @@
                 </thead>
                 <tbody id="archiveTableBody">
                     <tr>
-                        <td colspan="8" class="empty-state">Loading...</td>
+                        <td colspan="8" class="empty-state">Loading...<\/td>
                     </tr>
                 </tbody>
             </table>
         </div>
+        <div class="pagination" id="archivePagination"></div>
     </div>
 
     <div class="detail-modal" id="detailModal">
@@ -599,8 +621,13 @@
             throw new Error('No token available');
         }
         sessionStorage.setItem('token', token);
+        
         var allTransactions = [], archivedTransactions = [], currentDetailTx = null, currentTab = 'active', selectedArchived = {};
         var archiveSearchTimeout = null;
+        var filterTimeout = null;
+        var currentPage = 1;
+        var totalPages = 1;
+        var totalTransactions = 0;
 
         loadTransactions();
         loadArchived();
@@ -631,6 +658,7 @@
                 banner.style.display = 'none';
                 showToast('Showing only regular transactions', 'info');
             }
+            currentPage = 1;
             loadTransactions();
         }
 
@@ -639,18 +667,47 @@
             applyFilters();
         }
 
-        // ============ LOAD ACTIVE TRANSACTIONS (exclude archived) ============
+        // FIXED: Load active transactions with pagination support
         async function loadTransactions() {
+            var refreshBtn = document.querySelector('.refresh-btn');
+            var originalText = refreshBtn ? refreshBtn.innerHTML : '';
+
             try {
+                if (refreshBtn) {
+                    refreshBtn.innerHTML = '<span class="spinner"></span> Loading...';
+                    refreshBtn.disabled = true;
+                }
+
                 var includePast = document.getElementById('includePastCheckbox')?.checked || false;
-                var url = API_URL + '/transactions?include_void=true&include_past=' + includePast + '&archived=false';
+                var search = document.getElementById('searchInput')?.value || '';
+                var date = document.getElementById('dateFilter')?.value || '';
+                var status = document.getElementById('statusFilter')?.value || '';
+                var method = document.getElementById('methodFilter')?.value || '';
+                
+                var url = API_URL + '/transactions?include_void=true&include_past=' + includePast + '&archived=false&page=' + currentPage + '&limit=50';
+                if (search) url += '&search=' + encodeURIComponent(search);
+                if (date) url += '&date=' + date;
+                if (status) url += '&status=' + status;
+                if (method) url += '&payment_method=' + method;
+                
                 console.log('Loading active transactions from:', url);
 
                 var res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
                 var data = await res.json();
 
-                allTransactions = Array.isArray(data) ? data : [];
-                console.log('Active transactions loaded:', allTransactions.length);
+                // Handle paginated response
+                if (data && typeof data === 'object' && data.data) {
+                    allTransactions = Array.isArray(data.data) ? data.data : [];
+                    totalTransactions = data.total || 0;
+                    totalPages = data.totalPages || 1;
+                    currentPage = data.page || 1;
+                } else {
+                    allTransactions = Array.isArray(data) ? data : [];
+                    totalTransactions = allTransactions.length;
+                    totalPages = 1;
+                }
+                
+                console.log('Active transactions loaded:', allTransactions.length, 'Total:', totalTransactions);
 
                 // Check for pending transactions
                 var pendingCount = allTransactions.filter(function (tx) { return tx.payment_status === 'pending' && !tx.is_void; }).length;
@@ -666,35 +723,53 @@
 
                 renderTable(allTransactions);
                 updateStats(allTransactions);
+                renderPagination();
             } catch (e) {
                 console.error('Error loading transactions:', e);
                 showToast('Error loading transactions: ' + e.message, 'error');
+            } finally {
+                if (refreshBtn) {
+                    refreshBtn.innerHTML = '🔄 Refresh';
+                    refreshBtn.disabled = false;
+                }
             }
         }
 
+        function renderPagination() {
+            var paginationDiv = document.getElementById('pagination');
+            if (!paginationDiv) return;
+            
+            if (totalPages <= 1) {
+                paginationDiv.innerHTML = '';
+                return;
+            }
+            
+            var html = '<button class="btn-primary btn-sm" onclick="goToPage(' + (currentPage - 1) + ')" ' + (currentPage === 1 ? 'disabled' : '') + '>← Previous</button>';
+            html += '<span class="page-info">Page ' + currentPage + ' of ' + totalPages + ' (' + totalTransactions + ' transactions)</span>';
+            html += '<button class="btn-primary btn-sm" onclick="goToPage(' + (currentPage + 1) + ')" ' + (currentPage === totalPages ? 'disabled' : '') + '>Next →</button>';
+            paginationDiv.innerHTML = html;
+        }
+
+        function goToPage(page) {
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            loadTransactions();
+        }
+
         function applyFilters() {
-            var filtered = allTransactions.slice();
-            var search = document.getElementById('searchInput').value.toLowerCase();
-            var date = document.getElementById('dateFilter').value;
-            var status = document.getElementById('statusFilter').value;
-            var method = document.getElementById('methodFilter').value;
+            currentPage = 1;
+            loadTransactions();
+        }
 
-            if (search) filtered = filtered.filter(function (tx) {
-                return (tx.receipt_no || '').toLowerCase().indexOf(search) >= 0 ||
-                    (tx.customer_name || '').toLowerCase().indexOf(search) >= 0 ||
-                    (tx.cashier_name || '').toLowerCase().indexOf(search) >= 0;
-            });
-            if (date) filtered = filtered.filter(function (tx) { return tx.transaction_date === date; });
-            if (status) filtered = filtered.filter(function (tx) { return tx.payment_status === status; });
-            if (method) filtered = filtered.filter(function (tx) { return tx.payment_method === method; });
-
-            renderTable(filtered);
+        function debounceFilter() {
+            clearTimeout(filterTimeout);
+            filterTimeout = setTimeout(applyFilters, 500);
         }
 
         function renderTable(transactions) {
             var tbody = document.getElementById('txTableBody');
             if (!transactions.length) {
-                tbody.innerHTML = '<tr><td colspan="10" class="empty-state">No transactions found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="10" class="empty-state">No transactions found<\/td><\/tr>';
                 return;
             }
 
@@ -719,13 +794,13 @@
                 }
 
                 return '<tr>' +
-                    '<td><strong>' + tx.receipt_no + '</strong>' + isPastBadge + '</td>' +
-                    '<td>' + tx.transaction_date + '</td>' +
+                    '<td><strong>' + (tx.receipt_no || '-') + '</strong>' + isPastBadge + '</td>' +
+                    '<td>' + (tx.transaction_date || '-') + '</td>' +
                     '<td>' + (tx.customer_name || 'Guest') + '</td>' +
                     '<td>KES ' + (tx.total_amount || 0).toLocaleString() + '</td>' +
                     '<td>KES ' + (tx.amount_paid || 0).toLocaleString() + '</td>' +
                     '<td style="color:' + (tx.balance > 0 ? '#dc3545' : '#28a745') + ';">KES ' + (tx.balance || 0).toLocaleString() + '</td>' +
-                    '<td><span class="badge badge-info">' + tx.payment_method + '</span></td>' +
+                    '<td><span class="badge badge-info">' + (tx.payment_method || '-') + '</span></td>' +
                     '<td>' + statusBadge + '</td>' +
                     '<td>' + (tx.cashier_name || '-') + '</td>' +
                     '<td>' + actions + '</td>' +
@@ -736,7 +811,7 @@
         function updateStats(transactions) {
             var today = new Date().toISOString().split('T')[0];
             var todayTx = transactions.filter(function (tx) { return tx.transaction_date === today && !tx.is_void && tx.payment_status === 'completed'; });
-            var totalToday = todayTx.reduce(function (sum, tx) { return sum + tx.total_amount; }, 0);
+            var totalToday = todayTx.reduce(function (sum, tx) { return sum + (tx.total_amount || 0); }, 0);
             var includePast = document.getElementById('includePastCheckbox')?.checked || false;
             var pastCount = transactions.filter(function (tx) { return tx.is_past; }).length;
             var pendingCount = transactions.filter(function (tx) { return tx.payment_status === 'pending' && !tx.is_void; }).length;
@@ -749,7 +824,7 @@
             document.getElementById('statsBar').innerHTML =
                 '<div class="stat-box"><div class="stat-value">KES ' + totalToday.toLocaleString() + '</div><div class="stat-label">Today Sales</div></div>' +
                 '<div class="stat-box"><div class="stat-value">' + todayTx.length + '</div><div class="stat-label">Today Txns</div></div>' +
-                '<div class="stat-box"><div class="stat-value">' + transactions.length + '</div><div class="stat-label">Total Txns</div></div>' +
+                '<div class="stat-box"><div class="stat-value">' + totalTransactions + '</div><div class="stat-label">Total Txns</div></div>' +
                 pastStatsHtml + pendingStatsHtml;
         }
 
@@ -791,6 +866,7 @@
 
             if (voidCount > 0) {
                 showToast('✅ Voided ' + voidCount + ' pending transaction(s)!', 'success');
+                currentPage = 1;
                 await loadTransactions();
                 await loadArchived();
             }
@@ -818,7 +894,13 @@
                 var res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
                 var data = await res.json();
 
-                archivedTransactions = Array.isArray(data) ? data : [];
+                // Handle paginated response for archived as well
+                if (data && typeof data === 'object' && data.data) {
+                    archivedTransactions = Array.isArray(data.data) ? data.data : [];
+                } else {
+                    archivedTransactions = Array.isArray(data) ? data : [];
+                }
+                
                 console.log('Archived loaded:', archivedTransactions.length);
 
                 var search = (document.getElementById('archiveSearch') || {}).value || '';
@@ -860,11 +942,11 @@
                 var isPastBadge = tx.is_past ? '<span class="badge badge-past" style="margin-left:5px;">📅 Past</span>' : '';
                 return '<tr>' +
                     '<td class="checkbox-cell"><input type="checkbox" data-id="' + tx.id + '"' + checked + ' onchange="toggleArchiveSelect(this)"></td>' +
-                    '<td><strong>' + tx.receipt_no + '</strong>' + isPastBadge + '</td>' +
-                    '<td>' + tx.transaction_date + '</td>' +
+                    '<td><strong>' + (tx.receipt_no || '-') + '</strong>' + isPastBadge + '</td>' +
+                    '<td>' + (tx.transaction_date || '-') + '</td>' +
                     '<td>' + (tx.customer_name || 'Guest') + '</td>' +
                     '<td>KES ' + (tx.total_amount || 0).toLocaleString() + '</td>' +
-                    '<td><span class="badge badge-info">' + tx.payment_method + '</span></td>' +
+                    '<td><span class="badge badge-info">' + (tx.payment_method || '-') + '</span></td>' +
                     '<td>' + (tx.cashier_name || '-') + '</td>' +
                     '<td><button class="btn-primary btn-sm" onclick="viewArchivedDetail(\'' + tx.id + '\')">👁️ View</button> ' +
                     '<button class="btn-info btn-sm" onclick="printArchivedReceipt(\'' + tx.id + '\')">🖨️ Print</button> ' +
@@ -910,20 +992,20 @@
 
         function showDetailModal(tx) {
             var itemsHTML = '';
-            try { var items = JSON.parse(tx.items_json || '[]'); itemsHTML = items.map(function (item) { return '<div class="item"><span>' + item.game_name + ' x' + item.quantity + '</span><span>KES ' + (item.total_price || 0).toLocaleString() + '</span></div>'; }).join(''); } catch (e) { itemsHTML = '<p>No items data</p>'; }
+            try { var items = JSON.parse(tx.items_json || '[]'); itemsHTML = items.map(function (item) { return '<div class="item"><span>' + (item.game_name || 'Item') + ' x' + (item.quantity || 1) + '</span><span>KES ' + (item.total_price || 0).toLocaleString() + '</span></div>'; }).join(''); } catch (e) { itemsHTML = '<p>No items data</p>'; }
             var pastBadge = tx.is_past ? '<p style="color:#6f42c1;font-weight:bold;text-align:center;margin-top:10px;">📅 PAST TRANSACTION (Backdated)</p>' : '';
             var pendingBadge = tx.payment_status === 'pending' ? '<p style="color:#ffc107;font-weight:bold;text-align:center;margin-top:10px;">⚠️ PENDING - Payment not confirmed</p>' : '';
 
             document.getElementById('detailBody').innerHTML =
-                '<div class="detail-row"><span class="detail-label">Receipt</span><span class="detail-value"><strong>' + tx.receipt_no + '</strong></span></div>' +
-                '<div class="detail-row"><span class="detail-label">Date/Time</span><span class="detail-value">' + tx.transaction_date + ' ' + (tx.transaction_time || '') + '</span></div>' +
+                '<div class="detail-row"><span class="detail-label">Receipt</span><span class="detail-value"><strong>' + (tx.receipt_no || '-') + '</strong></span></div>' +
+                '<div class="detail-row"><span class="detail-label">Date/Time</span><span class="detail-value">' + (tx.transaction_date || '-') + ' ' + (tx.transaction_time || '') + '</span></div>' +
                 '<div class="detail-row"><span class="detail-label">Customer</span><span class="detail-value">' + (tx.customer_name || 'Guest') + '</span></div>' +
                 (tx.customer_phone ? '<div class="detail-row"><span class="detail-label">Phone</span><span class="detail-value">' + tx.customer_phone + '</span></div>' : '') +
                 '<hr><strong>Items:</strong><div class="items-list">' + itemsHTML + '</div><hr>' +
                 '<div class="detail-row"><span class="detail-label">Total</span><span class="detail-value"><strong>KES ' + (tx.total_amount || 0).toLocaleString() + '</strong></span></div>' +
                 '<div class="detail-row"><span class="detail-label">Paid</span><span class="detail-value">KES ' + (tx.amount_paid || 0).toLocaleString() + '</span></div>' +
                 '<div class="detail-row"><span class="detail-label">Balance</span><span class="detail-value">KES ' + (tx.balance || 0).toLocaleString() + '</span></div>' +
-                '<div class="detail-row"><span class="detail-label">Method</span><span class="detail-value">' + tx.payment_method + '</span></div>' +
+                '<div class="detail-row"><span class="detail-label">Method</span><span class="detail-value">' + (tx.payment_method || '-') + '</span></div>' +
                 '<div class="detail-row"><span class="detail-label">Cashier</span><span class="detail-value">' + (tx.cashier_name || '-') + '</span></div>' +
                 '<div class="detail-row"><span class="detail-label">Station</span><span class="detail-value">' + (tx.station_used || '-') + '</span></div>' +
                 (tx.is_void ? '<p style="color:red;font-weight:bold;text-align:center;margin-top:10px;">VOIDED</p>' : '') +
@@ -945,11 +1027,11 @@
 
         async function voidTransaction(id) {
             if (!confirm('Void this transaction?')) return;
-            try { var res = await fetch(API_URL + '/transactions/' + id + '/void', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } }); var data = await res.json(); if (data.success) { showToast('Transaction voided'); closeDetailModal(); await loadTransactions(); await loadArchived(); } else showToast(data.error || 'Failed', 'error'); } catch (e) { showToast('Error', 'error'); }
+            try { var res = await fetch(API_URL + '/transactions/' + id + '/void', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } }); var data = await res.json(); if (data.success) { showToast('Transaction voided'); closeDetailModal(); currentPage = 1; await loadTransactions(); await loadArchived(); } else showToast(data.error || 'Failed', 'error'); } catch (e) { showToast('Error', 'error'); }
         }
 
         async function archiveTransaction(id) {
-            try { var res = await fetch(API_URL + '/transactions/' + id + '/archive', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } }); var data = await res.json(); if (data.success) { showToast('Archived!'); closeDetailModal(); await loadTransactions(); await loadArchived(); } else showToast(data.error || 'Failed', 'error'); } catch (e) { showToast('Error', 'error'); }
+            try { var res = await fetch(API_URL + '/transactions/' + id + '/archive', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } }); var data = await res.json(); if (data.success) { showToast('Archived!'); closeDetailModal(); currentPage = 1; await loadTransactions(); await loadArchived(); } else showToast(data.error || 'Failed', 'error'); } catch (e) { showToast('Error', 'error'); }
         }
 
         async function deleteVoidedTx(id, receiptNo) {
@@ -960,7 +1042,7 @@
                 try {
                     var res = await fetch(API_URL + '/transactions/' + id + '/permanent', { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ adminPassword: password }) });
                     var data = await res.json();
-                    if (data.success) { showToast('Deleted!'); closeDetailModal(); await loadTransactions(); await loadArchived(); return; }
+                    if (data.success) { showToast('Deleted!'); closeDetailModal(); currentPage = 1; await loadTransactions(); await loadArchived(); return; }
                     else if (data.error === 'Invalid password. Use your own admin login password.') { showToast('Wrong password!', 'error'); continue; }
                     else { showToast(data.error || 'Failed', 'error'); return; }
                 } catch (e) { showToast('Error', 'error'); return; }
@@ -985,9 +1067,9 @@
 
         function printReceipt(tx) {
             var items = []; try { items = JSON.parse(tx.items_json || '[]'); } catch (e) { }
-            var itemsHTML = items.map(function (item) { return '<tr><td>' + item.game_name + '</td><td style="text-align:center;">x' + item.quantity + '</td><td style="text-align:right;">KES ' + (item.total_price || 0).toLocaleString() + '</td></tr>'; }).join('');
+            var itemsHTML = items.map(function (item) { return '<tr><td>' + (item.game_name || 'Item') + '</td><td style="text-align:center;">x' + (item.quantity || 1) + '</td><td style="text-align:right;">KES ' + (item.total_price || 0).toLocaleString() + '</td></tr>'; }).join('');
             var pastLabel = tx.is_past ? '<p><strong>📅 PAST TRANSACTION</strong></p>' : '';
-            var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Receipt</title><style>body{font-family:"Courier New",monospace;width:80mm;margin:0 auto;padding:10px;font-size:12px;}.center{text-align:center;}.divider{border-top:1px dashed #000;margin:8px 0;}table{width:100%;}th,td{padding:4px;font-size:11px;}</style></head><body><div class="center"><h3>VR LOUNGE</h3><p>GATEWAY MALL - SYOKIMAU</p><div class="divider"></div><p><strong>RECEIPT: ' + tx.receipt_no + (tx.is_void ? ' (VOIDED)' : '') + (tx.archived ? ' (ARCHIVED)' : '') + '</strong></p>' + pastLabel + '<p>' + tx.transaction_date + ' ' + (tx.transaction_time || '') + '</p><p>Customer: ' + (tx.customer_name || 'Guest') + '</p><div class="divider"></div><table><thead><tr><th>ITEM</th><th>QTY</th><th>AMOUNT</th></tr></thead><tbody>' + itemsHTML + '</tbody></table><div class="divider"></div><p><strong>TOTAL: KES ' + (tx.total_amount || 0).toLocaleString() + '</strong></p><p>Method: ' + tx.payment_method + '</p><div class="divider"></div><p>Served by: ' + (tx.cashier_name || '-') + '</p><div class="divider"></div><p><strong>THANK YOU!</strong></p></div></body></html>';
+            var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Receipt</title><style>body{font-family:"Courier New",monospace;width:80mm;margin:0 auto;padding:10px;font-size:12px;}.center{text-align:center;}.divider{border-top:1px dashed #000;margin:8px 0;}table{width:100%;}th,td{padding:4px;font-size:11px;}</style></head><body><div class="center"><h3>VR LOUNGE</h3><p>GATEWAY MALL - SYOKIMAU</p><div class="divider"></div><p><strong>RECEIPT: ' + (tx.receipt_no || '-') + (tx.is_void ? ' (VOIDED)' : '') + (tx.archived ? ' (ARCHIVED)' : '') + '</strong></p>' + pastLabel + '<p>' + (tx.transaction_date || '-') + ' ' + (tx.transaction_time || '') + '</p><p>Customer: ' + (tx.customer_name || 'Guest') + '</p><div class="divider"></div><table><thead><tr><th>ITEM</th><th>QTY</th><th>AMOUNT</th></tr></thead><tbody>' + itemsHTML + '</tbody>追赶<div class="divider"></div><p><strong>TOTAL: KES ' + (tx.total_amount || 0).toLocaleString() + '</strong></p><p>Method: ' + (tx.payment_method || '-') + '</p><div class="divider"></div><p>Served by: ' + (tx.cashier_name || '-') + '</p><div class="divider"></div><p><strong>THANK YOU!</strong></p></div></body></html>';
             var w = window.open('', '_blank', 'width=400,height=600'); w.document.write(html); w.document.close(); setTimeout(function () { w.print(); }, 500);
         }
 
@@ -1007,7 +1089,7 @@
         function exportArchivedCSV() {
             if (!archivedTransactions.length) { showToast('No archived transactions', 'error'); return; }
             var csv = 'Receipt No,Date,Customer,Total,Method,Cashier,Station,Status,Past\n';
-            archivedTransactions.forEach(function (tx) { csv += tx.receipt_no + ',' + tx.transaction_date + ',' + (tx.customer_name || 'Guest') + ',' + tx.total_amount + ',' + tx.payment_method + ',' + (tx.cashier_name || '') + ',' + (tx.station_used || '') + ',' + (tx.is_void ? 'Voided' : 'Completed') + ',' + (tx.is_past ? 'Yes' : 'No') + '\n'; });
+            archivedTransactions.forEach(function (tx) { csv += (tx.receipt_no || '') + ',' + (tx.transaction_date || '') + ',' + (tx.customer_name || 'Guest') + ',' + (tx.total_amount || 0) + ',' + (tx.payment_method || '') + ',' + (tx.cashier_name || '') + ',' + (tx.station_used || '') + ',' + (tx.is_void ? 'Voided' : 'Completed') + ',' + (tx.is_past ? 'Yes' : 'No') + '\n'; });
             var blob = new Blob([csv], { type: 'text/csv' }); var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'archived_transactions.csv'; a.click(); showToast('Archived CSV exported!');
         }
 
@@ -1015,6 +1097,8 @@
 
         document.getElementById('detailModal').addEventListener('click', function (e) { if (e.target === this) closeDetailModal(); });
         document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeDetailModal(); });
+
+        window.goToPage = goToPage;
     </script>
 </body>
 
