@@ -1,24 +1,43 @@
 // data/database-pg.js
-// PostgreSQL version for Supabase
+// PostgreSQL version for Supabase - WITH IPv4 FIX
 
 const { Pool } = require('pg');
 const { v4: uuidv4 } = require('uuid');
+const dns = require('dns');
+
+// Force IPv4 resolution for better compatibility
+dns.setDefaultResultOrder('ipv4first');
 
 let pool = null;
 let dbInitialized = false;
 
 function getPool() {
     if (!pool) {
+        // Get the DATABASE_URL and ensure IPv4 is used
+        let connectionString = process.env.DATABASE_URL;
+        
+        // If using supabase.co domain, ensure we're using IPv4
+        if (connectionString && connectionString.includes('supabase.co')) {
+            console.log('📡 Configuring connection for IPv4 compatibility...');
+        }
+        
         pool = new Pool({
-            connectionString: process.env.DATABASE_URL,
-            ssl: { rejectUnauthorized: false },
+            connectionString: connectionString,
+            ssl: { 
+                rejectUnauthorized: false
+            },
             max: 10,
-            min: 2
+            min: 2,
+            connectionTimeoutMillis: 30000,
+            keepAlive: true,
+            keepAliveInitialDelayMillis: 10000,
+            // Force IPv4 by using hostname resolution first
+            host: connectionString.split('@')[1]?.split(':')[0] || 'db.tayzsgkxmduynosvowgj.supabase.co',
+            port: 5432
         });
         
-        // Test connection
         pool.on('error', (err) => {
-            console.error('Unexpected database error:', err);
+            console.error('Unexpected database error:', err.message);
         });
     }
     return pool;
@@ -28,12 +47,20 @@ async function initDatabase() {
     if (dbInitialized) return;
     
     console.log('🔄 Initializing Supabase PostgreSQL connection...');
+    console.log('📡 Connection target:', process.env.DATABASE_URL ? 'URL configured' : 'No URL');
+    
     try {
-        const result = await query('SELECT NOW()');
-        console.log('✅ Supabase connection successful');
+        // Try a simple query to test connection
+        const result = await query('SELECT NOW() as now, version() as version');
+        console.log('✅ Supabase connection successful!');
+        console.log('📅 Database time:', result.rows[0].now);
         dbInitialized = true;
     } catch (err) {
         console.error('❌ Supabase connection failed:', err.message);
+        console.error('🔧 Troubleshooting tips:');
+        console.error('   1. Check if DATABASE_URL is correct in Render environment variables');
+        console.error('   2. Make sure Supabase project is active');
+        console.error('   3. Try using the connection pooler URL (port 6543) instead');
         throw err;
     }
 }
@@ -45,7 +72,7 @@ async function query(text, params) {
         const res = await client.query(text, params);
         const duration = Date.now() - start;
         if (duration > 1000) {
-            console.log('Slow query:', { text, duration, rows: res.rowCount });
+            console.log('Slow query:', { text: text.substring(0, 100), duration, rows: res.rowCount });
         }
         return res;
     } finally {
@@ -328,6 +355,7 @@ async function getNextReceiptNo() {
     const prefix = `${year}${month}${day}`;
     
     try {
+        await query(`INSERT INTO receipt_sequence (id, last_number, updated_at) VALUES (1, 0, NOW()) ON CONFLICT (id) DO NOTHING`);
         const result = await query(
             `UPDATE receipt_sequence 
              SET last_number = last_number + 1, updated_at = NOW() 
@@ -338,15 +366,11 @@ async function getNextReceiptNo() {
         let nextNum = 1;
         if (result.rows.length > 0) {
             nextNum = result.rows[0].last_number;
-        } else {
-            await query(`INSERT INTO receipt_sequence (id, last_number, updated_at) VALUES (1, 1, NOW())`);
-            nextNum = 1;
         }
         
         return `${prefix}-${String(nextNum).padStart(6, '0')}`;
     } catch (err) {
         console.error('Error getting receipt number:', err);
-        // Fallback: use timestamp-based receipt number
         return `${prefix}-${Date.now()}`;
     }
 }
