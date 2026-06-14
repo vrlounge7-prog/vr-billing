@@ -1,6 +1,7 @@
-// data/database-pg.js - Updated for pooler compatibility
+// data/database-pg.js - Updated for pooler compatibility with full table creation
 const { Pool } = require('pg');
 const { v4: uuidv4 } = require('uuid');
+const bcrypt = require('bcryptjs');
 
 let pool = null;
 let dbInitialized = false;
@@ -23,7 +24,6 @@ function getPool() {
             connectionTimeoutMillis: 30000,
             keepAlive: true,
             keepAliveInitialDelayMillis: 10000,
-            // Pooler specific settings
             ...(isPooler && {
                 statement_timeout: 10000,
                 query_timeout: 10000,
@@ -35,7 +35,6 @@ function getPool() {
             console.error('Database pool error:', err.message);
         });
 
-        // Test connection on creation
         pool.connect((err, client, release) => {
             if (err) {
                 console.error('❌ Pool connection test failed:', err.message);
@@ -53,13 +52,17 @@ async function initDatabase() {
 
     console.log('🔄 Initializing Supabase connection...');
 
-    // Simple retry logic
     let retries = 3;
     while (retries > 0) {
         try {
             const result = await query('SELECT NOW() as now');
             console.log('✅ Supabase connected successfully!');
             console.log('📅 Server time:', result.rows[0].now);
+            
+            // Create tables and initialize data
+            await createTables();
+            await initializeDefaultData();
+            
             dbInitialized = true;
             return;
         } catch (err) {
@@ -86,6 +89,290 @@ async function query(text, params) {
 
 function generateId() {
     return uuidv4();
+}
+
+async function createTables() {
+    console.log('Creating tables if not exist...');
+    
+    // Create users table
+    await query(`
+        CREATE TABLE IF NOT EXISTS users (
+            id TEXT PRIMARY KEY,
+            full_name TEXT NOT NULL,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            role TEXT NOT NULL CHECK(role IN ('admin', 'cashier')),
+            can_delete_voided INTEGER DEFAULT 0,
+            phone_number TEXT DEFAULT '',
+            gender TEXT DEFAULT 'neutral',
+            bio TEXT DEFAULT '',
+            profile_picture TEXT DEFAULT '',
+            is_active INTEGER DEFAULT 1,
+            last_login TEXT DEFAULT '',
+            last_ip TEXT DEFAULT '',
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+    `);
+    
+    // Create games table
+    await query(`
+        CREATE TABLE IF NOT EXISTS games (
+            id TEXT PRIMARY KEY,
+            category TEXT NOT NULL,
+            sub_category TEXT NOT NULL,
+            duration_or_quantity TEXT DEFAULT '',
+            price_ksh INTEGER NOT NULL,
+            is_active INTEGER DEFAULT 1,
+            platform TEXT DEFAULT '',
+            is_fixed INTEGER DEFAULT 0,
+            created_at TEXT NOT NULL
+        )
+    `);
+    
+    // Create stations table
+    await query(`
+        CREATE TABLE IF NOT EXISTS stations (
+            id TEXT PRIMARY KEY,
+            station_name TEXT NOT NULL,
+            station_type TEXT NOT NULL,
+            station_number INTEGER,
+            is_active INTEGER DEFAULT 1,
+            in_use INTEGER DEFAULT 0,
+            setup_time INTEGER DEFAULT 2,
+            created_at TEXT NOT NULL
+        )
+    `);
+    
+    // Create transactions table
+    await query(`
+        CREATE TABLE IF NOT EXISTS transactions (
+            id TEXT PRIMARY KEY,
+            receipt_no TEXT UNIQUE NOT NULL,
+            customer_name TEXT DEFAULT 'Guest',
+            customer_phone TEXT DEFAULT '',
+            total_amount INTEGER NOT NULL,
+            amount_paid INTEGER DEFAULT 0,
+            balance INTEGER DEFAULT 0,
+            payment_method TEXT NOT NULL,
+            payment_status TEXT DEFAULT 'pending',
+            cashier_id TEXT NOT NULL,
+            cashier_name TEXT NOT NULL,
+            transaction_date TEXT NOT NULL,
+            transaction_time TEXT NOT NULL,
+            items_json TEXT NOT NULL,
+            station_used TEXT DEFAULT '',
+            total_duration_minutes INTEGER DEFAULT 0,
+            total_shots INTEGER DEFAULT 0,
+            credit_details TEXT DEFAULT '',
+            mpesa_receipt TEXT DEFAULT '',
+            is_void INTEGER DEFAULT 0,
+            is_past INTEGER DEFAULT 0,
+            archived INTEGER DEFAULT 0,
+            notes TEXT DEFAULT '',
+            past_game TEXT DEFAULT '',
+            created_at TEXT NOT NULL
+        )
+    `);
+    
+    // Create logs table
+    await query(`
+        CREATE TABLE IF NOT EXISTS logs (
+            id TEXT PRIMARY KEY,
+            user_id TEXT,
+            action TEXT NOT NULL,
+            details TEXT,
+            ip_address TEXT,
+            user_agent TEXT,
+            created_at TEXT NOT NULL
+        )
+    `);
+    
+    // Create inventory table
+    await query(`
+        CREATE TABLE IF NOT EXISTS inventory (
+            id TEXT PRIMARY KEY,
+            station_id TEXT NOT NULL,
+            item_type TEXT DEFAULT '',
+            item_name TEXT NOT NULL,
+            quantity INTEGER DEFAULT 0,
+            notes TEXT DEFAULT '',
+            last_updated TEXT NOT NULL
+        )
+    `);
+    
+    // Create receipt_sequence table
+    await query(`
+        CREATE TABLE IF NOT EXISTS receipt_sequence (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            last_number INTEGER DEFAULT 0,
+            updated_at TEXT NOT NULL
+        )
+    `);
+    
+    // Create indexes
+    await query(`CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(transaction_date)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_transactions_receipt ON transactions(receipt_no)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_transactions_cashier_id ON transactions(cashier_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_transactions_payment_status ON transactions(payment_status)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_transactions_archived ON transactions(archived)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_transactions_void ON transactions(is_void)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_logs_created ON logs(created_at)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_logs_user ON logs(user_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_logs_action ON logs(action)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_games_category ON games(category)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_stations_type ON stations(station_type)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_inventory_station_id ON inventory(station_id)`);
+    
+    console.log('Tables created/verified');
+}
+
+async function initializeDefaultData() {
+    console.log('Checking for default data...');
+    
+    // Check if users exist
+    const userCount = await getCount('users');
+    
+    if (userCount === 0) {
+        console.log('No users found, creating default users...');
+        const salt = await bcrypt.genSalt(10);
+        const adminHash = await bcrypt.hash('Admin@2026!', salt);
+        const cashierHash = await bcrypt.hash('Cashier@2026!', salt);
+        const now = new Date().toISOString();
+        
+        const users = [
+            {
+                id: generateId(),
+                full_name: 'System Administrator',
+                username: 'admin',
+                password: adminHash,
+                role: 'admin',
+                can_delete_voided: 1,
+                phone_number: '',
+                gender: 'male',
+                bio: '',
+                profile_picture: '',
+                is_active: 1,
+                last_login: '',
+                last_ip: '',
+                created_at: now,
+                updated_at: now
+            },
+            {
+                id: generateId(),
+                full_name: 'Cashier User',
+                username: 'cashier',
+                password: cashierHash,
+                role: 'cashier',
+                can_delete_voided: 0,
+                phone_number: '',
+                gender: 'neutral',
+                bio: '',
+                profile_picture: '',
+                is_active: 1,
+                last_login: '',
+                last_ip: '',
+                created_at: now,
+                updated_at: now
+            }
+        ];
+        
+        for (const user of users) {
+            await createUser(user);
+        }
+        console.log('✅ Default users created successfully!');
+        console.log('   Admin login: admin / Admin@2026!');
+        console.log('   Cashier login: cashier / Cashier@2026!');
+    } else {
+        console.log(`Found ${userCount} existing users, skipping user initialization`);
+        
+        // Make sure admin has delete permission
+        try {
+            const admin = await getUserByUsername('admin');
+            if (admin && (admin.can_delete_voided !== 1)) {
+                await updateUser(admin.id, { can_delete_voided: 1 });
+                console.log('Updated existing admin user with delete permissions');
+            }
+        } catch (err) {
+            console.log('Admin check skipped - admin user may not exist yet');
+        }
+    }
+    
+    // Check if games exist
+    const gameCount = await getCount('games');
+    if (gameCount === 0) {
+        console.log('No games found, creating default games...');
+        const defaultGames = [
+            { category: 'VR Experience Regular', sub_category: '5 mins', duration_or_quantity: '5', price_ksh: 200, platform: '', is_fixed: 0 },
+            { category: 'VR Experience Regular', sub_category: '15 mins', duration_or_quantity: '15', price_ksh: 400, platform: '', is_fixed: 0 },
+            { category: 'VR Experience Regular', sub_category: '30 mins', duration_or_quantity: '30', price_ksh: 600, platform: '', is_fixed: 0 },
+            { category: 'VR Experience Regular', sub_category: '60 mins', duration_or_quantity: '60', price_ksh: 1000, platform: '', is_fixed: 0 },
+            { category: 'VR Family Sharing', sub_category: '2 players 15 mins', duration_or_quantity: '2p_15', price_ksh: 550, platform: '', is_fixed: 0 },
+            { category: 'VR Family Sharing', sub_category: '2 players 30 mins', duration_or_quantity: '2p_30', price_ksh: 900, platform: '', is_fixed: 0 },
+            { category: 'Game Lounge', sub_category: 'Pool 1 game', duration_or_quantity: '1', price_ksh: 100, platform: '', is_fixed: 1 },
+            { category: 'Game Lounge', sub_category: 'Darts 30 mins', duration_or_quantity: '30', price_ksh: 100, platform: '', is_fixed: 0 },
+            { category: 'Game Lounge', sub_category: 'Foosball 30 mins', duration_or_quantity: '30', price_ksh: 100, platform: '', is_fixed: 0 },
+            { category: 'Paintball', sub_category: 'Rookie 10 shots', duration_or_quantity: '10', price_ksh: 300, platform: '', is_fixed: 1 },
+            { category: 'Paintball', sub_category: 'Soldier 20 shots', duration_or_quantity: '20', price_ksh: 500, platform: '', is_fixed: 1 },
+            { category: 'Paintball', sub_category: 'Sergeant 40 shots', duration_or_quantity: '40', price_ksh: 800, platform: '', is_fixed: 1 },
+            { category: 'Race Simulator', sub_category: '15 mins', duration_or_quantity: '15', price_ksh: 200, platform: '', is_fixed: 0 },
+            { category: 'Race Simulator', sub_category: '30 mins', duration_or_quantity: '30', price_ksh: 350, platform: '', is_fixed: 0 },
+            { category: 'Race Simulator', sub_category: '60 mins', duration_or_quantity: '60', price_ksh: 600, platform: '', is_fixed: 0 }
+        ];
+        
+        for (const game of defaultGames) {
+            await createGame({
+                id: generateId(),
+                ...game,
+                is_active: 1,
+                created_at: new Date().toISOString()
+            });
+        }
+        console.log('✅ Default games created successfully!');
+    }
+    
+    // Check if stations exist
+    const stationCount = await getCount('stations');
+    if (stationCount === 0) {
+        console.log('No stations found, creating default stations...');
+        const defaultStations = [
+            ['PS5 Station 1', 'PS5', 1, 3], ['PS5 Station 2', 'PS5', 2, 3], ['PS5 Station 3', 'PS5', 3, 3],
+            ['PS4 Station 1', 'PS4', 1, 3], ['PS4 Station 2', 'PS4', 2, 3],
+            ['VR Station 1', 'VR', 1, 2], ['VR Station 2', 'VR', 2, 2],
+            ['Pool Table 1', 'Pool', 1, 2], ['Pool Table 2', 'Pool', 2, 2],
+            ['Darts Station 1', 'Darts', 1, 2], ['Foosball Station 1', 'Foosball', 1, 2],
+            ['Paintball Range', 'Paintball', 1, 5],
+            ['Race Simulator 1', 'Race Simulator', 1, 2], ['Race Simulator 2', 'Race Simulator', 2, 2]
+        ];
+        
+        for (const [name, type, num, setupTime] of defaultStations) {
+            await createStation({
+                id: generateId(),
+                station_name: name,
+                station_type: type,
+                station_number: num,
+                is_active: 1,
+                in_use: 0,
+                setup_time: setupTime,
+                created_at: new Date().toISOString()
+            });
+        }
+        console.log('✅ Default stations created successfully!');
+    }
+    
+    // Initialize receipt sequence
+    await query(`
+        INSERT INTO receipt_sequence (id, last_number, updated_at) 
+        VALUES (1, 0, NOW()) 
+        ON CONFLICT (id) DO NOTHING
+    `);
+    
+    console.log('Default data initialization complete!');
+}
+
+async function getCount(table, where = '') {
+    const result = await query(`SELECT COUNT(*) as count FROM ${table} ${where}`);
+    return parseInt(result.rows[0].count);
 }
 
 // ============ USER FUNCTIONS ============
@@ -332,9 +619,9 @@ async function getTransactions(filters = {}) {
         sql += ` AND archived = 0`;
     }
     if (filters.search) {
-        sql += ` AND (receipt_no LIKE $${paramIndex} OR customer_name LIKE $${paramIndex + 1} OR 
-                customer_phone LIKE $${paramIndex + 2} OR cashier_name LIKE $${paramIndex + 3} OR 
-                payment_method LIKE $${paramIndex + 4})`;
+        sql += ` AND (receipt_no ILIKE $${paramIndex} OR customer_name ILIKE $${paramIndex + 1} OR 
+                customer_phone ILIKE $${paramIndex + 2} OR cashier_name ILIKE $${paramIndex + 3} OR 
+                payment_method ILIKE $${paramIndex + 4})`;
         const search = `%${filters.search}%`;
         params.push(search, search, search, search, search);
         paramIndex += 5;
@@ -523,11 +810,6 @@ async function getById(table, id) {
 
 async function deleteById(table, id) {
     await query(`DELETE FROM ${table} WHERE id = $1`, [id]);
-}
-
-async function getCount(table, where = '') {
-    const result = await query(`SELECT COUNT(*) as count FROM ${table} ${where}`);
-    return parseInt(result.rows[0].count);
 }
 
 function closeDatabase() {
