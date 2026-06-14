@@ -11,7 +11,6 @@
     <link rel="shortcut icon" href="/favicon.ico" type="image/png">
     <link rel="manifest" href="/manifest.json">
     <style>
-        /* [Keep all existing styles exactly as they were - they work fine] */
         * {
             margin: 0;
             padding: 0;
@@ -34,7 +33,7 @@
             height: 100vh;
         }
 
-        /* [Keep all existing CSS - it's fine] */
+        /* ============ HEADER - FIXED LAYOUT ============ */
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -44,8 +43,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 8px;
+            gap: 10px;
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
             flex-shrink: 0;
         }
@@ -54,6 +52,8 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            flex: 1;
+            min-width: 0;
         }
 
         .header-left img {
@@ -63,23 +63,36 @@
             border-radius: 10px;
             background: white;
             padding: 4px;
+            flex-shrink: 0;
+        }
+
+        .brand {
+            overflow: hidden;
         }
 
         .brand h4 {
             font-size: 13px;
             margin: 0;
             font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .brand small {
             font-size: 9px;
             opacity: 0.85;
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .header-right {
             display: flex;
             align-items: center;
             gap: 8px;
+            flex-shrink: 0;
         }
 
         .refresh-btn {
@@ -92,6 +105,13 @@
             font-size: 12px;
             font-weight: 500;
             transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .refresh-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
         }
 
         .user-profile {
@@ -130,6 +150,7 @@
             opacity: 0.8;
         }
 
+        /* Profile Dropdown */
         .profile-dropdown {
             position: absolute;
             top: 45px;
@@ -188,11 +209,20 @@
             gap: 6px;
         }
 
+        /* ============ MAIN CONTAINER ============ */
         .container {
             display: flex;
             flex-direction: column;
             gap: 10px;
             flex: 1;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        /* ============ LEFT PANEL ============ */
+        .left-panel {
+            display: flex;
+            flex-direction: column;
             overflow: hidden;
             min-height: 0;
         }
@@ -285,6 +315,7 @@
             display: inline-block;
         }
 
+        /* ============ RIGHT PANEL ============ */
         .right-panel {
             background: white;
             border-radius: 18px;
@@ -395,6 +426,7 @@
             flex-shrink: 0;
         }
 
+        /* ============ PAYMENT METHODS ============ */
         .payment-methods {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -419,19 +451,22 @@
             color: white;
         }
 
+        /* ============ PROCESS BUTTON - FIXED VISIBILITY ============ */
         .process-btn {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
             color: white;
             border: none;
             border-radius: 25px;
-            font-size: 15px;
+            font-size: 16px;
             font-weight: bold;
             cursor: pointer;
             margin-top: 8px;
+            margin-bottom: 4px;
         }
 
+        /* ============ TIMER SECTION ============ */
         .timer-section {
             background: white;
             border-radius: 14px;
@@ -492,6 +527,7 @@
             color: #667eea;
         }
 
+        /* ============ MODALS ============ */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -598,10 +634,11 @@
             color: white;
         }
 
+        /* ============ BACKDATE BUTTON - FIXED POSITION ============ */
         .backdate-container {
             position: fixed;
-            bottom: 15px;
-            left: 12px;
+            bottom: 20px;
+            right: 20px;
             z-index: 100;
         }
 
@@ -609,10 +646,10 @@
             background: linear-gradient(135deg, #ffc107, #ff9800);
             border: none;
             border-radius: 50px;
-            padding: 10px 16px;
+            padding: 12px 18px;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             cursor: pointer;
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
             color: #333;
@@ -620,6 +657,7 @@
             font-size: 13px;
         }
 
+        /* ============ NOTIFICATIONS ============ */
         .notification {
             position: fixed;
             top: 12px;
@@ -682,7 +720,8 @@
             display: none;
         }
 
-        @media (min-width:768px) {
+        /* ============ TABLET AND DESKTOP STYLES ============ */
+        @media (min-width: 768px) {
             body {
                 padding: 12px;
             }
@@ -694,16 +733,11 @@
 
             .left-panel {
                 flex: 2;
-                display: flex;
-                flex-direction: column;
-                overflow: hidden;
-                min-height: 0;
             }
 
             .right-panel {
                 flex: 1;
                 max-width: 380px;
-                height: 100%;
             }
 
             .games-grid {
@@ -712,7 +746,8 @@
 
             .backdate-container {
                 bottom: 20px;
-                left: 20px;
+                right: 20px;
+                left: auto;
             }
 
             .notification {
@@ -726,28 +761,67 @@
             }
         }
 
-        @media (min-width:1024px) {
+        @media (min-width: 1024px) {
             .games-grid {
                 grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        /* ============ SMALL PHONE ADJUSTMENTS ============ */
+        @media (max-width: 480px) {
+            .brand h4 {
+                font-size: 11px;
+            }
+
+            .brand small {
+                font-size: 8px;
+            }
+
+            .refresh-btn {
+                padding: 5px 10px;
+                font-size: 10px;
+            }
+
+            .refresh-btn .refresh-text {
+                display: inline;
+            }
+
+            .welcome-text .name {
+                font-size: 10px;
+            }
+
+            .welcome-text .role {
+                font-size: 8px;
+            }
+
+            .process-btn {
+                padding: 12px;
+                font-size: 14px;
+            }
+
+            .backdate-btn {
+                padding: 10px 14px;
+                font-size: 11px;
             }
         }
     </style>
 </head>
 
 <body>
-    <!-- [Keep all HTML body exactly as it was - no changes needed] -->
+    <!-- HEADER SECTION -->
     <div class="header">
         <div class="header-left">
-            <img src="/logo.png" alt="VR Billing Logo"
-                onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
-            <div class="logo-fallback">🎮</div>
+            <img src="/logo.png" alt="VR Billing Logo" onerror="this.style.display='none';">
             <div class="brand">
                 <h4>VR BILLING POS</h4>
                 <small>Awaken your inner child Magic</small>
             </div>
         </div>
         <div class="header-right">
-            <button class="refresh-btn" onclick="window.refreshSystem()">⟳</button>
+            <button class="refresh-btn" onclick="window.refreshSystem()">
+                <span>⟳</span>
+                <span class="refresh-text">Refresh</span>
+            </button>
             <div class="user-profile" id="userProfileBtn">
                 <div class="profile-avatar" id="profileIcon">👤</div>
                 <div class="welcome-text">
@@ -768,20 +842,19 @@
         </div>
     </div>
 
+    <!-- MAIN CONTAINER -->
     <div class="container">
         <div class="left-panel">
             <div class="category-wrapper">
                 <div class="category-buttons" id="categoryButtons"></div>
             </div>
             <div class="scroll-container">
-                <div class="scroll-fade-top" id="gamesFadeTop"></div>
                 <div class="games-grid" id="gamesGrid">
                     <div class="empty-state">
                         <div class="icon">🎮</div>
                         <p>Select a category</p>
                     </div>
                 </div>
-                <div class="scroll-fade-bottom" id="gamesFadeBottom"></div>
             </div>
             <div class="timer-section" id="timerSection" style="display:none;">
                 <div class="section-title">⏱️ Active Station Timers</div>
@@ -789,7 +862,6 @@
                     <div id="timerStationsList">
                         <p style="color:#999;text-align:center;padding:10px;">No active timers</p>
                     </div>
-                    <div class="timer-scroll-fade-bottom" id="timerFadeBottom"></div>
                 </div>
             </div>
         </div>
@@ -808,7 +880,6 @@
                         <p>Cart is empty</p>
                     </div>
                 </div>
-                <div class="cart-scroll-fade-bottom" id="cartFadeBottom"></div>
             </div>
             <div class="cart-total" id="cartTotal">Total: KES 0</div>
             <div class="section-title">💳 Payment Method</div>
@@ -821,11 +892,15 @@
         </div>
     </div>
 
+    <!-- BACKDATE BUTTON - MOVED TO BOTTOM RIGHT -->
     <div class="backdate-container">
-        <button class="backdate-btn" onclick="openBackdateModal()"><span>📅</span><span>Backdate
-                Transaction</span></button>
+        <button class="backdate-btn" onclick="openBackdateModal()">
+            <span>📅</span>
+            <span>Backdate Transaction</span>
+        </button>
     </div>
 
+    <!-- MODALS -->
     <div class="modal-overlay" id="paymentModal">
         <div class="modal-content">
             <h3 id="modalTitle">Complete Payment</h3>
@@ -1299,22 +1374,17 @@
                 } catch (e) { notify('Connection error', 'error'); }
             };
 
-            // ============ FIXED: Receipt Printing with Proper Barcode and Font ============
+            // ============ RECEIPT PRINTING ============
             function generateBarcodeSVG(data) {
-                // Create a simple but properly formatted barcode
                 var chars = data.toString().split('');
-                var bw = 2; // bar width
-                var h = 40; // height
+                var bw = 2;
+                var h = 40;
                 var x = 0;
                 var bars = [];
-
-                // Start character
                 bars.push('<rect x="' + x + '" y="0" width="' + bw + '" height="' + h + '" fill="black"/>');
                 x += bw * 2;
                 bars.push('<rect x="' + x + '" y="0" width="' + bw + '" height="' + h + '" fill="black"/>');
                 x += bw * 2;
-
-                // Data characters
                 for (var i = 0; i < chars.length; i++) {
                     var charCode = chars[i].charCodeAt(0);
                     for (var bit = 6; bit >= 0; bit--) {
@@ -1324,13 +1394,10 @@
                         x += bw * 2;
                     }
                 }
-
-                // End character
                 bars.push('<rect x="' + x + '" y="0" width="' + bw + '" height="' + h + '" fill="black"/>');
                 x += bw * 2;
                 bars.push('<rect x="' + x + '" y="0" width="' + bw * 2 + '" height="' + h + '" fill="black"/>');
                 x += bw * 3;
-
                 var svg = '<svg width="' + (x + 10) + '" height="' + (h + 10) + '" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto;">' +
                     '<rect width="100%" height="100%" fill="white"/>' +
                     bars.join('') +
@@ -1344,11 +1411,7 @@
                 var ts = data.transaction_time || now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
                 var rn = data.receipt_no || ('VR-' + Date.now());
                 var ih = '', sth = '', ps = {};
-
-                // Generate barcode
                 var barcodeSvg = generateBarcodeSVG(rn.replace(/[^A-Za-z0-9]/g, ''));
-
-                // Build items HTML
                 if (data.items && data.items.length > 0) {
                     data.items.forEach(function (item) {
                         var dl = '';
@@ -1360,7 +1423,6 @@
                             '<td style="text-align:center;padding:8px 4px;">' + dl + '</td>' +
                             '<td style="text-align:right;padding:8px 4px;">KES ' + item.total_price.toLocaleString() + '</td>' +
                             '</tr>';
-
                         if (!ps[item.station_id] && !item.is_pool_game && item.total_duration > 0) {
                             var sm = (item.station_type === 'PS5' || item.station_type === 'PS4') ? 3 : 2;
                             var gd = item.total_duration || 30;
@@ -1376,19 +1438,14 @@
                         }
                     });
                 }
-
                 var cnd = (data.customer_name && data.customer_name !== 'Guest') ? '<div class="info-text"><strong>CUSTOMER:</strong> ' + escapeHtml(data.customer_name) + '</div>' : '';
                 var cpd = data.customer_phone ? '<div class="info-text"><strong>PHONE:</strong> ' + escapeHtml(data.customer_phone) + '</div>' : '';
-
                 var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Receipt</title>' +
                     '<style>' +
                     '@page { size: 80mm auto; margin: 0mm; }' +
                     'body { font-family: "Courier New", monospace; width: 80mm; margin: 0 auto; padding: 8px 6px; font-size: 12px; line-height: 1.3; }' +
                     '.center { text-align: center; }' +
-                    '.left { text-align: left; }' +
-                    '.right { text-align: right; }' +
                     '.divider { border-top: 1px dashed #000; margin: 6px 0; }' +
-                    '.bold { font-weight: bold; }' +
                     '.logo-text { font-size: 18px; font-weight: bold; letter-spacing: 1px; margin-bottom: 3px; }' +
                     '.company-text { font-size: 10px; }' +
                     '.info-text { font-size: 11px; margin-bottom: 3px; }' +
@@ -1420,13 +1477,11 @@
                     '<div class="divider"></div>' +
                     '<div class="info-text">LINES: ' + (data.items ? data.items.length : 1) + '</div>' +
                     '<div class="total-line">TOTAL: KES ' + data.total_amount.toLocaleString() + '</div>';
-
                 if (sth) {
                     html += '<div class="divider"></div>' +
                         '<div class="info-text"><strong>SESSION TIMES:</strong></div>' +
                         '<table><thead><tr><th>STATION</th><th>START</th><th>END</th><th>DUR</th></tr></thead><tbody>' + sth + '</tbody></table>';
                 }
-
                 html += '<div class="divider"></div>' +
                     '<div class="info-text">PAID: KES ' + (data.amount_paid || data.total_amount).toLocaleString() + '</div>' +
                     '<div class="info-text">METHOD: ' + data.payment_method + '</div>' +
@@ -1436,7 +1491,6 @@
                     '<div class="center footer-text">END OF FISCAL RECEIPT</div>' +
                     '<div class="center footer-text">THANK YOU! COME AGAIN!</div>' +
                     '</body></html>';
-
                 var w = window.open('', '_blank', 'width=400,height=600');
                 w.document.write(html);
                 w.document.close();
@@ -1451,15 +1505,12 @@
                 else if (data.shots > 0) dl = data.shots + ' shots';
                 else if (data.duration > 0) dl = data.duration + ' mins';
                 var cnd = (data.customer_name && data.customer_name !== 'Guest') ? '<div class="info-text"><strong>CUSTOMER:</strong> ' + escapeHtml(data.customer_name) + '</div>' : '';
-
                 var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Receipt</title>' +
                     '<style>' +
                     '@page { size: 80mm auto; margin: 0mm; }' +
                     'body { font-family: "Courier New", monospace; width: 80mm; margin: 0 auto; padding: 8px 6px; font-size: 12px; line-height: 1.3; }' +
                     '.center { text-align: center; }' +
-                    '.left { text-align: left; }' +
                     '.divider { border-top: 1px dashed #000; margin: 6px 0; }' +
-                    '.bold { font-weight: bold; }' +
                     '.logo-text { font-size: 18px; font-weight: bold; letter-spacing: 1px; }' +
                     '.company-text { font-size: 10px; }' +
                     '.info-text { font-size: 11px; margin-bottom: 3px; }' +
@@ -1484,11 +1535,10 @@
                     cnd +
                     '<div class="divider"></div>' +
                     '<table><thead><tr><th>ITEM</th><th>STATION</th><th>DUR</th><th>AMOUNT</th></tr></thead><tbody>' +
-                    '<tr><td style="text-align:left;">' + escapeHtml(data.game_name) + '</td><td style="text-align:center;">' + escapeHtml(data.station_used) + '</td><td style="text-align:center;">' + dl + '</td><td style="text-align:right;">KES ' + data.total_amount.toLocaleString() + '</td></tr>' +
+                    '<tr><td style="text-align:left;">' + escapeHtml(data.game_name) + '</td><td style="text-align:center;">' + escapeHtml(data.station_used) + '</td><td style="text-align:center;">' + dl + '</td><td style="text-align:right;">KES ' + data.total_amount.toLocaleString() + 'NonNullable' +
                     '</tbody></table>' +
                     '<div class="divider"></div>' +
                     '<div class="total-line">TOTAL: KES ' + data.total_amount.toLocaleString() + '</div>';
-
                 if (!data.is_pool && data.duration > 0) {
                     var sm = (data.station_used || '').toLowerCase().indexOf('ps') >= 0 ? 3 : 2;
                     var gd = data.duration || 30;
@@ -1500,10 +1550,10 @@
                     html += '<div class="divider"></div>' +
                         '<div class="info-text"><strong>SESSION TIMES:</strong></div>' +
                         '<table><thead><tr><th>STATION</th><th>START</th><th>END</th><th>DUR</th></tr></thead><tbody>' +
-                        '<tr><td>' + escapeHtml(data.station_used) + '</td><td style="text-align:center;">' + ast.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }) + '</td><td style="text-align:center;">' + et.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }) + '</td><td style="text-align:right;">' + gd + ' min</td></tr>' +
+                        '<tr><td>' + escapeHtml(data.station_used) + '</td><td style="text-align:center;">' + ast.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }) + '</td><td style="text-align:center;">' + et.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }) + '</td><td style="text-align:right;">' + gd + ' min</td>' +
+                        '</tr>' +
                         '</tbody></table>';
                 }
-
                 html += '<div class="divider"></div>' +
                     '<div class="info-text">PAID: KES ' + data.amount_paid.toLocaleString() + '</div>' +
                     '<div class="info-text">METHOD: ' + data.payment_method + '</div>' +
@@ -1513,7 +1563,6 @@
                     '<div class="center footer-text">END OF FISCAL RECEIPT</div>' +
                     '<div class="center footer-text">THANK YOU! COME AGAIN!</div>' +
                     '</body></html>';
-
                 var w = window.open('', '_blank', 'width=400,height=600');
                 w.document.write(html);
                 w.document.close();
