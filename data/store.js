@@ -1,4 +1,15 @@
-const database = require('./database');
+// ============ DATABASE SELECTION ============
+// Automatically choose between SQLite (local) and Supabase PostgreSQL (cloud)
+let database;
+
+if (process.env.DATABASE_URL) {
+    console.log('✅ Using Supabase PostgreSQL database (Cloud)');
+    database = require('./database-pg');
+} else {
+    console.log('📁 Using SQLite database (Local file)');
+    database = require('./database');
+}
+
 const { v4: uuidv4 } = require('uuid');
 
 let dbInitialized = false;
@@ -48,7 +59,7 @@ async function getUserById(id) {
 
 async function getAllUsers() {
     await ensureDb();
-    return await database.getAll('users');
+    return await database.getAllUsers();
 }
 
 async function updateUser(id, data) {
@@ -58,29 +69,28 @@ async function updateUser(id, data) {
 
 async function createUser(userData) {
     await ensureDb();
-    return await database.insertUser(userData);
+    return await database.createUser(userData);
 }
 
 async function deleteUser(id) {
     await ensureDb();
-    return await database.deleteById('users', id);
+    return await database.deleteUser(id);
 }
 
 // ============ GAME FUNCTIONS ============
 async function getAllGames(includeInactive = false) {
     await ensureDb();
-    const where = includeInactive ? '' : 'WHERE is_active = 1';
-    return await database.getAll('games', where);
+    return await database.getAllGames(includeInactive);
 }
 
 async function getGameById(id) {
     await ensureDb();
-    return await database.getById('games', id);
+    return await database.getGameById(id);
 }
 
 async function createGame(gameData) {
     await ensureDb();
-    return await database.insertGame(gameData);
+    return await database.createGame(gameData);
 }
 
 async function updateGame(id, gameData) {
@@ -90,24 +100,23 @@ async function updateGame(id, gameData) {
 
 async function deleteGame(id) {
     await ensureDb();
-    return await database.deleteById('games', id);
+    return await database.deleteGame(id);
 }
 
 // ============ STATION FUNCTIONS ============
 async function getAllStations(includeInactive = false) {
     await ensureDb();
-    const where = includeInactive ? '' : 'WHERE is_active = 1';
-    return await database.getAll('stations', where);
+    return await database.getAllStations(includeInactive);
 }
 
 async function getStationById(id) {
     await ensureDb();
-    return await database.getById('stations', id);
+    return await database.getStationById(id);
 }
 
 async function createStation(stationData) {
     await ensureDb();
-    return await database.insertStation(stationData);
+    return await database.createStation(stationData);
 }
 
 async function updateStation(id, stationData) {
@@ -117,7 +126,7 @@ async function updateStation(id, stationData) {
 
 async function deleteStation(id) {
     await ensureDb();
-    return await database.deleteById('stations', id);
+    return await database.deleteStation(id);
 }
 
 // ============ TRANSACTION FUNCTIONS ============
@@ -144,7 +153,7 @@ async function getTransactions(filters = {}) {
 
 async function getTransactionById(id) {
     await ensureDb();
-    return await database.getById('transactions', id);
+    return await database.getTransactionById(id);
 }
 
 async function getDailySummary(date, includePast = false) {
@@ -160,17 +169,17 @@ async function getNextReceiptNo() {
 // ============ INVENTORY FUNCTIONS ============
 async function getAllInventory() {
     await ensureDb();
-    return await database.getAll('inventory');
+    return await database.getAllInventory();
 }
 
 async function getInventoryById(id) {
     await ensureDb();
-    return await database.getById('inventory', id);
+    return await database.getInventoryById(id);
 }
 
 async function createInventoryItem(itemData) {
     await ensureDb();
-    return await database.insertInventoryItem(itemData);
+    return await database.createInventoryItem(itemData);
 }
 
 async function updateInventoryItem(id, itemData) {
@@ -180,7 +189,7 @@ async function updateInventoryItem(id, itemData) {
 
 async function deleteInventoryItem(id) {
     await ensureDb();
-    return await database.deleteById('inventory', id);
+    return await database.deleteInventoryItem(id);
 }
 
 // ============ AUDIT FUNCTIONS ============
@@ -191,7 +200,7 @@ async function getAuditLogs(filters = {}) {
 
 async function deleteAuditLog(id) {
     await ensureDb();
-    return await database.deleteById('logs', id);
+    return await database.deleteAuditLog(id);
 }
 
 async function getAuditActions() {
