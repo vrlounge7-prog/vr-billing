@@ -1,43 +1,48 @@
-// data/database-pg.js
-// PostgreSQL version for Supabase - WITH IPv4 FIX
-
+// data/database-pg.js - Updated for pooler compatibility
 const { Pool } = require('pg');
 const { v4: uuidv4 } = require('uuid');
-const dns = require('dns');
-
-// Force IPv4 resolution for better compatibility
-dns.setDefaultResultOrder('ipv4first');
 
 let pool = null;
 let dbInitialized = false;
 
 function getPool() {
     if (!pool) {
-        // Get the DATABASE_URL and ensure IPv4 is used
-        let connectionString = process.env.DATABASE_URL;
-        
-        // If using supabase.co domain, ensure we're using IPv4
-        if (connectionString && connectionString.includes('supabase.co')) {
-            console.log('📡 Configuring connection for IPv4 compatibility...');
-        }
-        
+        const connectionString = process.env.DATABASE_URL;
+        const isPooler = connectionString && connectionString.includes('pooler.supabase.com');
+
+        console.log(`📡 Connection type: ${isPooler ? 'Pooler (Port 6543)' : 'Direct (Port 5432)'}`);
+
         pool = new Pool({
             connectionString: connectionString,
-            ssl: { 
-                rejectUnauthorized: false
+            ssl: {
+                rejectUnauthorized: false,
+                require: true
             },
             max: 10,
             min: 2,
             connectionTimeoutMillis: 30000,
             keepAlive: true,
             keepAliveInitialDelayMillis: 10000,
-            // Force IPv4 by using hostname resolution first
-            host: connectionString.split('@')[1]?.split(':')[0] || 'db.tayzsgkxmduynosvowgj.supabase.co',
-            port: 5432
+            // Pooler specific settings
+            ...(isPooler && {
+                statement_timeout: 10000,
+                query_timeout: 10000,
+                idle_in_transaction_session_timeout: 10000
+            })
         });
-        
+
         pool.on('error', (err) => {
-            console.error('Unexpected database error:', err.message);
+            console.error('Database pool error:', err.message);
+        });
+
+        // Test connection on creation
+        pool.connect((err, client, release) => {
+            if (err) {
+                console.error('❌ Pool connection test failed:', err.message);
+            } else {
+                console.log('✅ Database pool ready');
+                release();
+            }
         });
     }
     return pool;
@@ -45,35 +50,34 @@ function getPool() {
 
 async function initDatabase() {
     if (dbInitialized) return;
-    
-    console.log('🔄 Initializing Supabase PostgreSQL connection...');
-    console.log('📡 Connection target:', process.env.DATABASE_URL ? 'URL configured' : 'No URL');
-    
-    try {
-        // Try a simple query to test connection
-        const result = await query('SELECT NOW() as now, version() as version');
-        console.log('✅ Supabase connection successful!');
-        console.log('📅 Database time:', result.rows[0].now);
-        dbInitialized = true;
-    } catch (err) {
-        console.error('❌ Supabase connection failed:', err.message);
-        console.error('🔧 Troubleshooting tips:');
-        console.error('   1. Check if DATABASE_URL is correct in Render environment variables');
-        console.error('   2. Make sure Supabase project is active');
-        console.error('   3. Try using the connection pooler URL (port 6543) instead');
-        throw err;
+
+    console.log('🔄 Initializing Supabase connection...');
+
+    // Simple retry logic
+    let retries = 3;
+    while (retries > 0) {
+        try {
+            const result = await query('SELECT NOW() as now');
+            console.log('✅ Supabase connected successfully!');
+            console.log('📅 Server time:', result.rows[0].now);
+            dbInitialized = true;
+            return;
+        } catch (err) {
+            retries--;
+            console.log(`❌ Connection attempt failed. ${retries} retries left.`);
+            if (retries === 0) {
+                console.error('❌ All connection attempts failed:', err.message);
+                throw err;
+            }
+            await new Promise(resolve => setTimeout(resolve, 2000));
+        }
     }
 }
 
 async function query(text, params) {
     const client = await getPool().connect();
-    const start = Date.now();
     try {
         const res = await client.query(text, params);
-        const duration = Date.now() - start;
-        if (duration > 1000) {
-            console.log('Slow query:', { text: text.substring(0, 100), duration, rows: res.rowCount });
-        }
         return res;
     } finally {
         client.release();
@@ -101,14 +105,14 @@ async function getAllUsers() {
 }
 
 async function updateUser(id, fields) {
-    const allowedFields = ['full_name', 'username', 'password', 'role', 'can_delete_voided', 
-                           'phone_number', 'gender', 'bio', 'profile_picture', 'is_active', 
-                           'last_login', 'last_ip', 'updated_at'];
-    
+    const allowedFields = ['full_name', 'username', 'password', 'role', 'can_delete_voided',
+        'phone_number', 'gender', 'bio', 'profile_picture', 'is_active',
+        'last_login', 'last_ip', 'updated_at'];
+
     const updates = [];
     const values = [];
     let idx = 1;
-    
+
     for (const [key, value] of Object.entries(fields)) {
         if (allowedFields.includes(key)) {
             updates.push(`${key} = $${idx}`);
@@ -116,9 +120,9 @@ async function updateUser(id, fields) {
             idx++;
         }
     }
-    
+
     if (updates.length === 0) return;
-    
+
     values.push(id);
     await query(`UPDATE users SET ${updates.join(', ')} WHERE id = $${idx}`, values);
 }
@@ -172,13 +176,13 @@ async function createGame(game) {
 }
 
 async function updateGame(id, fields) {
-    const allowedFields = ['category', 'sub_category', 'duration_or_quantity', 'price_ksh', 
-                           'is_active', 'platform', 'is_fixed'];
-    
+    const allowedFields = ['category', 'sub_category', 'duration_or_quantity', 'price_ksh',
+        'is_active', 'platform', 'is_fixed'];
+
     const updates = [];
     const values = [];
     let idx = 1;
-    
+
     for (const [key, value] of Object.entries(fields)) {
         if (allowedFields.includes(key)) {
             updates.push(`${key} = $${idx}`);
@@ -186,9 +190,9 @@ async function updateGame(id, fields) {
             idx++;
         }
     }
-    
+
     if (updates.length === 0) return;
-    
+
     values.push(id);
     await query(`UPDATE games SET ${updates.join(', ')} WHERE id = $${idx}`, values);
 }
@@ -226,11 +230,11 @@ async function createStation(station) {
 
 async function updateStation(id, fields) {
     const allowedFields = ['station_name', 'station_type', 'station_number', 'is_active', 'in_use', 'setup_time'];
-    
+
     const updates = [];
     const values = [];
     let idx = 1;
-    
+
     for (const [key, value] of Object.entries(fields)) {
         if (allowedFields.includes(key)) {
             updates.push(`${key} = $${idx}`);
@@ -238,9 +242,9 @@ async function updateStation(id, fields) {
             idx++;
         }
     }
-    
+
     if (updates.length === 0) return;
-    
+
     values.push(id);
     await query(`UPDATE stations SET ${updates.join(', ')} WHERE id = $${idx}`, values);
 }
@@ -270,13 +274,13 @@ async function insertTransaction(tx) {
 }
 
 async function updateTransaction(id, fields) {
-    const allowedFields = ['amount_paid', 'balance', 'payment_status', 'mpesa_receipt', 
-                           'credit_details', 'is_void', 'archived', 'notes'];
-    
+    const allowedFields = ['amount_paid', 'balance', 'payment_status', 'mpesa_receipt',
+        'credit_details', 'is_void', 'archived', 'notes'];
+
     const updates = [];
     const values = [];
     let idx = 1;
-    
+
     for (const [key, value] of Object.entries(fields)) {
         if (allowedFields.includes(key)) {
             updates.push(`${key} = $${idx}`);
@@ -284,9 +288,9 @@ async function updateTransaction(id, fields) {
             idx++;
         }
     }
-    
+
     if (updates.length === 0) return;
-    
+
     values.push(id);
     await query(`UPDATE transactions SET ${updates.join(', ')} WHERE id = $${idx}`, values);
 }
@@ -300,7 +304,7 @@ async function getTransactions(filters = {}) {
     let sql = 'SELECT * FROM transactions WHERE 1=1';
     const params = [];
     let paramIndex = 1;
-    
+
     if (filters.date) {
         sql += ` AND transaction_date = $${paramIndex}`;
         params.push(filters.date);
@@ -335,14 +339,14 @@ async function getTransactions(filters = {}) {
         params.push(search, search, search, search, search);
         paramIndex += 5;
     }
-    
+
     sql += ` ORDER BY created_at DESC`;
-    
+
     if (filters.limit && !isNaN(parseInt(filters.limit))) {
         sql += ` LIMIT $${paramIndex}`;
         params.push(parseInt(filters.limit));
     }
-    
+
     const result = await query(sql, params);
     return result.rows;
 }
@@ -353,7 +357,7 @@ async function getNextReceiptNo() {
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const day = String(now.getDate()).padStart(2, '0');
     const prefix = `${year}${month}${day}`;
-    
+
     try {
         await query(`INSERT INTO receipt_sequence (id, last_number, updated_at) VALUES (1, 0, NOW()) ON CONFLICT (id) DO NOTHING`);
         const result = await query(
@@ -362,12 +366,12 @@ async function getNextReceiptNo() {
              WHERE id = 1 
              RETURNING last_number`
         );
-        
+
         let nextNum = 1;
         if (result.rows.length > 0) {
             nextNum = result.rows[0].last_number;
         }
-        
+
         return `${prefix}-${String(nextNum).padStart(6, '0')}`;
     } catch (err) {
         console.error('Error getting receipt number:', err);
@@ -392,11 +396,11 @@ async function getDailySummary(date, includePast = false) {
         FROM transactions 
         WHERE transaction_date = $1 AND is_void = 0 AND payment_status = 'completed'
     `;
-    
+
     if (!includePast) {
         sql += ` AND is_past = 0`;
     }
-    
+
     const result = await query(sql, [date]);
     return result.rows[0] || { transaction_count: 0, cash: 0, mpesa: 0, credit: 0, total: 0 };
 }
@@ -416,7 +420,7 @@ async function getLogs(filters = {}) {
     let sql = 'SELECT * FROM logs WHERE 1=1';
     const params = [];
     let paramIndex = 1;
-    
+
     if (filters.search) {
         sql += ` AND (action ILIKE $${paramIndex} OR details ILIKE $${paramIndex + 1})`;
         const search = `%${filters.search}%`;
@@ -443,14 +447,14 @@ async function getLogs(filters = {}) {
         params.push(filters.date_to + 'T23:59:59.999Z');
         paramIndex++;
     }
-    
+
     sql += ` ORDER BY created_at DESC`;
-    
+
     if (filters.limit) {
         sql += ` LIMIT $${paramIndex}`;
         params.push(parseInt(filters.limit));
     }
-    
+
     const result = await query(sql, params);
     return result.rows;
 }
@@ -476,18 +480,18 @@ async function createInventoryItem(item) {
         VALUES ($1, $2, $3, $4, $5, $6, $7)
     `;
     await query(queryText, [
-        item.id, item.station_id, item.item_type, item.item_name, 
+        item.id, item.station_id, item.item_type, item.item_name,
         item.quantity, item.notes, item.last_updated
     ]);
 }
 
 async function updateInventoryItem(id, fields) {
     const allowedFields = ['item_name', 'item_type', 'quantity', 'notes', 'last_updated'];
-    
+
     const updates = [];
     const values = [];
     let idx = 1;
-    
+
     for (const [key, value] of Object.entries(fields)) {
         if (allowedFields.includes(key)) {
             updates.push(`${key} = $${idx}`);
@@ -495,9 +499,9 @@ async function updateInventoryItem(id, fields) {
             idx++;
         }
     }
-    
+
     if (updates.length === 0) return;
-    
+
     values.push(id);
     await query(`UPDATE inventory SET ${updates.join(', ')} WHERE id = $${idx}`, values);
 }
