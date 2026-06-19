@@ -3,442 +3,518 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#667eea">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <meta name="theme-color" content="#1a1a2e">
     <title>VR BILLING - Admin Dashboard</title>
     <link rel="shortcut icon" href="/favicon.ico" type="image/png">
     <link rel="manifest" href="/manifest.json">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box
-        }
-
+        /* --- RESET & BASE --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f0f2f5;
-            min-height: 100vh
-        }
-
-        .app-container {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #f4f6f9;
+            min-height: 100vh;
             display: flex;
-            min-height: 100vh
+            flex-direction: column;
         }
 
-        .sidebar {
-            width: 280px;
-            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        /* --- DESKTOP SIDEBAR (Hidden on Mobile) --- */
+        .desktop-sidebar {
+            display: none; /* Hidden on phone */
+        }
+
+        /* --- MOBILE TOP HEADER --- */
+        .mobile-header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             color: white;
-            padding: 0;
-            position: fixed;
-            height: 100vh;
-            overflow-y: auto;
-            z-index: 100;
-            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.2)
-        }
-
-        .sidebar-logo {
-            text-align: center;
-            padding: 25px 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            background: rgba(0, 0, 0, 0.2)
-        }
-
-        .sidebar-logo img {
-            width: 45%;
-            height: auto;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-            margin-bottom: 5px
-        }
-
-        .sidebar-logo .logo-fallback {
-            display: none;
-            font-size: 48px;
-            margin-bottom: 5px
-        }
-
-        .sidebar-logo h3 {
-            margin: 10px 0 5px;
-            font-size: 18px
-        }
-
-        .sidebar-logo p {
-            font-size: 11px;
-            opacity: 0.7;
-            letter-spacing: 2px;
-            text-transform: uppercase
-        }
-
-        .nav-section {
-            padding: 15px 20px 5px;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: rgba(255, 255, 255, 0.4);
-            font-weight: 600
-        }
-
-        .nav-item {
-            padding: 14px 25px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            transition: all 0.3s;
-            border-left: 4px solid transparent;
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 15px;
-            text-decoration: none
-        }
-
-        .nav-item:hover {
-            background: rgba(255, 255, 255, 0.08);
-            color: white
-        }
-
-        .nav-item.active {
-            background: rgba(102, 126, 234, 0.2);
-            border-left-color: #667eea;
-            color: white;
-            font-weight: 600
-        }
-
-        .nav-item .nav-icon {
-            font-size: 20px;
-            width: 30px;
-            text-align: center
-        }
-
-        .nav-item.logout-item {
-            margin-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            color: #ff6b6b
-        }
-
-        .nav-item.logout-item:hover {
-            background: rgba(255, 107, 107, 0.2);
-            border-left-color: #ff6b6b
-        }
-
-        .main-content {
-            flex: 1;
-            margin-left: 280px;
-            padding: 25px;
-            min-height: 100vh
-        }
-
-        .header {
-            background: white;
-            padding: 20px 30px;
-            border-radius: 15px;
-            margin-bottom: 25px;
+            padding: 15px 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08)
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            min-height: 60px;
         }
 
-        .header h2 {
-            color: #333;
-            font-size: 24px
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .hamburger-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            font-size: 24px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+        .hamburger-btn:active { background: rgba(255,255,255,0.2); }
+
+        .mobile-page-title {
+            font-size: 18px;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #fff;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
         }
 
         .admin-info {
             display: flex;
             align-items: center;
-            gap: 15px
+            gap: 10px;
+            text-align: right;
         }
 
-        .admin-avatar {
-            width: 45px;
-            height: 45px;
+        .admin-name-mobile {
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            line-height: 1.2;
+        }
+        .admin-role-mobile {
+            font-size: 10px;
+            opacity: 0.7;
+            display: block;
+        }
+
+        .mobile-avatar {
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             background: linear-gradient(135deg, #667eea, #764ba2);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
             font-weight: bold;
-            font-size: 20px
+            font-size: 18px;
+            color: white;
+            border: 2px solid rgba(255,255,255,0.2);
         }
 
-        .admin-name {
+        /* --- MOBILE SIDE DRAWER (Overlay) --- */
+        .side-drawer-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 200;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .side-drawer-overlay.open {
+            display: block;
+            opacity: 1;
+        }
+
+        .side-drawer {
+            position: fixed;
+            top: 0; left: -280px;
+            width: 280px;
+            height: 100%;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: white;
+            z-index: 201;
+            transition: left 0.3s ease;
+            overflow-y: auto;
+            padding-top: 60px; /* Space for close button */
+            box-shadow: 4px 0 20px rgba(0,0,0,0.4);
+        }
+        .side-drawer.open {
+            left: 0;
+        }
+
+        .drawer-close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            font-size: 22px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .drawer-logo {
+            text-align: center;
+            padding: 10px 20px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 10px;
+        }
+        .drawer-logo img { width: 50px; border-radius: 12px; }
+        .drawer-logo h3 { font-size: 16px; margin-top: 5px; }
+        .drawer-logo p { font-size: 10px; opacity: 0.7; letter-spacing: 1px; }
+
+        .drawer-nav-section {
+            padding: 15px 20px 5px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: rgba(255,255,255,0.4);
             font-weight: 600;
-            color: #333
         }
 
-        .admin-role {
-            font-size: 12px;
-            color: #666
+        .drawer-nav-item {
+            padding: 12px 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+            color: rgba(255,255,255,0.8);
+            font-size: 14px;
+            text-decoration: none;
+        }
+        .drawer-nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+        .drawer-nav-item.active {
+            background: rgba(102, 126, 234, 0.2);
+            border-left-color: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+        .drawer-nav-item .nav-icon { font-size: 18px; width: 24px; text-align: center; }
+        .drawer-nav-item.logout {
+            margin-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            color: #ff6b6b;
+        }
+        .drawer-nav-item.logout:hover { background: rgba(255,107,107,0.2); border-left-color: #ff6b6b; }
+
+        /* --- MAIN CONTENT AREA --- */
+        .main-content {
+            flex: 1;
+            padding: 16px;
+            padding-bottom: 80px; /* Space for bottom safe area */
         }
 
+        /* --- STATS CARDS (Mobile Grid) --- */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
         }
-
         .stat-card {
             background: white;
-            padding: 25px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s;
-            cursor: pointer
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12)
-        }
-
-        .stat-card .stat-icon {
-            font-size: 40px;
-            margin-bottom: 10px
-        }
-
-        .stat-card h3 {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 10px;
-            text-transform: uppercase
-        }
-
-        .stat-card .stat-value {
-            font-size: 32px;
-            font-weight: bold;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text
-        }
-
-        .section {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 25px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08)
-        }
-
-        .section h3 {
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #667eea;
-            color: #333
-        }
-
-        .quick-actions {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 15px
-        }
-
-        .quick-action-btn {
-            padding: 25px 20px;
-            background: #f8f9fa;
-            border: 2px solid #e0e0e0;
+            padding: 16px;
             border-radius: 12px;
-            cursor: pointer;
             text-align: center;
-            transition: all 0.3s;
-            font-weight: 600;
-            color: #333;
-            font-size: 14px
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
-
-        .quick-action-btn:hover {
-            border-color: #667eea;
-            background: #f8f9ff;
-            transform: translateY(-3px)
+        .stat-card .stat-value {
+            font-size: 24px;
+            font-weight: 800;
+            color: #667eea;
+            display: block;
+            margin-bottom: 4px;
         }
-
-        .quick-action-btn .action-icon {
-            font-size: 36px;
-            margin-bottom: 10px;
-            display: block
-        }
-
-        .content-frame {
-            width: 100%;
-            min-height: 600px;
-            border: none;
-            border-radius: 15px;
-            background: transparent
-        }
-
-        .loading-frame {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 400px;
+        .stat-card .stat-label {
+            font-size: 10px;
             color: #666;
-            font-size: 16px;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
         }
 
-        @media(max-width:768px) {
-            .sidebar {
-                width: 70px
-            }
+        /* --- FILTERS & ACTIONS --- */
+        .filter-section {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .filter-row {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
 
-            .sidebar .nav-text,
-            .sidebar-logo p,
-            .nav-section,
-            .sidebar-logo h3 {
-                display: none
-            }
+        .filter-row input, .filter-row select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            background: #fafafa;
+            appearance: none;
+        }
+        .filter-row input:focus, .filter-row select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+        }
 
+        .action-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .action-btn {
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 12px;
+            cursor: pointer;
+            color: white;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .action-btn:active { transform: scale(0.98); }
+        .btn-blue { background: #667eea; }
+        .btn-teal { background: #17a2b8; }
+        .btn-red { background: #dc3545; }
+        .btn-green { background: #28a745; }
+
+        /* --- TABS --- */
+        .tab-bar {
+            display: flex;
+            gap: 0;
+            margin-bottom: 20px;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 12px 10px;
+            border: none;
+            background: transparent;
+            font-weight: 600;
+            font-size: 13px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 3px solid transparent;
+        }
+        .tab-btn.active {
+            background: #667eea;
+            color: white;
+            border-bottom-color: transparent;
+        }
+
+        /* --- TABLE CONTAINER --- */
+        .table-wrapper {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .table-scroll {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px; /* Forces horizontal scroll on small phones */
+        }
+        th {
+            padding: 12px 10px;
+            text-align: left;
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #555;
+            font-size: 12px;
+            border-bottom: 2px solid #e0e0e0;
+            white-space: nowrap;
+        }
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 12px;
+            color: #333;
+        }
+        tr:hover { background: #f8f9ff; }
+
+        /* --- BADGES --- */
+        .badge {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .badge-success { background: #d4edda; color: #155724; }
+        .badge-warning { background: #fff3cd; color: #856404; }
+        .badge-danger { background: #f8d7da; color: #721c24; }
+        .badge-info { background: #d1ecf1; color: #0c5460; }
+        .badge-secondary { background: #e2e3e5; color: #383d41; }
+
+        /* --- UTILITIES --- */
+        .hidden { display: none !important; }
+        .empty-state { text-align: center; padding: 40px; color: #999; font-size: 14px; }
+        .text-center { text-align: center; }
+
+        /* --- DESKTOP OVERRIDES --- */
+        @media (min-width: 768px) {
+            body { flex-direction: row; }
+            .mobile-header { display: none; }
+            .desktop-sidebar {
+                display: block;
+                width: 240px;
+                background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+                color: white;
+                height: 100vh;
+                position: sticky;
+                top: 0;
+                overflow-y: auto;
+                flex-shrink: 0;
+            }
             .main-content {
-                margin-left: 70px;
-                padding: 15px
+                margin-left: 0;
+                padding: 30px;
+                flex: 1;
             }
-
-            .nav-item {
-                justify-content: center;
-                padding: 14px 10px
-            }
-            
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 12px;
-            }
-            
-            .stat-card {
-                padding: 15px;
-            }
-            
-            .stat-card .stat-value {
-                font-size: 24px;
-            }
-            
-            .quick-actions {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 10px;
-            }
-            
-            .quick-action-btn {
-                padding: 15px 10px;
-            }
-            
-            .quick-action-btn .action-icon {
-                font-size: 28px;
-            }
+            .stats-grid { grid-template-columns: repeat(4, 1fr); }
+            .filter-row { flex-direction: row; align-items: center; gap: 10px; }
+            .filter-row input, .filter-row select { width: auto; flex: 1; min-width: 120px; }
+            .action-row { grid-template-columns: repeat(4, 1fr); }
         }
     </style>
 </head>
 
 <body>
-    <div class="app-container">
-        <div class="sidebar">
-            <div class="sidebar-logo"><img src="/logo.png" alt="VR Billing Logo"
-                    onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
-                <div class="logo-fallback">🎮</div>
-                <h3>VR BILLING</h3>
-                <p>Admin Panel</p>
-            </div>
-            <div class="nav-section">Main Menu</div>
-            <a class="nav-item active" data-page="dashboard" onclick="navigateTo('dashboard', this)"><span
-                    class="nav-icon">📊</span><span class="nav-text">Dashboard</span></a>
-            <a class="nav-item" data-page="transactions" onclick="navigateTo('transactions', this)"><span
-                    class="nav-icon">💰</span><span class="nav-text">Transactions</span></a>
-            <a class="nav-item" data-page="accounts" onclick="navigateTo('accounts', this)"><span
-                    class="nav-icon">👥</span><span class="nav-text">User Accounts</span></a>
-            <div class="nav-section">Management</div>
-            <a class="nav-item" data-page="games" onclick="navigateTo('games', this)"><span
-                    class="nav-icon">🎮</span><span class="nav-text">Games & Services</span></a>
-            <a class="nav-item" data-page="stations" onclick="navigateTo('stations', this)"><span
-                    class="nav-icon">🖥️</span><span class="nav-text">Stations</span></a>
-            <a class="nav-item" data-page="inventory" onclick="navigateTo('inventory', this)"><span
-                    class="nav-icon">📦</span><span class="nav-text">Inventory</span></a>
-            <div class="nav-section">Reports & Logs</div>
-            <a class="nav-item" data-page="reports" onclick="navigateTo('reports', this)"><span
-                    class="nav-icon">📈</span><span class="nav-text">Reports</span></a>
-            <a class="nav-item" data-page="past-transactions" onclick="navigateTo('past-transactions', this)"><span
-                    class="nav-icon">📝</span><span class="nav-text">Past Transactions</span></a>
-            <a class="nav-item" data-page="audit" onclick="navigateTo('audit', this)"><span
-                    class="nav-icon">🔒</span><span class="nav-text">Audit Logs</span></a>
-            <div class="nav-section">System</div>
-            <a class="nav-item" data-page="settings" onclick="navigateTo('settings', this)"><span
-                    class="nav-icon">⚙️</span><span class="nav-text">Settings</span></a>
-            <a class="nav-item logout-item" onclick="handleLogout()"><span class="nav-icon">⏻</span><span
-                    class="nav-text">Logout</span></a>
+
+    <!-- ===== DESKTOP SIDEBAR (Hidden on Mobile) ===== -->
+    <div class="desktop-sidebar">
+        <div style="text-align:center; padding:25px 20px; border-bottom:1px solid rgba(255,255,255,0.1);">
+            <img src="/logo.png" alt="VR" style="width:60px; border-radius:12px; background:white; padding:4px;" onerror="this.style.display='none'">
+            <h3 style="margin-top:10px; font-size:18px;">VR BILLING</h3>
+            <p style="font-size:11px; opacity:0.7; letter-spacing:2px;">Admin Panel</p>
         </div>
-        <div class="main-content">
-            <div class="header">
-                <h2 id="pageTitle">📊 Dashboard</h2>
-                <div class="admin-info">
-                    <div>
-                        <div class="admin-name" id="adminName">Admin</div>
-                        <div class="admin-role">Administrator</div>
-                    </div>
-                    <div class="admin-avatar" id="adminAvatar">A</div>
+        <div style="padding:15px 20px 5px; font-size:11px; text-transform:uppercase; color:rgba(255,255,255,0.4);">Main Menu</div>
+        <a class="drawer-nav-item active" data-page="dashboard" onclick="navigateTo('dashboard', this)"><span class="nav-icon">📊</span>Dashboard</a>
+        <a class="drawer-nav-item" data-page="transactions" onclick="navigateTo('transactions', this)"><span class="nav-icon">💰</span>Transactions</a>
+        <a class="drawer-nav-item" data-page="accounts" onclick="navigateTo('accounts', this)"><span class="nav-icon">👥</span>User Accounts</a>
+        <div style="padding:15px 20px 5px; font-size:11px; text-transform:uppercase; color:rgba(255,255,255,0.4);">Management</div>
+        <a class="drawer-nav-item" data-page="games" onclick="navigateTo('games', this)"><span class="nav-icon">🎮</span>Games & Services</a>
+        <a class="drawer-nav-item" data-page="stations" onclick="navigateTo('stations', this)"><span class="nav-icon">🖥️</span>Stations</a>
+        <a class="drawer-nav-item" data-page="inventory" onclick="navigateTo('inventory', this)"><span class="nav-icon">📦</span>Inventory</a>
+        <div style="padding:15px 20px 5px; font-size:11px; text-transform:uppercase; color:rgba(255,255,255,0.4);">Reports & Logs</div>
+        <a class="drawer-nav-item" data-page="reports" onclick="navigateTo('reports', this)"><span class="nav-icon">📈</span>Reports</a>
+        <a class="drawer-nav-item" data-page="past-transactions" onclick="navigateTo('past-transactions', this)"><span class="nav-icon">📝</span>Past Transactions</a>
+        <a class="drawer-nav-item" data-page="audit" onclick="navigateTo('audit', this)"><span class="nav-icon">🔒</span>Audit Logs</a>
+        <div style="padding:15px 20px 5px; font-size:11px; text-transform:uppercase; color:rgba(255,255,255,0.4);">System</div>
+        <a class="drawer-nav-item" data-page="settings" onclick="navigateTo('settings', this)"><span class="nav-icon">⚙️</span>Settings</a>
+        <a class="drawer-nav-item logout" onclick="handleLogout()"><span class="nav-icon">⏻</span>Logout</a>
+    </div>
+
+    <!-- ===== MOBILE HEADER ===== -->
+    <header class="mobile-header">
+        <div class="header-left">
+            <button class="hamburger-btn" onclick="toggleDrawer()" aria-label="Open Menu">☰</button>
+            <h1 class="mobile-page-title" id="mobilePageTitle">📊 Dashboard</h1>
+        </div>
+        <div class="header-right">
+            <div class="admin-info">
+                <div>
+                    <div class="admin-name-mobile" id="mobileAdminName">Admin</div>
+                    <span class="admin-role-mobile">Admin</span>
                 </div>
+                <div class="mobile-avatar" id="mobileAdminAvatar">A</div>
             </div>
-            <div id="contentArea"></div>
         </div>
+    </header>
+
+    <!-- ===== MOBILE SIDE DRAWER (Overlay) ===== -->
+    <div class="side-drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+    <div class="side-drawer" id="sideDrawer">
+        <button class="drawer-close-btn" onclick="closeDrawer()">✕</button>
+        <div class="drawer-logo">
+            <img src="/logo.png" alt="VR" onerror="this.style.display='none'">
+            <h3>VR BILLING</h3>
+            <p>Admin Panel</p>
+        </div>
+        <div class="drawer-nav-section">Main Menu</div>
+        <a class="drawer-nav-item active" data-page="dashboard" onclick="navigateTo('dashboard', this); closeDrawer();"><span class="nav-icon">📊</span>Dashboard</a>
+        <a class="drawer-nav-item" data-page="transactions" onclick="navigateTo('transactions', this); closeDrawer();"><span class="nav-icon">💰</span>Transactions</a>
+        <a class="drawer-nav-item" data-page="accounts" onclick="navigateTo('accounts', this); closeDrawer();"><span class="nav-icon">👥</span>User Accounts</a>
+        <div class="drawer-nav-section">Management</div>
+        <a class="drawer-nav-item" data-page="games" onclick="navigateTo('games', this); closeDrawer();"><span class="nav-icon">🎮</span>Games & Services</a>
+        <a class="drawer-nav-item" data-page="stations" onclick="navigateTo('stations', this); closeDrawer();"><span class="nav-icon">🖥️</span>Stations</a>
+        <a class="drawer-nav-item" data-page="inventory" onclick="navigateTo('inventory', this); closeDrawer();"><span class="nav-icon">📦</span>Inventory</a>
+        <div class="drawer-nav-section">Reports & Logs</div>
+        <a class="drawer-nav-item" data-page="reports" onclick="navigateTo('reports', this); closeDrawer();"><span class="nav-icon">📈</span>Reports</a>
+        <a class="drawer-nav-item" data-page="past-transactions" onclick="navigateTo('past-transactions', this); closeDrawer();"><span class="nav-icon">📝</span>Past Transactions</a>
+        <a class="drawer-nav-item" data-page="audit" onclick="navigateTo('audit', this); closeDrawer();"><span class="nav-icon">🔒</span>Audit Logs</a>
+        <div class="drawer-nav-section">System</div>
+        <a class="drawer-nav-item" data-page="settings" onclick="navigateTo('settings', this); closeDrawer();"><span class="nav-icon">⚙️</span>Settings</a>
+        <a class="drawer-nav-item logout" onclick="handleLogout(); closeDrawer();"><span class="nav-icon">⏻</span>Logout</a>
+    </div>
+
+    <!-- ===== MAIN CONTENT AREA ===== -->
+    <div class="main-content" id="mainContent">
+        <!-- Content is injected here by the JS below -->
     </div>
 
     <script>
-        // ===== SESSION STORAGE =====
+        // ===== SESSION & USER DATA =====
         var token = sessionStorage.getItem('token');
         var user = {};
-        try { user = JSON.parse(sessionStorage.getItem('user') || '{}') } catch (e) { user = {} }
+        try { user = JSON.parse(sessionStorage.getItem('user') || '{}') } catch (e) {}
         if (!token) { window.location.href = '/' }
 
-        // Track current page and iframe
-        var currentPage = 'dashboard';
-        var contentFrame = null;
+        // ===== INITIALIZE HEADER =====
+        function setupMobileHeader() {
+            var name = user.full_name || 'Admin';
+            var avatar = name.charAt(0).toUpperCase();
+            document.getElementById('mobileAdminName').textContent = name;
+            document.getElementById('mobileAdminAvatar').textContent = avatar;
+        }
+        setupMobileHeader();
 
-        // END SESSION ON TAB/WINDOW CLOSE
-        window.addEventListener('beforeunload', function () { if (token) { navigator.sendBeacon('/api/logout', JSON.stringify({})) } });
-        window.addEventListener('unload', function () { if (token) { navigator.sendBeacon('/api/logout', JSON.stringify({})) } });
-        window.addEventListener('pagehide', function () { if (token) { navigator.sendBeacon('/api/logout', JSON.stringify({})) } });
-
-        function initDashboard() {
-            if (token && user && user.role === 'admin') {
-                setupDashboard();
-            } else if (token) {
-                fetch('/api/verify-token', { headers: { 'Authorization': 'Bearer ' + token } })
-                    .then(function (res) { return res.json() })
-                    .then(function (data) {
-                        if (data.valid && data.user && data.user.role === 'admin') {
-                            user = data.user;
-                            sessionStorage.setItem('user', JSON.stringify(data.user));
-                            setupDashboard();
-                        } else {
-                            window.location.href = '/'
-                        }
-                    })
-                    .catch(function () {
-                        setupDashboard();
-                    });
+        // ===== DRAWER LOGIC =====
+        function toggleDrawer() {
+            var overlay = document.getElementById('drawerOverlay');
+            var drawer = document.getElementById('sideDrawer');
+            if (overlay.classList.contains('open')) {
+                closeDrawer();
             } else {
-                window.location.href = '/';
+                overlay.classList.add('open');
+                drawer.classList.add('open');
             }
         }
-
-        function setupDashboard() {
-            window.token = token; 
-            window.user = user; 
-            sessionStorage.setItem('token', token);
-            var nameElem = document.getElementById('adminName');
-            var avatarElem = document.getElementById('adminAvatar');
-            if (nameElem) nameElem.textContent = user.full_name || 'Admin';
-            if (avatarElem) avatarElem.textContent = (user.full_name || 'A').charAt(0).toUpperCase();
-            showDashboardHome();
+        function closeDrawer() {
+            document.getElementById('drawerOverlay').classList.remove('open');
+            document.getElementById('sideDrawer').classList.remove('open');
         }
 
-        // ============ FIXED: Navigate with cache-busting timestamp ============
+        // ===== NAVIGATION =====
+        var currentPage = 'dashboard';
+
         function navigateTo(page, navItem) {
-            document.querySelectorAll('.nav-item').forEach(function (i) { i.classList.remove('active') });
+            // Update active state in both desktop sidebar and mobile drawer
+            document.querySelectorAll('.drawer-nav-item').forEach(function(i) { i.classList.remove('active'); });
             if (navItem) navItem.classList.add('active');
             
             currentPage = page;
-            
             var titles = { 
                 'dashboard': '📊 Dashboard', 
                 'transactions': '💰 Transactions', 
@@ -451,19 +527,17 @@
                 'audit': '🔒 Audit Logs', 
                 'settings': '⚙️ Settings' 
             };
-            var titleElem = document.getElementById('pageTitle');
-            if (titleElem) titleElem.textContent = titles[page] || page;
+            document.getElementById('mobilePageTitle').textContent = titles[page] || page;
 
             if (page === 'dashboard') {
                 showDashboardHome();
             } else {
-                var contentArea = document.getElementById('contentArea');
-                if (contentArea) {
-                    contentArea.innerHTML = '<div class="loading-frame">Loading ' + titles[page] + '...</div>';
+                var main = document.getElementById('mainContent');
+                if (main) {
+                    main.innerHTML = '<div style="text-align:center;padding:40px;color:#666;">Loading ' + titles[page] + '...</div>';
                     setTimeout(function() {
-                        // Add timestamp to force fresh load every time
                         var timestamp = new Date().getTime();
-                        contentArea.innerHTML = '<iframe src="/admin/' + page + '.html?token=' + encodeURIComponent(token) + '&t=' + timestamp + '" class="content-frame" id="contentFrame" onload="resizeIframe(this)"></iframe>';
+                        main.innerHTML = '<iframe src="/admin/' + page + '.html?token=' + encodeURIComponent(token) + '&t=' + timestamp + '" style="width:100%;border:none;border-radius:12px;background:transparent;" id="contentFrame" onload="resizeIframe(this)"></iframe>';
                     }, 50);
                 }
             }
@@ -472,31 +546,55 @@
         function resizeIframe(iframe) { 
             try { 
                 var h = iframe.contentWindow.document.body.scrollHeight; 
-                iframe.style.height = Math.max(h + 50, 600) + 'px'; 
+                iframe.style.height = Math.max(h + 20, 400) + 'px'; 
             } catch (e) { 
-                iframe.style.height = '700px'; 
+                iframe.style.height = '600px'; 
             } 
         }
 
-        // ============ FIXED: Refresh current iframe when tab is clicked again ============
-        function refreshCurrentPage() {
-            if (currentPage === 'dashboard') {
-                showDashboardHome();
-                return;
-            }
-            
-            var contentArea = document.getElementById('contentArea');
-            if (contentArea) {
-                var timestamp = new Date().getTime();
-                contentArea.innerHTML = '<iframe src="/admin/' + currentPage + '.html?token=' + encodeURIComponent(token) + '&t=' + timestamp + '" class="content-frame" id="contentFrame" onload="resizeIframe(this)"></iframe>';
-            }
-        }
-
+        // ===== DASHBOARD HOME (Mobile Optimized) =====
         function showDashboardHome() {
             currentPage = 'dashboard';
-            var contentArea = document.getElementById('contentArea');
-            if (contentArea) {
-                contentArea.innerHTML = '<div class="stats-grid"><div class="stat-card" onclick="navigateTo(\'transactions\')"><div class="stat-icon">💰</div><h3>Transactions</h3><div class="stat-value">View</div></div><div class="stat-card" onclick="navigateTo(\'accounts\')"><div class="stat-icon">👥</div><h3>Users</h3><div class="stat-value" id="userCount">-</div></div><div class="stat-card" onclick="navigateTo(\'games\')"><div class="stat-icon">🎮</div><h3>Games</h3><div class="stat-value" id="gameCount">-</div></div><div class="stat-card" onclick="navigateTo(\'stations\')"><div class="stat-icon">🖥️</div><h3>Stations</h3><div class="stat-value" id="stationCount">-</div></div></div><div class="section"><h3>Quick Actions</h3><div class="quick-actions"><button class="quick-action-btn" onclick="navigateTo(\'transactions\')"><span class="action-icon">💰</span>Transactions</button><button class="quick-action-btn" onclick="navigateTo(\'accounts\')"><span class="action-icon">👥</span>Users</button><button class="quick-action-btn" onclick="navigateTo(\'games\')"><span class="action-icon">🎮</span>Games</button><button class="quick-action-btn" onclick="navigateTo(\'stations\')"><span class="action-icon">🖥️</span>Stations</button><button class="quick-action-btn" onclick="navigateTo(\'reports\')"><span class="action-icon">📈</span>Reports</button><button class="quick-action-btn" onclick="navigateTo(\'audit\')"><span class="action-icon">🔒</span>Audit</button></div></div><div class="section"><h3>System Status</h3><p>Status: <span style="color:#28a745;font-weight:bold;">● Online</span></p><p>Logged in as: ' + (user.full_name || 'Admin') + '</p><p>Version: 2.0.0</p><p>Database: SQLite3</p></div>';
+            var main = document.getElementById('mainContent');
+            if (main) {
+                main.innerHTML = `
+                    <div class="stats-grid">
+                        <div class="stat-card" onclick="navigateTo('transactions')">
+                            <span class="stat-value" id="statTxns">-</span>
+                            <span class="stat-label">Transactions</span>
+                        </div>
+                        <div class="stat-card" onclick="navigateTo('accounts')">
+                            <span class="stat-value" id="statUsers">-</span>
+                            <span class="stat-label">Users</span>
+                        </div>
+                        <div class="stat-card" onclick="navigateTo('games')">
+                            <span class="stat-value" id="statGames">-</span>
+                            <span class="stat-label">Games</span>
+                        </div>
+                        <div class="stat-card" onclick="navigateTo('stations')">
+                            <span class="stat-value" id="statStations">-</span>
+                            <span class="stat-label">Stations</span>
+                        </div>
+                    </div>
+
+                    <div class="filter-section">
+                        <div style="font-weight:600;margin-bottom:10px;color:#333;">Quick Actions</div>
+                        <div class="action-row" style="grid-template-columns:1fr 1fr 1fr;">
+                            <button class="action-btn btn-blue" onclick="navigateTo('transactions')">💰 Txns</button>
+                            <button class="action-btn btn-green" onclick="navigateTo('accounts')">👥 Users</button>
+                            <button class="action-btn btn-teal" onclick="navigateTo('reports')">📈 Reports</button>
+                        </div>
+                    </div>
+
+                    <div class="filter-section">
+                        <div style="font-weight:600;margin-bottom:5px;color:#333;">🟢 System Status</div>
+                        <div style="font-size:13px;color:#666;line-height:1.6;">
+                            <div>Logged in as: <strong>${user.full_name || 'Admin'}</strong></div>
+                            <div>Version: 2.0.0</div>
+                            <div>Database: Cloud (Supabase)</div>
+                        </div>
+                    </div>
+                `;
                 loadDashboardStats();
             }
         }
@@ -512,21 +610,11 @@
                 var users = await responses[0].json(); 
                 var games = await responses[1].json(); 
                 var stations = await responses[2].json();
-                var ue = document.getElementById('userCount'); 
-                var ge = document.getElementById('gameCount'); 
-                var se = document.getElementById('stationCount');
-                if (ue) ue.textContent = users ? users.length : '0'; 
-                if (ge) ge.textContent = games ? games.length : '0'; 
-                if (se) se.textContent = stations ? stations.length : '0';
-            } catch (e) { 
-                console.error('Stats error:', e);
-                var ue = document.getElementById('userCount'); 
-                var ge = document.getElementById('gameCount'); 
-                var se = document.getElementById('stationCount');
-                if (ue) ue.textContent = '?'; 
-                if (ge) ge.textContent = '?'; 
-                if (se) se.textContent = '?';
-            }
+                
+                document.getElementById('statUsers').textContent = users ? users.length : '0';
+                document.getElementById('statGames').textContent = games ? games.length : '0';
+                document.getElementById('statStations').textContent = stations ? stations.length : '0';
+            } catch (e) { console.error('Stats error:', e); }
         }
 
         async function handleLogout() {
@@ -536,28 +624,30 @@
             window.location.href = '/';
         }
 
-        // ============ AUTO-REFRESH: Listen for messages from iframes ============
+        // ===== LISTEN FOR IFRAME REFRESH REQUESTS =====
         window.addEventListener('message', function(event) {
             if (event.data && event.data.type === 'REFRESH_TRANSACTIONS') {
-                console.log('Received refresh request from transactions iframe');
                 if (currentPage === 'transactions') {
-                    refreshCurrentPage();
+                    var timestamp = new Date().getTime();
+                    var main = document.getElementById('mainContent');
+                    main.innerHTML = '<iframe src="/admin/transactions.html?token=' + encodeURIComponent(token) + '&t=' + timestamp + '" style="width:100%;border:none;border-radius:12px;background:transparent;" id="contentFrame" onload="resizeIframe(this)"></iframe>';
                 }
             }
         });
+
+        // ===== INIT =====
+        showDashboardHome();
 
         // Make functions global
         window.navigateTo = navigateTo;
         window.handleLogout = handleLogout;
         window.resizeIframe = resizeIframe;
-        window.refreshCurrentPage = refreshCurrentPage;
-
-        initDashboard();
+        window.toggleDrawer = toggleDrawer;
+        window.closeDrawer = closeDrawer;
 
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js');
         }
     </script>
 </body>
-
 </html>
