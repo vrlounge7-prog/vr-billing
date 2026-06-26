@@ -10,6 +10,8 @@
     <title>VR BILLING - Cashier POS</title>
     <link rel="shortcut icon" href="/favicon.ico" type="image/png">
     <link rel="manifest" href="/manifest.json">
+    <!-- Add JsBarcode Library -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -1374,44 +1376,60 @@
                 } catch (e) { notify('Connection error', 'error'); }
             };
 
-            // ============ RECEIPT PRINTING ============
+            // ============ IMPROVED BARCODE GENERATION ============
             function generateBarcodeSVG(data) {
-                var chars = data.toString().split('');
-                var bw = 2;
-                var h = 40;
-                var x = 0;
-                var bars = [];
-                bars.push('<rect x="' + x + '" y="0" width="' + bw + '" height="' + h + '" fill="black"/>');
-                x += bw * 2;
-                bars.push('<rect x="' + x + '" y="0" width="' + bw + '" height="' + h + '" fill="black"/>');
-                x += bw * 2;
-                for (var i = 0; i < chars.length; i++) {
-                    var charCode = chars[i].charCodeAt(0);
-                    for (var bit = 6; bit >= 0; bit--) {
-                        if (charCode & (1 << bit)) {
-                            bars.push('<rect x="' + x + '" y="0" width="' + bw + '" height="' + h + '" fill="black"/>');
-                        }
-                        x += bw * 2;
-                    }
+                // Clean the data for barcode
+                var cleanData = data.replace(/[^A-Za-z0-9]/g, '');
+
+                // Create a temporary container for the barcode
+                var container = document.createElement('div');
+                container.id = 'barcode-container-' + Date.now();
+                container.style.display = 'none';
+                document.body.appendChild(container);
+
+                // Create SVG element
+                var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.id = 'barcode-svg-' + Date.now();
+                container.appendChild(svg);
+
+                try {
+                    // Generate proper barcode using JsBarcode
+                    JsBarcode('#' + svg.id, cleanData, {
+                        format: 'CODE128',
+                        width: 2,
+                        height: 40,
+                        displayValue: true,
+                        fontSize: 12,
+                        font: 'monospace',
+                        margin: 5,
+                        background: '#ffffff',
+                        lineColor: '#000000',
+                        fontColor: '#000000'
+                    });
+
+                    // Get the SVG content
+                    var svgContent = document.getElementById(svg.id).outerHTML;
+                    container.remove();
+                    return svgContent;
+                } catch (e) {
+                    console.error('Barcode generation failed:', e);
+                    container.remove();
+                    // Fallback: Return a simple text display
+                    return '<div style="text-align:center;font-family:monospace;font-size:14px;letter-spacing:3px;padding:5px;">' + cleanData + '</div>';
                 }
-                bars.push('<rect x="' + x + '" y="0" width="' + bw + '" height="' + h + '" fill="black"/>');
-                x += bw * 2;
-                bars.push('<rect x="' + x + '" y="0" width="' + bw * 2 + '" height="' + h + '" fill="black"/>');
-                x += bw * 3;
-                var svg = '<svg width="' + (x + 10) + '" height="' + (h + 10) + '" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto;">' +
-                    '<rect width="100%" height="100%" fill="white"/>' +
-                    bars.join('') +
-                    '</svg>';
-                return svg;
             }
 
+            // ============ IMPROVED RECEIPT PRINTING ============
             function printReceipt(data) {
                 var now = new Date();
                 var ds = data.transaction_date || now.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
                 var ts = data.transaction_time || now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
                 var rn = data.receipt_no || ('VR-' + Date.now());
                 var ih = '', sth = '', ps = {};
-                var barcodeSvg = generateBarcodeSVG(rn.replace(/[^A-Za-z0-9]/g, ''));
+
+                // Generate proper barcode
+                var barcodeSvg = generateBarcodeSVG(rn);
+
                 if (data.items && data.items.length > 0) {
                     data.items.forEach(function (item) {
                         var dl = '';
@@ -1440,6 +1458,7 @@
                 }
                 var cnd = (data.customer_name && data.customer_name !== 'Guest') ? '<div class="info-text"><strong>CUSTOMER:</strong> ' + escapeHtml(data.customer_name) + '</div>' : '';
                 var cpd = data.customer_phone ? '<div class="info-text"><strong>PHONE:</strong> ' + escapeHtml(data.customer_phone) + '</div>' : '';
+
                 var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Receipt</title>' +
                     '<style>' +
                     '@page { size: 80mm auto; margin: 0mm; }' +
@@ -1465,7 +1484,6 @@
                     '<div class="info-text">+254740547488</div>' +
                     '</div>' +
                     '<div class="barcode-container">' + barcodeSvg + '</div>' +
-                    '<div class="barcode-text">*' + rn.replace(/[^A-Za-z0-9]/g, '') + '*</div>' +
                     '<div class="center receipt-title">START OF FISCAL RECEIPT</div>' +
                     '<div class="divider"></div>' +
                     '<div class="info-text"><strong>RECEIPT:</strong> ' + rn + '</div>' +
@@ -1491,6 +1509,7 @@
                     '<div class="center footer-text">END OF FISCAL RECEIPT</div>' +
                     '<div class="center footer-text">THANK YOU! COME AGAIN!</div>' +
                     '</body></html>';
+
                 var w = window.open('', '_blank', 'width=400,height=600');
                 w.document.write(html);
                 w.document.close();
@@ -1499,12 +1518,15 @@
 
             function printBackdatedReceipt(data) {
                 var rn = data.receipt_no;
-                var barcodeSvg = generateBarcodeSVG(rn.replace(/[^A-Za-z0-9]/g, ''));
+                var barcodeSvg = generateBarcodeSVG(rn);
+
                 var dl = '';
                 if (data.is_pool) dl = data.number_of_games + ' game' + (data.number_of_games > 1 ? 's' : '');
                 else if (data.shots > 0) dl = data.shots + ' shots';
                 else if (data.duration > 0) dl = data.duration + ' mins';
+
                 var cnd = (data.customer_name && data.customer_name !== 'Guest') ? '<div class="info-text"><strong>CUSTOMER:</strong> ' + escapeHtml(data.customer_name) + '</div>' : '';
+
                 var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Receipt</title>' +
                     '<style>' +
                     '@page { size: 80mm auto; margin: 0mm; }' +
@@ -1520,13 +1542,11 @@
                     'th { border-bottom: 1px solid #000; text-align: left; }' +
                     '.total-line { font-size: 13px; font-weight: bold; margin-top: 5px; text-align: right; }' +
                     '.barcode-container { text-align: center; margin: 8px 0; }' +
-                    '.barcode-text { font-size: 12px; text-align: center; letter-spacing: 2px; margin-top: 3px; font-weight: bold; }' +
                     '.footer-text { font-size: 11px; margin-top: 8px; }' +
                     '@media print { body { margin: 0; padding: 5px; } }' +
                     '</style></head><body>' +
                     '<div class="center"><div class="logo-text">VR LOUNGE</div><div class="company-text">Dintez Solutions LTD</div><div class="info-text">+254740547488</div></div>' +
                     '<div class="barcode-container">' + barcodeSvg + '</div>' +
-                    '<div class="barcode-text">*' + rn.replace(/[^A-Za-z0-9]/g, '') + '*</div>' +
                     '<div class="center receipt-title">START OF FISCAL RECEIPT</div>' +
                     '<div class="divider"></div>' +
                     '<div class="info-text"><strong>RECEIPT:</strong> ' + rn + '</div>' +
@@ -1535,8 +1555,8 @@
                     cnd +
                     '<div class="divider"></div>' +
                     '<table><thead><tr><th>ITEM</th><th>STATION</th><th>DUR</th><th>AMOUNT</th></tr></thead><tbody>' +
-                    '<tr><td style="text-align:left;">' + escapeHtml(data.game_name) + '</td><td style="text-align:center;">' + escapeHtml(data.station_used) + '</td><td style="text-align:center;">' + dl + '</td><td style="text-align:right;">KES ' + data.total_amount.toLocaleString() + 'NonNullable' +
-                    '</tbody></table>' +
+                    '<tr><td style="text-align:left;">' + escapeHtml(data.game_name) + '</td><td style="text-align:center;">' + escapeHtml(data.station_used) + '</td><td style="text-align:center;">' + dl + '</td><td style="text-align:right;">KES ' + data.total_amount.toLocaleString() + '</td>' +
+                    '</tr></tbody></table>' +
                     '<div class="divider"></div>' +
                     '<div class="total-line">TOTAL: KES ' + data.total_amount.toLocaleString() + '</div>';
                 if (!data.is_pool && data.duration > 0) {
@@ -1563,6 +1583,7 @@
                     '<div class="center footer-text">END OF FISCAL RECEIPT</div>' +
                     '<div class="center footer-text">THANK YOU! COME AGAIN!</div>' +
                     '</body></html>';
+
                 var w = window.open('', '_blank', 'width=400,height=600');
                 w.document.write(html);
                 w.document.close();
