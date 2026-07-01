@@ -214,11 +214,9 @@ router.get('/:id', authenticateToken, async (req, res) => {
 });
 
 // ============ CREATE TRANSACTION - NO STATION LOCKING! ============
-// FIXED: Completely removed all station locking from transaction creation
-// Cashiers can create receipts ANY TIME (before, during, or after play)
 router.post('/', authenticateToken, async (req, res) => {
     try {
-        const { customer_name, customer_phone, items, total_amount, station_used, payment_method } = req.body;
+        const { customer_name, customer_phone, items, total_amount, station_used, payment_method, split_payment } = req.body;
         
         console.log('📝 CREATE TRANSACTION - Request received');
         console.log('  Customer:', customer_name || 'Guest');
@@ -247,6 +245,22 @@ router.post('/', authenticateToken, async (req, res) => {
         const totalDuration = items.reduce((sum, item) => sum + (item.total_duration || 0), 0);
         const totalShots = items.reduce((sum, item) => sum + (item.total_shots || 0), 0);
 
+        // Handle split payment details
+        let creditDetails = '';
+        let splitDetails = null;
+        
+        if (payment_method === 'Split' && split_payment) {
+            splitDetails = {
+                type: 'split',
+                cash: split_payment.cash || 0,
+                mpesa: split_payment.mpesa || 0,
+                total: split_payment.total || total_amount,
+                mpesa_receipt: '' // Will be filled during verification
+            };
+            creditDetails = JSON.stringify(splitDetails);
+            console.log('  Split Payment Details:', splitDetails);
+        }
+
         const newTx = {
             id: store.generateId(),
             receipt_no: receiptNo,
@@ -265,7 +279,7 @@ router.post('/', authenticateToken, async (req, res) => {
             station_used: station_used || '',
             total_duration_minutes: totalDuration,
             total_shots: totalShots,
-            credit_details: '',
+            credit_details: creditDetails,
             mpesa_receipt: '',
             is_void: 0,
             is_past: 0,
@@ -295,16 +309,48 @@ router.post('/:id/verify', authenticateToken, async (req, res) => {
         const tx = await store.getTransactionById(req.params.id);
         if (!tx) return res.status(404).json({ error: 'Transaction not found.' });
 
-        const { amount_paid, mpesa_receipt, credit_details } = req.body;
+        const { amount_paid, mpesa_receipt, credit_details, split_cash, split_mpesa } = req.body;
         const paid = amount_paid || tx.total_amount;
         const balance = paid - tx.total_amount;
+
+        let creditDetails = credit_details || '';
+        let paymentMethod = tx.payment_method;
+
+        // Handle split payment verification
+        if (tx.payment_method === 'Split' || (split_cash !== undefined && split_mpesa !== undefined)) {
+            let splitData = {};
+            try {
+                // Try to parse existing credit_details
+                if (tx.credit_details && typeof tx.credit_details === 'string') {
+                    splitData = JSON.parse(tx.credit_details);
+                } else if (tx.credit_details && typeof tx.credit_details === 'object') {
+                    splitData = tx.credit_details;
+                }
+            } catch (e) {
+                splitData = {};
+            }
+
+            // Update with verification data
+            splitData.type = 'split';
+            splitData.cash = split_cash || splitData.cash || 0;
+            splitData.mpesa = split_mpesa || splitData.mpesa || 0;
+            splitData.total = (splitData.cash || 0) + (splitData.mpesa || 0);
+            if (mpesa_receipt) {
+                splitData.mpesa_receipt = mpesa_receipt;
+            }
+            creditDetails = JSON.stringify(splitData);
+            paymentMethod = 'Split (Cash + M-Pesa)';
+            
+            console.log('Split payment verified:', splitData);
+        }
 
         await store.updateTransaction(req.params.id, {
             amount_paid: paid,
             balance: balance,
             payment_status: 'completed',
             mpesa_receipt: mpesa_receipt || '',
-            credit_details: credit_details ? JSON.stringify(credit_details) : ''
+            credit_details: creditDetails,
+            payment_method: paymentMethod
         });
 
         const updatedTx = await store.getTransactionById(req.params.id);
