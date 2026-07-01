@@ -472,10 +472,125 @@
             flex-shrink: 0;
         }
 
+        /* ============ SPLIT PAYMENT STYLES ============ */
+        .split-payment-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin: 5px 0;
+            cursor: pointer;
+            border: 2px solid #e0e0e0;
+            transition: all 0.2s;
+        }
+
+        .split-payment-toggle:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .split-payment-toggle input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .split-payment-toggle label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .split-payment-toggle .toggle-icon {
+            font-size: 18px;
+        }
+
+        .split-payment-fields {
+            display: none;
+            padding: 10px;
+            background: #f8f9ff;
+            border-radius: 10px;
+            margin: 5px 0;
+            border: 2px solid #667eea;
+        }
+
+        .split-payment-fields.active {
+            display: block;
+        }
+
+        .split-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 5px 0;
+        }
+
+        .split-row .split-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #555;
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .split-row input {
+            padding: 8px 10px;
+            margin: 0;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .split-row input.cash-input {
+            border-color: #28a745;
+            background: #f0fff4;
+        }
+
+        .split-row input.mpesa-input {
+            border-color: #17a2b8;
+            background: #f0faff;
+        }
+
+        .split-row input:focus {
+            border-color: #667eea;
+            background: white;
+        }
+
+        .split-total-display {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 12px;
+            margin-top: 5px;
+            background: #e8ecff;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        .split-total-display .total-label {
+            color: #555;
+        }
+
+        .split-total-display .total-amount {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .split-total-display .total-amount.valid {
+            color: #28a745;
+        }
+
+        .split-total-display .total-amount.invalid {
+            color: #dc3545;
+        }
+
         /* ============ PAYMENT METHODS ============ */
         .payment-methods {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 6px;
             margin: 8px 0;
         }
@@ -487,13 +602,20 @@
             font-weight: 600;
             cursor: pointer;
             background: white;
-            font-size: 12px;
+            font-size: 11px;
             color: #333;
+            transition: all 0.2s;
         }
 
         .payment-btn.active {
             border-color: #667eea;
             background: #667eea;
+            color: white;
+        }
+
+        .payment-btn.split-active {
+            border-color: #ff6b35;
+            background: #ff6b35;
             color: white;
         }
 
@@ -877,6 +999,14 @@
                 padding: 10px 14px;
                 font-size: 11px;
             }
+
+            .payment-methods {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .split-row {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -947,6 +1077,35 @@
             </select>
             <input type="text" id="customerName" placeholder="Customer Name (Optional)">
             <input type="text" id="customerPhone" placeholder="Phone Number">
+            
+            <!-- SPLIT PAYMENT TOGGLE -->
+            <div class="split-payment-toggle" onclick="toggleSplitPayment()">
+                <input type="checkbox" id="splitPaymentToggle" onchange="toggleSplitPayment()">
+                <label for="splitPaymentToggle">💳 Split Payment (Cash + M-Pesa)</label>
+                <span class="toggle-icon">💰</span>
+            </div>
+
+            <!-- SPLIT PAYMENT FIELDS -->
+            <div class="split-payment-fields" id="splitPaymentFields">
+                <div class="split-row">
+                    <div>
+                        <span class="split-label">💵 Cash Amount</span>
+                        <input type="number" id="splitCashAmount" class="cash-input" placeholder="0" min="0" step="1" oninput="updateSplitTotal()">
+                    </div>
+                    <div>
+                        <span class="split-label">📱 M-Pesa Amount</span>
+                        <input type="number" id="splitMpesaAmount" class="mpesa-input" placeholder="0" min="0" step="1" oninput="updateSplitTotal()">
+                    </div>
+                </div>
+                <div class="split-total-display">
+                    <span class="total-label">Total Paid:</span>
+                    <span class="total-amount" id="splitTotalDisplay">KES 0</span>
+                </div>
+                <div style="font-size:11px;color:#666;margin-top:5px;text-align:center;">
+                    ⚠️ Total must equal the cart total: <strong id="splitCartTotal">KES 0</strong>
+                </div>
+            </div>
+
             <div class="cart-scroll-container">
                 <div class="cart-items" id="cartItems">
                     <div class="empty-state">
@@ -961,6 +1120,7 @@
                 <button class="payment-btn active" id="btnCash">💵 Cash</button>
                 <button class="payment-btn" id="btnMpesa">📱 M-Pesa</button>
                 <button class="payment-btn" id="btnCredit">📝 Credit</button>
+                <button class="payment-btn" id="btnSplit">💳 Split</button>
             </div>
             <button class="process-btn" id="processPaymentBtn">💳 PROCESS & PRINT</button>
         </div>
@@ -1072,6 +1232,7 @@
             var sessionCheckInterval;
             var pendingGame = null;
             var stkPollInterval = null;
+            var isSplitPayment = false;
 
             if (!token) { window.location.href = '/'; return; }
 
@@ -1127,6 +1288,56 @@
                 window.location.href = '/';
             };
 
+            // ============ SPLIT PAYMENT FUNCTIONS ============
+            window.toggleSplitPayment = function () {
+                var checkbox = document.getElementById('splitPaymentToggle');
+                var fields = document.getElementById('splitPaymentFields');
+                isSplitPayment = checkbox.checked;
+                
+                if (isSplitPayment) {
+                    fields.classList.add('active');
+                    selectedPayment = 'Split';
+                    document.querySelectorAll('.payment-btn').forEach(function (b) { b.classList.remove('active', 'split-active'); });
+                    document.getElementById('btnSplit').classList.add('split-active');
+                    document.getElementById('splitCashAmount').value = '';
+                    document.getElementById('splitMpesaAmount').value = '';
+                    updateSplitTotal();
+                    notify('Split payment mode enabled. Enter Cash and M-Pesa amounts.', 'info');
+                } else {
+                    fields.classList.remove('active');
+                    selectedPayment = 'Cash';
+                    document.querySelectorAll('.payment-btn').forEach(function (b) { b.classList.remove('active', 'split-active'); });
+                    document.getElementById('btnCash').classList.add('active');
+                }
+            };
+
+            function updateSplitTotal() {
+                var cash = parseFloat(document.getElementById('splitCashAmount').value) || 0;
+                var mpesa = parseFloat(document.getElementById('splitMpesaAmount').value) || 0;
+                var total = cash + mpesa;
+                var cartTotal = getCartTotal();
+                var display = document.getElementById('splitTotalDisplay');
+                var cartTotalDisplay = document.getElementById('splitCartTotal');
+                
+                display.textContent = 'KES ' + total.toLocaleString();
+                cartTotalDisplay.textContent = 'KES ' + cartTotal.toLocaleString();
+                
+                if (total === cartTotal && total > 0) {
+                    display.className = 'total-amount valid';
+                } else if (total > 0) {
+                    display.className = 'total-amount invalid';
+                } else {
+                    display.className = 'total-amount';
+                }
+            }
+
+            function getCartTotal() {
+                var total = 0;
+                cart.forEach(function (i) { total += i.total_price; });
+                return total;
+            }
+
+            // ============ LOAD FUNCTIONS ============
             async function loadGames() {
                 try {
                     var res = await fetch(API_URL + '/games', { headers: { 'Authorization': 'Bearer ' + token } });
@@ -1156,7 +1367,7 @@
                 });
             }
 
-            // ============ UPDATED CATEGORIES WITH COMBO ============
+            // ============ CATEGORIES ============
             var categories = ['🔥 Combo', 'VR Experience', 'PS Games', 'Game Lounge', 'Paintball', 'Race Simulator'];
             var icons = {
                 '🔥 Combo': '🔥',
@@ -1187,13 +1398,11 @@
                 if (categories.length > 0) { c.querySelector('.cat-btn').classList.add('active'); showGames(categories[0]); }
             }
 
-            // ============ UPDATED showGames WITH COMBO SUPPORT ============
+            // ============ GAME DISPLAY ============
             function showGames(cat) {
                 var filteredGames = [];
                 if (cat === '🔥 Combo') {
-                    // Show all games with category 'Combo'
                     filteredGames = games.filter(function (g) { return g.category === 'Combo'; });
-                    // If no combo found, show a message
                     if (filteredGames.length === 0) {
                         var grid = document.getElementById('gamesGrid');
                         grid.innerHTML = '<div class="empty-state"><div class="icon">🔥</div><p>No combo packages available.<br>Contact admin to add the Weekday Combo.</p></div>';
@@ -1222,7 +1431,6 @@
                     var isCombo = g.category === 'Combo';
                     var cardClass = isCombo ? 'game-card combo-card' : 'game-card';
                     var comboBadge = isCombo ? '<div class="combo-badge">🔥 BEST VALUE</div>' : '';
-                    // For combo, show a special detail
                     var detailText = isCombo ? '1hr - All Activities' : d.detail;
                     return '<div class="' + cardClass + '" onclick="showDurationSelector(\'' + g.id + '\')">' +
                         '<div class="game-icon">' + d.icon + '</div>' +
@@ -1239,7 +1447,6 @@
                 var s = ''; if (baseGame.sub_category) s = baseGame.sub_category.toLowerCase();
                 if (s.indexOf('pool') !== -1) return baseGame.price_ksh * durationMinutes;
                 if (baseGame.category === 'Race Simulator') { var b = Math.ceil(durationMinutes / 15); return baseGame.price_ksh * b; }
-                // For Combo, price is fixed regardless of duration (it's per person for 1hr)
                 if (baseGame.category === 'Combo') return baseGame.price_ksh;
                 var bd = parseInt(baseGame.duration_or_quantity) || 30, bp = baseGame.price_ksh;
                 var t = Math.round((bp / bd) * durationMinutes); return Math.ceil(t / 10) * 10;
@@ -1247,7 +1454,6 @@
 
             function formatGameDisplay(game) {
                 var s = ''; if (game.sub_category) s = game.sub_category.toLowerCase();
-                // Combo display
                 if (game.category === 'Combo') {
                     return { icon: '🔥', detail: '1 Hour - All Activities' };
                 }
@@ -1269,20 +1475,18 @@
                 return { icon: '🎮', detail: 'Custom duration' };
             }
 
-            // ============ UPDATED DURATION SELECTOR FOR COMBO ============
+            // ============ DURATION SELECTOR ============
             window.showDurationSelector = function (gameId) {
                 var game = games.find(function (g) { return g.id === gameId; });
                 if (!game) return;
                 pendingGame = game;
 
-                // For Combo, just add directly with the fixed duration (60 mins)
                 if (game.category === 'Combo') {
                     var comboInfo = {
                         title: '🔥 Weekday Combo',
                         desc: '1 Hour Access to: PlayStation • VR Racing • Pool Table • Darts • Paintball (5 rounds)',
                         price: game.price_ksh
                     };
-                    // Show combo info modal
                     var modal = document.getElementById('durationModal');
                     document.getElementById('durationModalTitle').textContent = '🔥 Weekday Combo';
                     document.getElementById('durationModalBody').innerHTML = `
@@ -1352,7 +1556,6 @@
                     stationName = st.station_name;
                     if (st.in_use) { notify('Note: ' + stationName + ' is currently in use. Receipt can still be created.', 'warning'); }
                 } else {
-                    // For combo, try to find any combo station
                     if (isCombo) {
                         var comboSt = stations.find(function (x) { return x.station_type === 'Combo' && x.is_active; });
                         if (comboSt) {
@@ -1367,7 +1570,6 @@
                 }
                 var cp = calculatePrice(game, durationMinutes), sps = 0;
                 if (game.category === 'Paintball') { sps = parseInt(game.duration_or_quantity) || 20; cp = game.price_ksh; }
-                // For combo, use the game's price
                 if (isCombo) cp = game.price_ksh;
 
                 cart.push({
@@ -1383,6 +1585,7 @@
                     game.sub_category + (isPool ? ' - ' + durationMinutes + ' game(s) added! KES ' + cp.toLocaleString() : ' added for ' + durationMinutes + ' mins! KES ' + cp.toLocaleString());
                 notify(msg);
                 updateCartDisplay();
+                updateSplitTotal();
             }
 
             window.addToCart = function (id) { showDurationSelector(id); };
@@ -1423,6 +1626,7 @@
                     }).join('');
                 }
                 document.getElementById('cartTotal').textContent = 'Total: KES ' + t.toLocaleString();
+                updateSplitTotal();
                 setTimeout(updateCartFade, 100);
             }
 
@@ -1447,33 +1651,174 @@
                 s.value = '';
             }
 
-            function setPaymentMethod(m) { selectedPayment = m; document.querySelectorAll('.payment-btn').forEach(function (b) { b.classList.remove('active'); }); if (m === 'Cash') document.getElementById('btnCash').classList.add('active'); else if (m === 'Mpesa') document.getElementById('btnMpesa').classList.add('active'); else document.getElementById('btnCredit').classList.add('active'); }
+            function setPaymentMethod(m) {
+                selectedPayment = m;
+                document.querySelectorAll('.payment-btn').forEach(function (b) { b.classList.remove('active', 'split-active'); });
+                
+                // If Split is selected, show the split fields
+                if (m === 'Split') {
+                    document.getElementById('btnSplit').classList.add('split-active');
+                    document.getElementById('splitPaymentToggle').checked = true;
+                    document.getElementById('splitPaymentFields').classList.add('active');
+                    isSplitPayment = true;
+                    updateSplitTotal();
+                } else {
+                    document.getElementById('splitPaymentToggle').checked = false;
+                    document.getElementById('splitPaymentFields').classList.remove('active');
+                    isSplitPayment = false;
+                    if (m === 'Cash') document.getElementById('btnCash').classList.add('active');
+                    else if (m === 'Mpesa') document.getElementById('btnMpesa').classList.add('active');
+                    else if (m === 'Credit') document.getElementById('btnCredit').classList.add('active');
+                }
+            }
 
             document.getElementById('btnCash').addEventListener('click', function () { setPaymentMethod('Cash'); });
             document.getElementById('btnMpesa').addEventListener('click', function () { setPaymentMethod('Mpesa'); });
             document.getElementById('btnCredit').addEventListener('click', function () { setPaymentMethod('Credit'); });
+            document.getElementById('btnSplit').addEventListener('click', function () { setPaymentMethod('Split'); });
 
+            // ============ PROCESS PAYMENT ============
             async function processPayment() {
                 if (cart.length === 0) { notify('Cart is empty!', 'error'); return; }
+                
                 var cn = document.getElementById('customerName').value || 'Guest',
                     cp = document.getElementById('customerPhone').value,
                     t = 0;
                 cart.forEach(function (i) { t += i.total_price; });
                 var su = cart[0] ? cart[0].station_name : 'N/A';
-                console.log('📤 PROCESSING PAYMENT - Total:', t, 'Method:', selectedPayment);
+
+                // Check if split payment is enabled
+                var isSplit = document.getElementById('splitPaymentToggle').checked;
+                var splitData = null;
+
+                if (isSplit) {
+                    var cashAmount = parseFloat(document.getElementById('splitCashAmount').value) || 0;
+                    var mpesaAmount = parseFloat(document.getElementById('splitMpesaAmount').value) || 0;
+                    var totalPaid = cashAmount + mpesaAmount;
+
+                    if (totalPaid !== t) {
+                        notify('Split payment total (KES ' + totalPaid.toLocaleString() + ') does not match cart total (KES ' + t.toLocaleString() + ')', 'error');
+                        return;
+                    }
+
+                    if (cashAmount < 0 || mpesaAmount < 0) {
+                        notify('Payment amounts cannot be negative', 'error');
+                        return;
+                    }
+
+                    // Use split payment
+                    splitData = {
+                        cash: cashAmount,
+                        mpesa: mpesaAmount,
+                        total: totalPaid
+                    };
+                    
+                    // We'll use the payment method as 'Split' and store split details in credit_details
+                    selectedPayment = 'Split';
+                }
+
+                console.log('📤 PROCESSING PAYMENT - Total:', t, 'Method:', selectedPayment, 'Split:', splitData);
+
                 try {
                     var res = await fetch(API_URL + '/transactions', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-                        body: JSON.stringify({ customer_name: cn, customer_phone: cp, items: cart, total_amount: t, station_used: su, payment_method: selectedPayment })
+                        body: JSON.stringify({ 
+                            customer_name: cn, 
+                            customer_phone: cp, 
+                            items: cart, 
+                            total_amount: t, 
+                            station_used: su, 
+                            payment_method: selectedPayment,
+                            split_payment: splitData // Pass split data to backend
+                        })
                     });
                     var data = await res.json();
-                    if (data.success) { currentTx = data.transaction; if (selectedPayment === 'Cash') showCashModal();
-                    else if (selectedPayment === 'Mpesa') showMpesaModal();
-                    else showCreditModal(); } else notify('Error: ' + (data.error || 'Failed'), 'error');
+                    if (data.success) { 
+                        currentTx = data.transaction; 
+                        if (selectedPayment === 'Cash') showCashModal();
+                        else if (selectedPayment === 'Mpesa') showMpesaModal();
+                        else if (selectedPayment === 'Credit') showCreditModal();
+                        else if (selectedPayment === 'Split') {
+                            // For split payment, verify with the split data
+                            verifySplitPayment(splitData);
+                        }
+                    } else notify('Error: ' + (data.error || 'Failed'), 'error');
                 } catch (e) { notify('Connection error', 'error'); }
             }
 
+            // ============ SPLIT PAYMENT VERIFICATION ============
+            async function verifySplitPayment(splitData) {
+                // Create split details for storage
+                var splitDetails = {
+                    type: 'split',
+                    cash: splitData.cash,
+                    mpesa: splitData.mpesa,
+                    total: splitData.total,
+                    mpesa_receipt: '' // Will be filled if M-Pesa code provided
+                };
+
+                // If there's M-Pesa portion, ask for the code
+                if (splitData.mpesa > 0) {
+                    var mpesaCode = prompt('📱 Enter M-Pesa code for the KES ' + splitData.mpesa.toLocaleString() + ' payment:\n(Leave empty if STK Push was used)');
+                    if (mpesaCode && mpesaCode.trim()) {
+                        splitDetails.mpesa_receipt = mpesaCode.trim();
+                    }
+                }
+
+                try {
+                    var res = await fetch(API_URL + '/transactions/' + currentTx.id + '/verify', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                        body: JSON.stringify({ 
+                            amount_paid: splitData.total, 
+                            mpesa_receipt: splitDetails.mpesa_receipt || '',
+                            credit_details: splitDetails,
+                            payment_method: 'Split',
+                            split_cash: splitData.cash,
+                            split_mpesa: splitData.mpesa
+                        })
+                    });
+                    var data = await res.json();
+                    if (data.success) {
+                        closeModal('paymentModal');
+                        if (cart.some(function (i) { return i.total_duration > 0; })) startStationTimers();
+                        printReceipt({
+                            receipt_no: data.transaction.receipt_no,
+                            customer_name: document.getElementById('customerName').value || 'Guest',
+                            customer_phone: document.getElementById('customerPhone').value,
+                            items: cart,
+                            total_amount: data.transaction.total_amount,
+                            amount_paid: splitData.total,
+                            balance: 0,
+                            payment_method: 'Split (Cash + M-Pesa)',
+                            cashier_name: user.full_name || 'Cashier',
+                            station_used: cart[0] ? cart[0].station_name : 'N/A',
+                            transaction_date: data.transaction.transaction_date,
+                            transaction_time: data.transaction.transaction_time,
+                            split_details: {
+                                cash: splitData.cash,
+                                mpesa: splitData.mpesa,
+                                mpesa_receipt: splitDetails.mpesa_receipt
+                            }
+                        });
+                        notify('✅ Payment Successful! Cash: KES ' + splitData.cash.toLocaleString() + ' | M-Pesa: KES ' + splitData.mpesa.toLocaleString());
+                        cart = [];
+                        updateCartDisplay();
+                        document.getElementById('customerName').value = '';
+                        document.getElementById('customerPhone').value = '';
+                        document.getElementById('splitCashAmount').value = '';
+                        document.getElementById('splitMpesaAmount').value = '';
+                        document.getElementById('splitPaymentToggle').checked = false;
+                        document.getElementById('splitPaymentFields').classList.remove('active');
+                        isSplitPayment = false;
+                        currentTx = null;
+                        loadStations();
+                    } else notify('Payment failed: ' + (data.error || 'Error'), 'error');
+                } catch (e) { notify('Error verifying payment', 'error'); }
+            }
+
+            // ============ CASH MODAL ============
             function showCashModal() {
                 document.getElementById('modalTitle').textContent = '💵 Cash Payment';
                 document.getElementById('modalBody').innerHTML = '<p>Total: <strong>KES ' + currentTx.total_amount.toLocaleString() + '</strong></p><input type="number" id="amountPaid" value="' + currentTx.total_amount + '" style="width:100%;padding:12px;margin:10px 0;border:1.5px solid #e0e0e0;border-radius:12px;"><p id="changeAmount" style="color:#28a745;font-weight:bold;"></p>';
@@ -1484,6 +1829,7 @@
                 openModal('paymentModal');
             }
 
+            // ============ MPESA MODAL ============
             function showMpesaModal() {
                 if (stkPollInterval) { clearInterval(stkPollInterval); stkPollInterval = null; }
                 document.getElementById('modalTitle').textContent = '📱 M-Pesa Payment';
@@ -1590,6 +1936,7 @@
                 openModal('paymentModal');
             }
 
+            // ============ CREDIT MODAL ============
             function showCreditModal() { document.getElementById('creditFullName').value = document.getElementById('customerName').value;
                 document.getElementById('creditPhone').value = document.getElementById('customerPhone').value;
                 openModal('creditModal'); }
@@ -1603,8 +1950,13 @@
                 verifyPayment(null, { full_name: fn, phone: ph, guarantor: g, guarantor_phone: document.getElementById('creditGuarantorPhone').value, due_date: document.getElementById('creditDueDate').value }, currentTx.total_amount);
             }
 
+            // ============ VERIFY PAYMENT ============
             async function verifyPayment(mc, cd, ca) {
-                var body = { amount_paid: ca || currentTx.total_amount, mpesa_receipt: mc || '', credit_details: cd || null };
+                var body = { 
+                    amount_paid: ca || currentTx.total_amount, 
+                    mpesa_receipt: mc || '', 
+                    credit_details: cd || null 
+                };
                 try {
                     var res = await fetch(API_URL + '/transactions/' + currentTx.id + '/verify', {
                         method: 'POST',
@@ -1615,6 +1967,7 @@
                     if (data.success) {
                         closeModal('paymentModal');
                         if (cart.some(function (i) { return i.total_duration > 0; })) startStationTimers();
+                        var paymentMethodDisplay = selectedPayment === 'Split' ? 'Split (Cash + M-Pesa)' : selectedPayment;
                         printReceipt({
                             receipt_no: data.transaction.receipt_no,
                             customer_name: document.getElementById('customerName').value || 'Guest',
@@ -1623,23 +1976,35 @@
                             total_amount: data.transaction.total_amount,
                             amount_paid: body.amount_paid,
                             balance: data.transaction.balance,
-                            payment_method: selectedPayment,
+                            payment_method: paymentMethodDisplay,
                             cashier_name: user.full_name || 'Cashier',
                             station_used: cart[0] ? cart[0].station_name : 'N/A',
                             transaction_date: data.transaction.transaction_date,
-                            transaction_time: data.transaction.transaction_time
+                            transaction_time: data.transaction.transaction_time,
+                            split_details: data.transaction.split_details || null
                         });
-                        notify('Payment Successful! Receipt: ' + data.transaction.receipt_no);
+                        var msg = 'Payment Successful! Receipt: ' + data.transaction.receipt_no;
+                        if (selectedPayment === 'Split') {
+                            var split = data.transaction.split_details || {};
+                            msg += ' | Cash: KES ' + (split.cash || 0).toLocaleString() + ' | M-Pesa: KES ' + (split.mpesa || 0).toLocaleString();
+                        }
+                        notify(msg);
                         cart = [];
                         updateCartDisplay();
                         document.getElementById('customerName').value = '';
                         document.getElementById('customerPhone').value = '';
+                        document.getElementById('splitCashAmount').value = '';
+                        document.getElementById('splitMpesaAmount').value = '';
+                        document.getElementById('splitPaymentToggle').checked = false;
+                        document.getElementById('splitPaymentFields').classList.remove('active');
+                        isSplitPayment = false;
                         currentTx = null;
                         loadStations();
                     } else notify('Payment failed: ' + (data.error || 'Error'), 'error');
                 } catch (e) { notify('Error verifying payment', 'error'); }
             }
 
+            // ============ BACKDATE FUNCTIONS ============
             window.openBackdateModal = function () {
                 document.getElementById('backdateDate').value = new Date().toISOString().split('T')[0];
                 document.getElementById('backdateTime').value = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -1723,7 +2088,7 @@
                 } catch (e) { notify('Connection error', 'error'); }
             };
 
-            // ============ IMPROVED BARCODE GENERATION ============
+            // ============ RECEIPT PRINTING ============
             function generateBarcodeSVG(data) {
                 var cleanData = data.replace(/[^A-Za-z0-9]/g, '');
                 var container = document.createElement('div');
@@ -1756,7 +2121,6 @@
                 }
             }
 
-            // ============ IMPROVED RECEIPT PRINTING ============
             function printReceipt(data) {
                 var now = new Date();
                 var ds = data.transaction_date || now.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
@@ -1766,6 +2130,16 @@
                     sth = '',
                     ps = {};
                 var barcodeSvg = generateBarcodeSVG(rn);
+                
+                // Split payment details
+                var splitDisplay = '';
+                if (data.split_details && data.split_details.cash !== undefined) {
+                    splitDisplay = '<div class="info-text"><strong>SPLIT PAYMENT:</strong></div>' +
+                        '<div class="info-text">   💵 Cash: KES ' + data.split_details.cash.toLocaleString() + '</div>' +
+                        '<div class="info-text">   📱 M-Pesa: KES ' + data.split_details.mpesa.toLocaleString() + '</div>' +
+                        (data.split_details.mpesa_receipt ? '<div class="info-text">   M-Pesa Code: ' + data.split_details.mpesa_receipt + '</div>' : '');
+                }
+
                 if (data.items && data.items.length > 0) {
                     data.items.forEach(function (item) {
                         var dl = '';
@@ -1838,8 +2212,14 @@
                 }
                 html += '<div class="divider"></div>' +
                     '<div class="info-text">PAID: KES ' + (data.amount_paid || data.total_amount).toLocaleString() + '</div>' +
-                    '<div class="info-text">METHOD: ' + data.payment_method + '</div>' +
-                    '<div class="divider"></div>' +
+                    '<div class="info-text">METHOD: ' + data.payment_method + '</div>';
+                
+                // Add split payment details if present
+                if (data.split_details && data.split_details.cash !== undefined) {
+                    html += splitDisplay;
+                }
+                
+                html += '<div class="divider"></div>' +
                     '<div class="info-text"><strong>SERVED BY:</strong> ' + escapeHtml(data.cashier_name || '-').toUpperCase() + '</div>' +
                     '<div class="divider"></div>' +
                     '<div class="center footer-text">END OF FISCAL RECEIPT</div>' +
@@ -1925,6 +2305,7 @@
                 setTimeout(function () { w.print(); }, 500);
             }
 
+            // ============ STATION TIMERS ============
             function startStationTimers() {
                 var sm = {};
                 cart.forEach(function (item) {
@@ -2003,6 +2384,7 @@
                 setTimeout(updateTimerFade, 100);
             }
 
+            // ============ UI HELPERS ============
             function initScrollFades() {
                 var g = document.getElementById('gamesGrid'),
                     gb = document.getElementById('gamesFadeBottom'),
@@ -2048,6 +2430,7 @@
             document.getElementById('confirmCreditBtn').addEventListener('click', processCreditPayment);
             document.getElementById('cancelCreditBtn').addEventListener('click', function () { closeModal('creditModal'); });
             window.closeDurationModal = closeDurationModal;
+            window.updateSplitTotal = updateSplitTotal;
 
             setTimeout(initScrollFades, 500);
             loadGames();
