@@ -83,17 +83,58 @@ router.get('/daily/:date', authenticateToken, async (req, res) => {
 
         // Process each transaction
         transactions.forEach(tx => {
-            const method = tx.payment_method || 'Unknown';
-            if (!byMethod[method]) byMethod[method] = { count: 0, total: 0 };
-            byMethod[method].count++;
-            byMethod[method].total += tx.total_amount;
+            // --- PAYMENT METHOD BREAKDOWN WITH SPLIT SUPPORT ---
+            let method = tx.payment_method || 'Unknown';
+            
+            // Check if this is a split payment
+            if (method === 'Split' || method === 'Split (Cash + M-Pesa)') {
+                let splitData = null;
+                try {
+                    if (tx.credit_details && typeof tx.credit_details === 'string') {
+                        splitData = JSON.parse(tx.credit_details);
+                    } else if (tx.credit_details && typeof tx.credit_details === 'object') {
+                        splitData = tx.credit_details;
+                    }
+                } catch (e) {}
+                
+                if (splitData && splitData.type === 'split') {
+                    // Count as split payment
+                    if (!byMethod['Split']) byMethod['Split'] = { count: 0, total: 0 };
+                    byMethod['Split'].count++;
+                    byMethod['Split'].total += tx.total_amount;
+                    
+                    // Also track individual components for detailed reporting
+                    if (splitData.cash > 0) {
+                        if (!byMethod['Split-Cash']) byMethod['Split-Cash'] = { count: 0, total: 0 };
+                        byMethod['Split-Cash'].count++;
+                        byMethod['Split-Cash'].total += splitData.cash;
+                    }
+                    if (splitData.mpesa > 0) {
+                        if (!byMethod['Split-Mpesa']) byMethod['Split-Mpesa'] = { count: 0, total: 0 };
+                        byMethod['Split-Mpesa'].count++;
+                        byMethod['Split-Mpesa'].total += splitData.mpesa;
+                    }
+                } else {
+                    // Fallback: treat as regular method
+                    if (!byMethod[method]) byMethod[method] = { count: 0, total: 0 };
+                    byMethod[method].count++;
+                    byMethod[method].total += tx.total_amount;
+                }
+            } else {
+                // Regular method counting
+                if (!byMethod[method]) byMethod[method] = { count: 0, total: 0 };
+                byMethod[method].count++;
+                byMethod[method].total += tx.total_amount;
+            }
 
+            // By Hour
             const hour = tx.transaction_time ? tx.transaction_time.split(':')[0] : '00';
             const hourKey = `${hour}:00`;
             if (!byHour[hourKey]) byHour[hourKey] = { count: 0, total: 0 };
             byHour[hourKey].count++;
             byHour[hourKey].total += tx.total_amount;
 
+            // By Cashier
             const name = tx.cashier_name || 'Unknown';
             if (!byCashier[name]) byCashier[name] = { count: 0, total: 0 };
             byCashier[name].count++;
@@ -112,6 +153,21 @@ router.get('/daily/:date', authenticateToken, async (req, res) => {
                 if (tx.payment_method === 'Cash') byStation[stn].cash += tx.total_amount;
                 else if (tx.payment_method === 'Mpesa') byStation[stn].mpesa += tx.total_amount;
                 else if (tx.payment_method === 'Credit') byStation[stn].credit += tx.total_amount;
+                // Check for split payment
+                else if (tx.payment_method === 'Split' || tx.payment_method === 'Split (Cash + M-Pesa)') {
+                    let splitData = null;
+                    try {
+                        if (tx.credit_details && typeof tx.credit_details === 'string') {
+                            splitData = JSON.parse(tx.credit_details);
+                        } else if (tx.credit_details && typeof tx.credit_details === 'object') {
+                            splitData = tx.credit_details;
+                        }
+                    } catch (err) {}
+                    if (splitData && splitData.type === 'split') {
+                        byStation[stn].cash += splitData.cash || 0;
+                        byStation[stn].mpesa += splitData.mpesa || 0;
+                    }
+                }
                 return;
             }
 
@@ -124,6 +180,20 @@ router.get('/daily/:date', authenticateToken, async (req, res) => {
                 if (tx.payment_method === 'Cash') byStation[stn].cash += tx.total_amount;
                 else if (tx.payment_method === 'Mpesa') byStation[stn].mpesa += tx.total_amount;
                 else if (tx.payment_method === 'Credit') byStation[stn].credit += tx.total_amount;
+                else if (tx.payment_method === 'Split' || tx.payment_method === 'Split (Cash + M-Pesa)') {
+                    let splitData = null;
+                    try {
+                        if (tx.credit_details && typeof tx.credit_details === 'string') {
+                            splitData = JSON.parse(tx.credit_details);
+                        } else if (tx.credit_details && typeof tx.credit_details === 'object') {
+                            splitData = tx.credit_details;
+                        }
+                    } catch (err) {}
+                    if (splitData && splitData.type === 'split') {
+                        byStation[stn].cash += splitData.cash || 0;
+                        byStation[stn].mpesa += splitData.mpesa || 0;
+                    }
+                }
                 return;
             }
 
@@ -138,9 +208,40 @@ router.get('/daily/:date', authenticateToken, async (req, res) => {
                 if (!byStation[stn]) byStation[stn] = { count: 0, total: 0, cash: 0, mpesa: 0, credit: 0 };
                 byStation[stn].count++;
                 byStation[stn].total += itemPrice;
-                if (tx.payment_method === 'Cash') byStation[stn].cash += itemPrice;
-                else if (tx.payment_method === 'Mpesa') byStation[stn].mpesa += itemPrice;
-                else if (tx.payment_method === 'Credit') byStation[stn].credit += itemPrice;
+                
+                // Determine payment method for this item (split by proportion)
+                let methodForItem = tx.payment_method;
+                let cashPortion = 0;
+                let mpesaPortion = 0;
+                
+                if (tx.payment_method === 'Split' || tx.payment_method === 'Split (Cash + M-Pesa)') {
+                    let splitData = null;
+                    try {
+                        if (tx.credit_details && typeof tx.credit_details === 'string') {
+                            splitData = JSON.parse(tx.credit_details);
+                        } else if (tx.credit_details && typeof tx.credit_details === 'object') {
+                            splitData = tx.credit_details;
+                        }
+                    } catch (e) {}
+                    
+                    if (splitData && splitData.type === 'split' && splitData.total > 0) {
+                        // Allocate proportionally
+                        const proportion = itemPrice / tx.total_amount;
+                        cashPortion = splitData.cash * proportion;
+                        mpesaPortion = splitData.mpesa * proportion;
+                    }
+                }
+                
+                if (cashPortion > 0 || mpesaPortion > 0) {
+                    byStation[stn].cash += cashPortion;
+                    byStation[stn].mpesa += mpesaPortion;
+                } else if (tx.payment_method === 'Cash') {
+                    byStation[stn].cash += itemPrice;
+                } else if (tx.payment_method === 'Mpesa') {
+                    byStation[stn].mpesa += itemPrice;
+                } else if (tx.payment_method === 'Credit') {
+                    byStation[stn].credit += itemPrice;
+                }
 
                 // Categorize the item by its name/station
                 let matched = false;
@@ -152,9 +253,17 @@ router.get('/daily/:date', authenticateToken, async (req, res) => {
                     );
 
                     if (isMatch) {
-                        byStationType[categoryKey].cash += (tx.payment_method === 'Cash' ? itemPrice : 0);
-                        byStationType[categoryKey].mpesa += (tx.payment_method === 'Mpesa' ? itemPrice : 0);
-                        byStationType[categoryKey].credit += (tx.payment_method === 'Credit' ? itemPrice : 0);
+                        // Use the same proportional allocation for category breakdown
+                        if (cashPortion > 0 || mpesaPortion > 0) {
+                            byStationType[categoryKey].cash += cashPortion;
+                            byStationType[categoryKey].mpesa += mpesaPortion;
+                        } else if (tx.payment_method === 'Cash') {
+                            byStationType[categoryKey].cash += itemPrice;
+                        } else if (tx.payment_method === 'Mpesa') {
+                            byStationType[categoryKey].mpesa += itemPrice;
+                        } else if (tx.payment_method === 'Credit') {
+                            byStationType[categoryKey].credit += itemPrice;
+                        }
                         byStationType[categoryKey].total += itemPrice;
                         byStationType[categoryKey].count++;
                         matched = true;
@@ -176,9 +285,16 @@ router.get('/daily/:date', authenticateToken, async (req, res) => {
                             isolated: false
                         };
                     }
-                    byStationType['OTHER'].cash += (tx.payment_method === 'Cash' ? itemPrice : 0);
-                    byStationType['OTHER'].mpesa += (tx.payment_method === 'Mpesa' ? itemPrice : 0);
-                    byStationType['OTHER'].credit += (tx.payment_method === 'Credit' ? itemPrice : 0);
+                    if (cashPortion > 0 || mpesaPortion > 0) {
+                        byStationType['OTHER'].cash += cashPortion;
+                        byStationType['OTHER'].mpesa += mpesaPortion;
+                    } else if (tx.payment_method === 'Cash') {
+                        byStationType['OTHER'].cash += itemPrice;
+                    } else if (tx.payment_method === 'Mpesa') {
+                        byStationType['OTHER'].mpesa += itemPrice;
+                    } else if (tx.payment_method === 'Credit') {
+                        byStationType['OTHER'].credit += itemPrice;
+                    }
                     byStationType['OTHER'].total += itemPrice;
                     byStationType['OTHER'].count++;
                     
@@ -214,7 +330,7 @@ router.get('/daily/:date', authenticateToken, async (req, res) => {
     }
 });
 
-// Other routes remain unchanged...
+// ============ RANGE REPORT ============
 router.get('/range', authenticateToken, async (req, res) => {
     try {
         const { from, to } = req.query;
@@ -227,12 +343,33 @@ router.get('/range', authenticateToken, async (req, res) => {
         const byDate = {};
         transactions.forEach(tx => {
             const date = tx.transaction_date;
-            if (!byDate[date]) byDate[date] = { count: 0, total: 0, cash: 0, mpesa: 0, credit: 0 };
+            if (!byDate[date]) byDate[date] = { count: 0, total: 0, cash: 0, mpesa: 0, credit: 0, split: 0 };
             byDate[date].count++;
             byDate[date].total += tx.total_amount;
-            if (tx.payment_method === 'Cash') byDate[date].cash += tx.total_amount;
-            else if (tx.payment_method === 'Mpesa') byDate[date].mpesa += tx.total_amount;
-            else if (tx.payment_method === 'Credit') byDate[date].credit += tx.total_amount;
+            
+            // Handle split payments in range report
+            if (tx.payment_method === 'Split' || tx.payment_method === 'Split (Cash + M-Pesa)') {
+                let splitData = null;
+                try {
+                    if (tx.credit_details && typeof tx.credit_details === 'string') {
+                        splitData = JSON.parse(tx.credit_details);
+                    } else if (tx.credit_details && typeof tx.credit_details === 'object') {
+                        splitData = tx.credit_details;
+                    }
+                } catch (e) {}
+                
+                if (splitData && splitData.type === 'split') {
+                    byDate[date].cash += splitData.cash || 0;
+                    byDate[date].mpesa += splitData.mpesa || 0;
+                    byDate[date].split += tx.total_amount;
+                }
+            } else if (tx.payment_method === 'Cash') {
+                byDate[date].cash += tx.total_amount;
+            } else if (tx.payment_method === 'Mpesa') {
+                byDate[date].mpesa += tx.total_amount;
+            } else if (tx.payment_method === 'Credit') {
+                byDate[date].credit += tx.total_amount;
+            }
         });
 
         res.json({ from, to, total_transactions: transactions.length, total_revenue: transactions.reduce((sum, tx) => sum + tx.total_amount, 0), by_date: byDate });
@@ -242,6 +379,7 @@ router.get('/range', authenticateToken, async (req, res) => {
     }
 });
 
+// ============ CSV EXPORT ============
 router.get('/export/csv/:date', authenticateToken, async (req, res) => {
     try {
         const date = req.params.date;
@@ -297,6 +435,7 @@ router.get('/export/csv/:date', authenticateToken, async (req, res) => {
     }
 });
 
+// ============ TEXT EXPORT ============
 router.get('/export/text/:date', authenticateToken, async (req, res) => {
     try {
         const date = req.params.date;
@@ -314,9 +453,37 @@ router.get('/export/text/:date', authenticateToken, async (req, res) => {
         }
 
         const totalRevenue = transactions.reduce((sum, tx) => sum + tx.total_amount, 0);
-        const cashTotal = transactions.filter(tx => tx.payment_method === 'Cash').reduce((sum, tx) => sum + tx.total_amount, 0);
-        const mpesaTotal = transactions.filter(tx => tx.payment_method === 'Mpesa').reduce((sum, tx) => sum + tx.total_amount, 0);
-        const creditTotal = transactions.filter(tx => tx.payment_method === 'Credit').reduce((sum, tx) => sum + tx.total_amount, 0);
+        let cashTotal = 0;
+        let mpesaTotal = 0;
+        let creditTotal = 0;
+        let splitTotal = 0;
+        
+        // Calculate payment totals with split support
+        transactions.forEach(tx => {
+            if (tx.payment_method === 'Split' || tx.payment_method === 'Split (Cash + M-Pesa)') {
+                let splitData = null;
+                try {
+                    if (tx.credit_details && typeof tx.credit_details === 'string') {
+                        splitData = JSON.parse(tx.credit_details);
+                    } else if (tx.credit_details && typeof tx.credit_details === 'object') {
+                        splitData = tx.credit_details;
+                    }
+                } catch (e) {}
+                
+                if (splitData && splitData.type === 'split') {
+                    cashTotal += splitData.cash || 0;
+                    mpesaTotal += splitData.mpesa || 0;
+                    splitTotal += tx.total_amount;
+                }
+            } else if (tx.payment_method === 'Cash') {
+                cashTotal += tx.total_amount;
+            } else if (tx.payment_method === 'Mpesa') {
+                mpesaTotal += tx.total_amount;
+            } else if (tx.payment_method === 'Credit') {
+                creditTotal += tx.total_amount;
+            }
+        });
+        
         const pastCount = transactions.filter(tx => tx.is_past === 1 || tx.is_past === true).length;
 
         // Category definitions
@@ -358,6 +525,21 @@ router.get('/export/text/:date', authenticateToken, async (req, res) => {
                         if (tx.payment_method === 'Cash') byStationType[type].cash += amount;
                         else if (tx.payment_method === 'Mpesa') byStationType[type].mpesa += amount;
                         else if (tx.payment_method === 'Credit') byStationType[type].credit += amount;
+                        else if (tx.payment_method === 'Split' || tx.payment_method === 'Split (Cash + M-Pesa)') {
+                            let splitData = null;
+                            try {
+                                if (tx.credit_details && typeof tx.credit_details === 'string') {
+                                    splitData = JSON.parse(tx.credit_details);
+                                } else if (tx.credit_details && typeof tx.credit_details === 'object') {
+                                    splitData = tx.credit_details;
+                                }
+                            } catch (err) {}
+                            if (splitData && splitData.type === 'split') {
+                                const proportion = amount / tx.total_amount;
+                                byStationType[type].cash += splitData.cash * proportion;
+                                byStationType[type].mpesa += splitData.mpesa * proportion;
+                            }
+                        }
                         byStationType[type].total += amount;
                         byStationType[type].count++;
                         break;
@@ -377,11 +559,40 @@ router.get('/export/text/:date', authenticateToken, async (req, res) => {
                 const searchString = (itemName + ' ' + stationName).toLowerCase();
                 let matched = false;
 
+                // Determine split proportions for this item
+                let cashPortion = 0;
+                let mpesaPortion = 0;
+                let creditPortion = 0;
+                
+                if (tx.payment_method === 'Split' || tx.payment_method === 'Split (Cash + M-Pesa)') {
+                    let splitData = null;
+                    try {
+                        if (tx.credit_details && typeof tx.credit_details === 'string') {
+                            splitData = JSON.parse(tx.credit_details);
+                        } else if (tx.credit_details && typeof tx.credit_details === 'object') {
+                            splitData = tx.credit_details;
+                        }
+                    } catch (e) {}
+                    
+                    if (splitData && splitData.type === 'split' && splitData.total > 0) {
+                        const proportion = amount / tx.total_amount;
+                        cashPortion = splitData.cash * proportion;
+                        mpesaPortion = splitData.mpesa * proportion;
+                    }
+                }
+
                 for (const [type, data] of Object.entries(categoryDefinitions)) {
                     if (data.patterns.some(pattern => searchString.includes(pattern))) {
-                        if (tx.payment_method === 'Cash') byStationType[type].cash += amount;
-                        else if (tx.payment_method === 'Mpesa') byStationType[type].mpesa += amount;
-                        else if (tx.payment_method === 'Credit') byStationType[type].credit += amount;
+                        if (cashPortion > 0 || mpesaPortion > 0) {
+                            byStationType[type].cash += cashPortion;
+                            byStationType[type].mpesa += mpesaPortion;
+                        } else if (tx.payment_method === 'Cash') {
+                            byStationType[type].cash += amount;
+                        } else if (tx.payment_method === 'Mpesa') {
+                            byStationType[type].mpesa += amount;
+                        } else if (tx.payment_method === 'Credit') {
+                            byStationType[type].credit += amount;
+                        }
                         byStationType[type].total += amount;
                         byStationType[type].count++;
                         matched = true;
@@ -403,9 +614,16 @@ router.get('/export/text/:date', authenticateToken, async (req, res) => {
                             isolated: false 
                         };
                     }
-                    if (tx.payment_method === 'Cash') byStationType['OTHER'].cash += amount;
-                    else if (tx.payment_method === 'Mpesa') byStationType['OTHER'].mpesa += amount;
-                    else if (tx.payment_method === 'Credit') byStationType['OTHER'].credit += amount;
+                    if (cashPortion > 0 || mpesaPortion > 0) {
+                        byStationType['OTHER'].cash += cashPortion;
+                        byStationType['OTHER'].mpesa += mpesaPortion;
+                    } else if (tx.payment_method === 'Cash') {
+                        byStationType['OTHER'].cash += amount;
+                    } else if (tx.payment_method === 'Mpesa') {
+                        byStationType['OTHER'].mpesa += amount;
+                    } else if (tx.payment_method === 'Credit') {
+                        byStationType['OTHER'].credit += amount;
+                    }
                     byStationType['OTHER'].total += amount;
                     byStationType['OTHER'].count++;
                 }
@@ -441,6 +659,11 @@ router.get('/export/text/:date', authenticateToken, async (req, res) => {
             pastNote = `\n📅 NOTE: This report includes ${pastCount} backdated/past transaction(s) for this date.\n`;
         }
 
+        let splitNote = '';
+        if (splitTotal > 0) {
+            splitNote = `\n💳 Split Payments: KES ${splitTotal.toLocaleString()}\n`;
+        }
+
         let paintballSection = '';
         if (paintballBreakdown) {
             paintballSection = `\n========================================
@@ -458,7 +681,7 @@ No Paintball transactions for this date.\n`;
 ========================================
 Date: ${date}
 Generated: ${new Date().toLocaleString()}
-${pastNote}
+${pastNote}${splitNote}
 ========================================
            PAYMENT SUMMARY
 ========================================
@@ -468,6 +691,7 @@ Total Revenue:      KES ${totalRevenue.toLocaleString()}
 Cash:               KES ${cashTotal.toLocaleString()}
 M-Pesa:             KES ${mpesaTotal.toLocaleString()}
 Credit:             KES ${creditTotal.toLocaleString()}
+Split Payments:     KES ${splitTotal.toLocaleString()}
 
 ========================================
        OTHER GAMES BREAKDOWN
@@ -500,6 +724,7 @@ Generated by VR Billing System
     }
 });
 
+// ============ PRINT REPORT ============
 router.get('/export/print/:date', authenticateToken, async (req, res) => {
     try {
         const date = req.params.date;
@@ -519,9 +744,37 @@ router.get('/export/print/:date', authenticateToken, async (req, res) => {
         transactions.sort((a, b) => (a.transaction_time || '').localeCompare(b.transaction_time || ''));
 
         const totalRevenue = transactions.reduce((sum, tx) => sum + tx.total_amount, 0);
-        const cashTotal = transactions.filter(tx => tx.payment_method === 'Cash').reduce((sum, tx) => sum + tx.total_amount, 0);
-        const mpesaTotal = transactions.filter(tx => tx.payment_method === 'Mpesa').reduce((sum, tx) => sum + tx.total_amount, 0);
-        const creditTotal = transactions.filter(tx => tx.payment_method === 'Credit').reduce((sum, tx) => sum + tx.total_amount, 0);
+        let cashTotal = 0;
+        let mpesaTotal = 0;
+        let creditTotal = 0;
+        let splitTotal = 0;
+        
+        // Calculate payment totals with split support
+        transactions.forEach(tx => {
+            if (tx.payment_method === 'Split' || tx.payment_method === 'Split (Cash + M-Pesa)') {
+                let splitData = null;
+                try {
+                    if (tx.credit_details && typeof tx.credit_details === 'string') {
+                        splitData = JSON.parse(tx.credit_details);
+                    } else if (tx.credit_details && typeof tx.credit_details === 'object') {
+                        splitData = tx.credit_details;
+                    }
+                } catch (e) {}
+                
+                if (splitData && splitData.type === 'split') {
+                    cashTotal += splitData.cash || 0;
+                    mpesaTotal += splitData.mpesa || 0;
+                    splitTotal += tx.total_amount;
+                }
+            } else if (tx.payment_method === 'Cash') {
+                cashTotal += tx.total_amount;
+            } else if (tx.payment_method === 'Mpesa') {
+                mpesaTotal += tx.total_amount;
+            } else if (tx.payment_method === 'Credit') {
+                creditTotal += tx.total_amount;
+            }
+        });
+        
         const pastCount = transactions.filter(tx => tx.is_past === 1 || tx.is_past === true).length;
 
         const rowsHTML = transactions.map(tx => {
@@ -534,18 +787,36 @@ router.get('/export/print/:date', authenticateToken, async (req, res) => {
             } catch (e) {
                 itemsDisplay = tx.past_game || tx.station_used || '-';
             }
+            
+            // Show split payment info
+            let methodDisplay = tx.payment_method;
+            if (tx.payment_method === 'Split' || tx.payment_method === 'Split (Cash + M-Pesa)') {
+                let splitData = null;
+                try {
+                    if (tx.credit_details && typeof tx.credit_details === 'string') {
+                        splitData = JSON.parse(tx.credit_details);
+                    } else if (tx.credit_details && typeof tx.credit_details === 'object') {
+                        splitData = tx.credit_details;
+                    }
+                } catch (e) {}
+                if (splitData && splitData.type === 'split') {
+                    methodDisplay = `Split (Cash: ${splitData.cash || 0}, M-Pesa: ${splitData.mpesa || 0})`;
+                }
+            }
+            
             return `
             <tr><td style="text-align:left;font-size:14px;">${tx.receipt_no}${pastBadge}</td>
             <td style="text-align:center;font-size:14px;">${tx.transaction_time || ''}</td>
             <td style="text-align:left;font-size:14px;">${tx.customer_name || 'Guest'}</td>
             <td style="text-align:right;font-size:14px;">KES ${(tx.total_amount || 0).toLocaleString()}</td>
-            <td style="text-align:center;font-size:14px;">${tx.payment_method}</td>
+            <td style="text-align:center;font-size:14px;">${methodDisplay}</td>
             <td style="text-align:left;font-size:14px;">${tx.cashier_name || '-'}</td>
             <td style="text-align:left;font-size:14px;">${itemsDisplay}</td>
             </tr>`;
         }).join('');
 
         const pastNote = pastCount > 0 ? `<p style="background:#e8d5f5;padding:10px;border-radius:8px;margin-bottom:15px;"><strong>📅 Note:</strong> This report includes ${pastCount} backdated/past transaction(s) for this date.</p>` : '';
+        const splitNote = splitTotal > 0 ? `<p style="background:#fff3cd;padding:10px;border-radius:8px;margin-bottom:15px;"><strong>💳 Split Payments:</strong> KES ${splitTotal.toLocaleString()}</p>` : '';
 
         const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Report ${date}</title>
         <style>body{font-family:sans-serif;padding:30px;}h1{color:#667eea;}table{width:100%;border-collapse:collapse;}
@@ -553,15 +824,16 @@ router.get('/export/print/:date', authenticateToken, async (req, res) => {
         .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin:20px 0;}
         .card{background:#f8f9fa;padding:15px;border-radius:8px;text-align:center;}
         .card .val{font-size:24px;font-weight:bold;color:#667eea;}
-        .payment-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin:20px 0;}
+        .payment-summary{display:grid;grid-template-columns:repeat(5,1fr);gap:15px;margin:20px 0;}
         .payment-card{background:#fff;padding:15px;border-radius:8px;text-align:center;border:2px solid #e0e0e0;}
         .payment-card.cash{border-color:#28a745;}
         .payment-card.mpesa{border-color:#17a2b8;}
         .payment-card.credit{border-color:#ffc107;}
+        .payment-card.split{border-color:#ff6b35;}
         .payment-card.total{border-color:#667eea;}
         @media print{body{padding:10px;}}</style></head>
         <body><h1>VR Lounge - Daily Report</h1><p>Date: ${date}</p>
-        ${pastNote}
+        ${pastNote}${splitNote}
         <div class="summary"><div class="card"><div class="val">${transactions.length}</div>Transactions</div>
         <div class="card"><div class="val">KES ${totalRevenue.toLocaleString()}</div>Revenue</div>
         <div class="card"><div class="val">KES ${cashTotal.toLocaleString()}</div>Cash</div></div>
@@ -569,6 +841,7 @@ router.get('/export/print/:date', authenticateToken, async (req, res) => {
         <div class="payment-card cash"><strong>💵 Cash</strong><br>KES ${cashTotal.toLocaleString()}</div>
         <div class="payment-card mpesa"><strong>📱 M-Pesa</strong><br>KES ${mpesaTotal.toLocaleString()}</div>
         <div class="payment-card credit"><strong>📝 Credit</strong><br>KES ${creditTotal.toLocaleString()}</div>
+        <div class="payment-card split"><strong>💳 Split</strong><br>KES ${splitTotal.toLocaleString()}</div>
         <div class="payment-card total"><strong>💰 Total</strong><br>KES ${totalRevenue.toLocaleString()}</div>
         </div>
         <table><thead><tr><th>Receipt</th><th>Time</th><th>Customer</th><th>Amount</th><th>Method</th><th>Cashier</th><th>Items</th></tr></thead>
