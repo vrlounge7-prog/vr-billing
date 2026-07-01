@@ -20,39 +20,13 @@ router.get('/daily/:date', authenticateToken, async (req, res) => {
             });
         }
 
+        // --- FIXED: Process by individual items instead of whole transaction ---
         const byMethod = {};
         const byHour = {};
         const byCashier = {};
         const byStation = {};
 
-        transactions.forEach(tx => {
-            const method = tx.payment_method || 'Unknown';
-            if (!byMethod[method]) byMethod[method] = { count: 0, total: 0 };
-            byMethod[method].count++;
-            byMethod[method].total += tx.total_amount;
-
-            const hour = tx.transaction_time ? tx.transaction_time.split(':')[0] : '00';
-            const hourKey = `${hour}:00`;
-            if (!byHour[hourKey]) byHour[hourKey] = { count: 0, total: 0 };
-            byHour[hourKey].count++;
-            byHour[hourKey].total += tx.total_amount;
-
-            const name = tx.cashier_name || 'Unknown';
-            if (!byCashier[name]) byCashier[name] = { count: 0, total: 0 };
-            byCashier[name].count++;
-            byCashier[name].total += tx.total_amount;
-
-            const stn = tx.station_used || 'Unknown';
-            if (!byStation[stn]) byStation[stn] = { count: 0, total: 0, cash: 0, mpesa: 0, credit: 0 };
-            byStation[stn].count++;
-            byStation[stn].total += tx.total_amount;
-            if (tx.payment_method === 'Cash') byStation[stn].cash += tx.total_amount;
-            else if (tx.payment_method === 'Mpesa') byStation[stn].mpesa += tx.total_amount;
-            else if (tx.payment_method === 'Credit') byStation[stn].credit += tx.total_amount;
-        });
-
-        // Define game categories with their station name patterns
-        // PAINTBALL is now ISOLATED - will have its own separate section
+        // Define category definitions with detection patterns
         const categoryDefinitions = {
             'POOL': {
                 name: 'POOL TABLE',
@@ -88,11 +62,11 @@ router.get('/daily/:date', authenticateToken, async (req, res) => {
                 name: 'PAINTBALL (ISOLATED)',
                 icon: '🔫',
                 patterns: ['paintball', 'paint ball', 'paint'],
-                isolated: true  // Flag to indicate this category is isolated
+                isolated: true
             }
         };
 
-        // Initialize categories
+        // Initialize category tracking
         const byStationType = {};
         for (const [categoryKey, categoryData] of Object.entries(categoryDefinitions)) {
             byStationType[categoryKey] = {
@@ -107,68 +81,118 @@ router.get('/daily/:date', authenticateToken, async (req, res) => {
             };
         }
 
-        // Track unmatched stations for debugging
-        const unmatchedStations = new Set();
-        // Track if we found any paintball transactions
-        let paintballFound = false;
+        // Process each transaction
+        transactions.forEach(tx => {
+            const method = tx.payment_method || 'Unknown';
+            if (!byMethod[method]) byMethod[method] = { count: 0, total: 0 };
+            byMethod[method].count++;
+            byMethod[method].total += tx.total_amount;
 
-        for (const [stationName, stationData] of Object.entries(byStation)) {
-            let matched = false;
-            const stationLower = stationName.toLowerCase().trim();
+            const hour = tx.transaction_time ? tx.transaction_time.split(':')[0] : '00';
+            const hourKey = `${hour}:00`;
+            if (!byHour[hourKey]) byHour[hourKey] = { count: 0, total: 0 };
+            byHour[hourKey].count++;
+            byHour[hourKey].total += tx.total_amount;
 
-            for (const [categoryKey, categoryDef] of Object.entries(categoryDefinitions)) {
-                const isMatch = categoryDef.patterns.some(pattern =>
-                    stationLower.includes(pattern)
-                );
+            const name = tx.cashier_name || 'Unknown';
+            if (!byCashier[name]) byCashier[name] = { count: 0, total: 0 };
+            byCashier[name].count++;
+            byCashier[name].total += tx.total_amount;
 
-                if (isMatch) {
-                    // Add to the matched category
-                    byStationType[categoryKey].cash += stationData.cash || 0;
-                    byStationType[categoryKey].mpesa += stationData.mpesa || 0;
-                    byStationType[categoryKey].credit += stationData.credit || 0;
-                    byStationType[categoryKey].total += stationData.total || 0;
-                    byStationType[categoryKey].count += stationData.count || 0;
-                    matched = true;
+            // ---- CRITICAL FIX: Parse items and categorize each individually ----
+            let items = [];
+            try {
+                items = JSON.parse(tx.items_json || '[]');
+            } catch (e) {
+                // If parsing fails, fallback to station_used
+                const stn = tx.station_used || 'Unknown';
+                if (!byStation[stn]) byStation[stn] = { count: 0, total: 0, cash: 0, mpesa: 0, credit: 0 };
+                byStation[stn].count++;
+                byStation[stn].total += tx.total_amount;
+                if (tx.payment_method === 'Cash') byStation[stn].cash += tx.total_amount;
+                else if (tx.payment_method === 'Mpesa') byStation[stn].mpesa += tx.total_amount;
+                else if (tx.payment_method === 'Credit') byStation[stn].credit += tx.total_amount;
+                return;
+            }
 
-                    // Track if paintball was found
-                    if (categoryKey === 'PAINTBALL') {
-                        paintballFound = true;
+            // If no items, skip
+            if (!items || items.length === 0) {
+                const stn = tx.station_used || 'Unknown';
+                if (!byStation[stn]) byStation[stn] = { count: 0, total: 0, cash: 0, mpesa: 0, credit: 0 };
+                byStation[stn].count++;
+                byStation[stn].total += tx.total_amount;
+                if (tx.payment_method === 'Cash') byStation[stn].cash += tx.total_amount;
+                else if (tx.payment_method === 'Mpesa') byStation[stn].mpesa += tx.total_amount;
+                else if (tx.payment_method === 'Credit') byStation[stn].credit += tx.total_amount;
+                return;
+            }
+
+            // Process each individual item in the transaction
+            items.forEach(item => {
+                const itemName = (item.game_name || item.name || '').toLowerCase().trim();
+                const stationName = (item.station_name || tx.station_used || '').toLowerCase().trim();
+                const itemPrice = item.total_price || item.price || (tx.total_amount / items.length);
+                
+                // Track by station (for backward compatibility)
+                const stn = item.station_name || tx.station_used || 'Unknown';
+                if (!byStation[stn]) byStation[stn] = { count: 0, total: 0, cash: 0, mpesa: 0, credit: 0 };
+                byStation[stn].count++;
+                byStation[stn].total += itemPrice;
+                if (tx.payment_method === 'Cash') byStation[stn].cash += itemPrice;
+                else if (tx.payment_method === 'Mpesa') byStation[stn].mpesa += itemPrice;
+                else if (tx.payment_method === 'Credit') byStation[stn].credit += itemPrice;
+
+                // Categorize the item by its name/station
+                let matched = false;
+                const searchString = (itemName + ' ' + stationName).toLowerCase();
+                
+                for (const [categoryKey, categoryDef] of Object.entries(categoryDefinitions)) {
+                    const isMatch = categoryDef.patterns.some(pattern => 
+                        searchString.includes(pattern)
+                    );
+
+                    if (isMatch) {
+                        byStationType[categoryKey].cash += (tx.payment_method === 'Cash' ? itemPrice : 0);
+                        byStationType[categoryKey].mpesa += (tx.payment_method === 'Mpesa' ? itemPrice : 0);
+                        byStationType[categoryKey].credit += (tx.payment_method === 'Credit' ? itemPrice : 0);
+                        byStationType[categoryKey].total += itemPrice;
+                        byStationType[categoryKey].count++;
+                        matched = true;
+                        break;
                     }
-                    break;
                 }
-            }
 
-            if (!matched && stationName !== 'Unknown' && stationName !== 'Manual Entry') {
-                unmatchedStations.add(stationName);
-            }
-        }
-
-        // Log unmatched stations for debugging
-        if (unmatchedStations.size > 0) {
-            console.log('⚠️ UNMATCHED STATIONS - Need to update patterns:');
-            unmatchedStations.forEach(station => {
-                console.log(`  - "${station}"`);
+                // If no category matched, log it as "Other"
+                if (!matched) {
+                    if (!byStationType['OTHER']) {
+                        byStationType['OTHER'] = {
+                            name: 'OTHER SERVICES',
+                            icon: '📌',
+                            cash: 0,
+                            mpesa: 0,
+                            credit: 0,
+                            total: 0,
+                            count: 0,
+                            isolated: false
+                        };
+                    }
+                    byStationType['OTHER'].cash += (tx.payment_method === 'Cash' ? itemPrice : 0);
+                    byStationType['OTHER'].mpesa += (tx.payment_method === 'Mpesa' ? itemPrice : 0);
+                    byStationType['OTHER'].credit += (tx.payment_method === 'Credit' ? itemPrice : 0);
+                    byStationType['OTHER'].total += itemPrice;
+                    byStationType['OTHER'].count++;
+                    
+                    // Log unmatched items for debugging
+                    console.log(`⚠️ UNMATCHED ITEM: "${itemName}" | Station: "${stationName}"`);
+                }
             });
-        }
+        });
 
-        // Remove empty non-paintball categories (keep paintball even if empty for visibility)
+        // Remove empty non-paintball categories
         for (const categoryKey of Object.keys(byStationType)) {
-            if (categoryKey === 'PAINTBALL') {
-                // Always keep paintball in the response, even if zero
-                if (byStationType[categoryKey].total === 0) {
-                    console.log('Paintball category has no transactions - showing zero');
-                }
-            } else if (byStationType[categoryKey].total === 0) {
+            if (categoryKey !== 'PAINTBALL' && byStationType[categoryKey].total === 0) {
                 delete byStationType[categoryKey];
             }
-        }
-
-        // If we have transactions but no categories matched, log the station names
-        if (Object.keys(byStationType).length === 0 && transactions.length > 0) {
-            console.log('❌ NO CATEGORIES MATCHED! Station names in database:');
-            Object.keys(byStation).forEach(station => {
-                console.log(`  - "${station}"`);
-            });
         }
 
         const pastCount = transactions.filter(tx => tx.is_past === 1 || tx.is_past === true).length;
@@ -182,8 +206,7 @@ router.get('/daily/:date', authenticateToken, async (req, res) => {
             by_hour: byHour,
             by_cashier: byCashier,
             by_station: byStation,
-            by_station_type: byStationType,
-            paintball_found: paintballFound  // Add flag for frontend
+            by_station_type: byStationType
         });
     } catch (error) {
         console.error('Report generation error:', error);
@@ -296,7 +319,7 @@ router.get('/export/text/:date', authenticateToken, async (req, res) => {
         const creditTotal = transactions.filter(tx => tx.payment_method === 'Credit').reduce((sum, tx) => sum + tx.total_amount, 0);
         const pastCount = transactions.filter(tx => tx.is_past === 1 || tx.is_past === true).length;
 
-        // Category definitions with isolated Paintball
+        // Category definitions
         const categoryDefinitions = {
             'POOL': { name: 'POOL TABLE', patterns: ['pool', 'billiard'] },
             'VR': { name: 'VR EXPERIENCE', patterns: ['vr', 'virtual reality', 'oculus', 'quest'] },
@@ -307,22 +330,86 @@ router.get('/export/text/:date', authenticateToken, async (req, res) => {
             'PAINTBALL': { name: 'PAINTBALL (ISOLATED)', patterns: ['paintball', 'paint ball'], isolated: true }
         };
 
+        // Initialize category tracking
         const byStationType = {};
         for (const [type, data] of Object.entries(categoryDefinitions)) {
-            byStationType[type] = { name: data.name, cash: 0, mpesa: 0, credit: 0, total: 0, isolated: data.isolated || false };
+            byStationType[type] = { 
+                name: data.name, 
+                cash: 0, 
+                mpesa: 0, 
+                credit: 0, 
+                total: 0, 
+                count: 0,
+                isolated: data.isolated || false 
+            };
         }
 
+        // ---- FIXED: Process each transaction's items individually ----
         transactions.forEach(tx => {
-            const stn = (tx.station_used || '').toLowerCase().trim();
-            for (const [type, data] of Object.entries(categoryDefinitions)) {
-                if (data.patterns.some(pattern => stn.includes(pattern))) {
-                    if (tx.payment_method === 'Cash') byStationType[type].cash += tx.total_amount;
-                    else if (tx.payment_method === 'Mpesa') byStationType[type].mpesa += tx.total_amount;
-                    else if (tx.payment_method === 'Credit') byStationType[type].credit += tx.total_amount;
-                    byStationType[type].total += tx.total_amount;
-                    break;
+            let items = [];
+            try {
+                items = JSON.parse(tx.items_json || '[]');
+            } catch (e) {
+                // Fallback: use station_used
+                const stn = (tx.station_used || '').toLowerCase().trim();
+                for (const [type, data] of Object.entries(categoryDefinitions)) {
+                    if (data.patterns.some(pattern => stn.includes(pattern))) {
+                        const amount = tx.total_amount;
+                        if (tx.payment_method === 'Cash') byStationType[type].cash += amount;
+                        else if (tx.payment_method === 'Mpesa') byStationType[type].mpesa += amount;
+                        else if (tx.payment_method === 'Credit') byStationType[type].credit += amount;
+                        byStationType[type].total += amount;
+                        byStationType[type].count++;
+                        break;
+                    }
                 }
+                return;
             }
+
+            if (!items || items.length === 0) return;
+
+            // Process each item
+            items.forEach(item => {
+                const itemName = (item.game_name || item.name || '').toLowerCase().trim();
+                const stationName = (item.station_name || tx.station_used || '').toLowerCase().trim();
+                const amount = item.total_price || item.price || (tx.total_amount / items.length);
+
+                const searchString = (itemName + ' ' + stationName).toLowerCase();
+                let matched = false;
+
+                for (const [type, data] of Object.entries(categoryDefinitions)) {
+                    if (data.patterns.some(pattern => searchString.includes(pattern))) {
+                        if (tx.payment_method === 'Cash') byStationType[type].cash += amount;
+                        else if (tx.payment_method === 'Mpesa') byStationType[type].mpesa += amount;
+                        else if (tx.payment_method === 'Credit') byStationType[type].credit += amount;
+                        byStationType[type].total += amount;
+                        byStationType[type].count++;
+                        matched = true;
+                        break;
+                    }
+                }
+
+                if (!matched) {
+                    // Log unmatched
+                    console.log(`⚠️ TEXT EXPORT - UNMATCHED ITEM: "${itemName}" | Station: "${stationName}"`);
+                    if (!byStationType['OTHER']) {
+                        byStationType['OTHER'] = { 
+                            name: 'OTHER SERVICES', 
+                            cash: 0, 
+                            mpesa: 0, 
+                            credit: 0, 
+                            total: 0, 
+                            count: 0,
+                            isolated: false 
+                        };
+                    }
+                    if (tx.payment_method === 'Cash') byStationType['OTHER'].cash += amount;
+                    else if (tx.payment_method === 'Mpesa') byStationType['OTHER'].mpesa += amount;
+                    else if (tx.payment_method === 'Credit') byStationType['OTHER'].credit += amount;
+                    byStationType['OTHER'].total += amount;
+                    byStationType['OTHER'].count++;
+                }
+            });
         });
 
         let stationBreakdown = '';
@@ -336,7 +423,8 @@ router.get('/export/text/:date', authenticateToken, async (req, res) => {
                     `  Total Cash:    KES ${data.cash.toLocaleString()}\n` +
                     `  Total M-Pesa:  KES ${data.mpesa.toLocaleString()}\n` +
                     `  Total Credit:  KES ${data.credit.toLocaleString()}\n` +
-                    `  TOTAL AMOUNT:  KES ${data.total.toLocaleString()}\n`;
+                    `  TOTAL AMOUNT:  KES ${data.total.toLocaleString()}\n` +
+                    `  Transactions:  ${data.count}\n`;
 
                 if (data.isolated || type === 'PAINTBALL') {
                     paintballBreakdown += breakdownText;
@@ -438,6 +526,14 @@ router.get('/export/print/:date', authenticateToken, async (req, res) => {
 
         const rowsHTML = transactions.map(tx => {
             const pastBadge = tx.is_past ? '<span style="background:#e8d5f5;color:#6f42c1;padding:2px 6px;border-radius:4px;font-size:10px;margin-left:5px;">📅 Past</span>' : '';
+            // Get items for display
+            let itemsDisplay = '';
+            try {
+                const items = JSON.parse(tx.items_json || '[]');
+                itemsDisplay = items.map(item => `${item.game_name || 'Item'}`).join(', ');
+            } catch (e) {
+                itemsDisplay = tx.past_game || tx.station_used || '-';
+            }
             return `
             <tr><td style="text-align:left;font-size:14px;">${tx.receipt_no}${pastBadge}</td>
             <td style="text-align:center;font-size:14px;">${tx.transaction_time || ''}</td>
@@ -445,7 +541,7 @@ router.get('/export/print/:date', authenticateToken, async (req, res) => {
             <td style="text-align:right;font-size:14px;">KES ${(tx.total_amount || 0).toLocaleString()}</td>
             <td style="text-align:center;font-size:14px;">${tx.payment_method}</td>
             <td style="text-align:left;font-size:14px;">${tx.cashier_name || '-'}</td>
-            <td style="text-align:left;font-size:14px;">${tx.station_used || '-'}</td>
+            <td style="text-align:left;font-size:14px;">${itemsDisplay}</td>
             </tr>`;
         }).join('');
 
@@ -475,7 +571,7 @@ router.get('/export/print/:date', authenticateToken, async (req, res) => {
         <div class="payment-card credit"><strong>📝 Credit</strong><br>KES ${creditTotal.toLocaleString()}</div>
         <div class="payment-card total"><strong>💰 Total</strong><br>KES ${totalRevenue.toLocaleString()}</div>
         </div>
-        <table><thead><tr><th>Receipt</th><th>Time</th><th>Customer</th><th>Amount</th><th>Method</th><th>Cashier</th><th>Station</th></tr></thead>
+        <table><thead><tr><th>Receipt</th><th>Time</th><th>Customer</th><th>Amount</th><th>Method</th><th>Cashier</th><th>Items</th></tr></thead>
         <tbody>${rowsHTML || '<tr><td colspan="7">No transactions</td></tr>'}</tbody>
         </table>
         <div style="margin-top:20px;text-align:center;color:#666;">
